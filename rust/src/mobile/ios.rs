@@ -4,11 +4,10 @@ use crate::models::*;
 use block2::RcBlock;
 use dispatch2::{DispatchQueue, DispatchQueueAttr};
 use network_framework_sys::{
-    nw_interface_type_cellular, nw_interface_type_wifi, nw_interface_type_wired,
-    nw_path_get_status, nw_path_monitor_create, nw_path_monitor_set_queue,
-    nw_path_monitor_start, nw_path_monitor_cancel, nw_path_status_satisfied,
-    nw_path_status_unsatisfied, nw_path_uses_interface_type, nw_path_t, nw_release,
-    dispatch_queue_t, nw_path_monitor_t,
+    dispatch_queue_t, nw_interface_type_cellular, nw_interface_type_wifi, nw_interface_type_wired,
+    nw_path_get_status, nw_path_monitor_cancel, nw_path_monitor_create, nw_path_monitor_set_queue,
+    nw_path_monitor_start, nw_path_monitor_t, nw_path_status_satisfied, nw_path_status_unsatisfied,
+    nw_path_t, nw_path_uses_interface_type, nw_release,
 };
 use objc2::MainThreadMarker;
 use objc2_foundation::{NSArray, NSNumber, NSString, NSURL, NSUUID};
@@ -243,8 +242,7 @@ fn detect_network_type() -> String {
         });
 
         let queue = DispatchQueue::new("com.xuehua.networkmonitor", DispatchQueueAttr::SERIAL);
-        let queue_ptr =
-            dispatch2::DispatchRetained::as_ptr(&queue).as_ptr() as dispatch_queue_t;
+        let queue_ptr = dispatch2::DispatchRetained::as_ptr(&queue).as_ptr() as dispatch_queue_t;
 
         nw_path_monitor_set_queue(monitor, queue_ptr);
         nw_path_monitor_set_update_handler(

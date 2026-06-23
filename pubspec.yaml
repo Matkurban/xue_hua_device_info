@@ -1,7 +1,11 @@
 name: xue_hua_device_info
 description: "Flutter plugin for device info: battery, network, storage, display, and system details. Ported from tauri-plugin-device-info."
 version: 1.0.0
-homepage:
+homepage: https://github.com/Matkurban/xue_hua_device_info
+repository: https://github.com/Matkurban/xue_hua_device_info
+issue_tracker: https://github.com/Matkurban/xue_hua_device_info/issues
+documentation: https://github.com/Matkurban/xue_hua_device_info/blob/main/README.md
+publish_to: none
 
 environment:
   sdk: ^3.12.2
@@ -26,7 +30,6 @@ flutter:
   plugin:
     platforms:
       android:
-        ffiPlugin: true
         package: com.flutter_rust_bridge.xue_hua_device_info
         pluginClass: XueHuaDeviceInfoPlugin
       ios:

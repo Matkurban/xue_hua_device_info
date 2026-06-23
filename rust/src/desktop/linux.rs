@@ -31,7 +31,13 @@ pub fn get_display_resolution() -> Option<(u32, u32)> {
     for line in output.lines() {
         if line.contains('*') {
             for part in line.split_whitespace() {
-                if part.contains('x') && part.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+                if part.contains('x')
+                    && part
+                        .chars()
+                        .next()
+                        .map(|c| c.is_ascii_digit())
+                        .unwrap_or(false)
+                {
                     let dims: Vec<&str> = part.split('x').collect();
                     if dims.len() == 2 {
                         let width = dims[0].parse::<u32>().ok()?;
