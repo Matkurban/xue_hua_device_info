@@ -1,0 +1,22 @@
+PODS:
+  - FlutterMacOS (1.0.0)
+  - xue_hua_device_info (0.0.1):
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - xue_hua_device_info (from `Flutter/ephemeral/.symlinks/plugins/xue_hua_device_info/macos`)
+
+EXTERNAL SOURCES:
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  xue_hua_device_info:
+    :path: Flutter/ephemeral/.symlinks/plugins/xue_hua_device_info/macos
+
+SPEC CHECKSUMS:
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  xue_hua_device_info: d0d5fef10782ab8bbd11ea661e053e2eac74d739
+
+PODFILE CHECKSUM: 54d867c82ac51cbd61b565781b9fada492027009
+
+COCOAPODS: 1.16.2
