@@ -5,7 +5,6 @@ homepage: https://github.com/Matkurban/xue_hua_device_info
 repository: https://github.com/Matkurban/xue_hua_device_info
 issue_tracker: https://github.com/Matkurban/xue_hua_device_info/issues
 documentation: https://github.com/Matkurban/xue_hua_device_info/blob/main/README.md
-publish_to: none
 
 environment:
   sdk: ^3.12.2
