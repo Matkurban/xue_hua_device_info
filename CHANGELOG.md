@@ -1,25 +1,10 @@
-# Changelog
+## 1.0.1
 
-All notable changes to this project will be documented in this file.
+- **macOS 链接错误** — 将 `sysinfo` 限制为 `system`、`disk`、`network` 特性，避免编入未使用的 `user` 模块（OpenDirectory 符号），修复 `Undefined symbols for architecture arm64` 构建失败。  
+  **macOS link error** — restricted `sysinfo` to `system`, `disk`, and `network` features so the unused `user` module (OpenDirectory symbols) is not linked, fixing `Undefined symbols for architecture arm64` build failures.
 
-本项目的所有重要变更均记录在此文件中。
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
-本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
-
-## [Unreleased]
-
-### Removed / 移除
-
-- **Android Rust / JNI 死代码** — 删除 `rust/src/mobile/android.rs` 及 `jni` 依赖；Android 运行时仅使用 Kotlin `MethodChannel`，不再交叉编译或打包 `libxue_hua_device_info.so`。  
-  **Android Rust / JNI dead code** — removed `rust/src/mobile/android.rs` and the `jni` dependency; Android now uses Kotlin `MethodChannel` only, with no Rust cross-compile or `libxue_hua_device_info.so` in the APK.
-- **Android Cargokit 构建** — `pubspec.yaml` 去掉 `ffiPlugin`，`android/build.gradle` 移除 Cargokit / NDK 配置。  
-  **Android Cargokit build** — removed `ffiPlugin` from `pubspec.yaml` and Cargokit / NDK from `android/build.gradle`.
-
-## [1.0.0] - 2026-06-24
+## 1.0.0
 
 首次正式发布。
 
@@ -64,5 +49,3 @@ Initial stable release.
   **Some fields may be `null`** — due to platform policies, hardware configuration, or permissions (e.g. desktops without battery, Linux without `xrandr`).
 - **设备信息采集逻辑** — 源自 [edisdev/tauri-plugin-device-info](https://github.com/edisdev/tauri-plugin-device-info)（MIT）。  
   **Device info collection logic** — derived from [edisdev/tauri-plugin-device-info](https://github.com/edisdev/tauri-plugin-device-info) (MIT).
-
-[1.0.0]: https://github.com/Matkurban/xue_hua_device_info/releases/tag/v1.0.0
