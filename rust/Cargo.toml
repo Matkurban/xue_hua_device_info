@@ -1,7 +1,7 @@
 [package]
 name = "xue_hua_device_info"
-version = "0.1.0"
-edition = "2021"
+version = "1.1.0"
+edition = "2024"
 
 [lib]
 crate-type = ["cdylib", "staticlib"]
@@ -38,6 +38,10 @@ security-framework = "3.7.0"
 network-framework-sys = "0.1.0"
 block2 = "0.6.2"
 dispatch2 = "0.3.1"
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.22.4"
+ndk-context = "0.1.1"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }

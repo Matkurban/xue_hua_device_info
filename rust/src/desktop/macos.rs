@@ -46,6 +46,34 @@ pub fn get_device_info() -> crate::Result<DeviceInfoResponse> {
     })
 }
 
+/// Classify a macOS network interface name (e.g. `en0` → wifi).
+pub(crate) fn classify_interface_name(name: &str) -> Option<String> {
+    if name.starts_with("en") {
+        if name == "en0" {
+            Some("wifi".to_string())
+        } else {
+            Some("ethernet".to_string())
+        }
+    } else {
+        None
+    }
+}
+
+/// Parse whether the battery is charging from a `pmset -g batt` line.
+pub(crate) fn parse_pmset_is_charging(output: &str) -> bool {
+    let status = output
+        .split('\t')
+        .nth(1)
+        .and_then(|s| s.split(';').nth(1))
+        .map(|s| s.trim().to_lowercase());
+
+    match status.as_deref() {
+        Some("charging") | Some("charged") | Some("finishing charge") => true,
+        Some("discharging") | Some("not charging") => false,
+        _ => false,
+    }
+}
+
 pub fn get_battery_info() -> crate::Result<BatteryInfo> {
     let output = Command::new("pmset")
         .args(["-g", "batt"])
@@ -62,7 +90,7 @@ pub fn get_battery_info() -> crate::Result<BatteryInfo> {
             .and_then(|s| s.replace('%', "").trim().parse::<f32>().ok());
 
         // Parse charging status
-        let is_charging = output_str.contains("charging") && !output_str.contains("discharging");
+        let is_charging = parse_pmset_is_charging(&output_str);
 
         // Health is harder to get via pmset without XML, defaulting to good if present
         let health = if output_str.contains("present: true") {
@@ -103,7 +131,7 @@ pub fn get_display_refresh_rate() -> Option<f64> {
 
 #[cfg(test)]
 mod tests {
-    // Tests for parsing logic - no imports needed as we test parsing directly
+    use super::{classify_interface_name, parse_pmset_is_charging};
 
     #[test]
     fn parse_battery_percentage_from_pmset_output() {
@@ -121,18 +149,30 @@ mod tests {
     }
 
     #[test]
+    fn classify_interface_name_en0_is_wifi() {
+        assert_eq!(
+            classify_interface_name("en0"),
+            Some("wifi".to_string())
+        );
+        assert_eq!(
+            classify_interface_name("en1"),
+            Some("ethernet".to_string())
+        );
+        assert!(classify_interface_name("lo0").is_none());
+    }
+
+    #[test]
     fn parse_charging_status_from_pmset() {
         let charging_output =
             "Now drawing from 'AC Power'\n -InternalBattery-0\t95%; charging; 0:30 remaining";
-        let discharging_output = "Now drawing from 'Battery Power'\n -InternalBattery-0\t85%; discharging; 3:45 remaining";
+        let not_charging_output =
+            "Now drawing from 'AC Power'\n -InternalBattery-0\t80%; not charging;";
+        let discharging_output =
+            "Now drawing from 'Battery Power'\n -InternalBattery-0\t85%; discharging; 3:45 remaining";
 
-        let is_charging_1 =
-            charging_output.contains("charging") && !charging_output.contains("discharging");
-        let is_charging_2 =
-            discharging_output.contains("charging") && !discharging_output.contains("discharging");
-
-        assert!(is_charging_1);
-        assert!(!is_charging_2);
+        assert!(parse_pmset_is_charging(charging_output));
+        assert!(!parse_pmset_is_charging(not_charging_output));
+        assert!(!parse_pmset_is_charging(discharging_output));
     }
 
     #[test]

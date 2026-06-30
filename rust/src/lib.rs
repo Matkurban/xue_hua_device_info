@@ -4,10 +4,14 @@ pub mod models;
 
 pub use error::{Error, Result};
 
-#[cfg(not(target_os = "ios"))]
-pub mod desktop;
+#[cfg(target_os = "android")]
+mod android_init;
 
-#[cfg(target_os = "ios")]
+#[cfg(any(target_os = "ios", target_os = "android"))]
 pub mod mobile;
 
+#[cfg(not(any(target_os = "ios", target_os = "android")))]
+pub mod desktop;
+
 mod frb_generated;
+mod platform;

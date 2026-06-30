@@ -16,7 +16,7 @@ use security_framework::passwords::{
     delete_generic_password, get_generic_password, set_generic_password,
 };
 use std::ffi::CStr;
-use std::time::Duration;
+use std::sync::{Mutex, OnceLock};
 
 const KEYCHAIN_SERVICE: &str = "com.xuehua.deviceinfo";
 const KEYCHAIN_ACCOUNT: &str = "unique_id";
@@ -85,11 +85,11 @@ pub fn get_battery_info() -> crate::Result<BatteryInfo> {
 }
 
 pub fn get_network_info() -> crate::Result<NetworkInfo> {
-    let ip_address = get_ip_address().unwrap_or_else(|| "0.0.0.0".to_string());
+    let ip_address = get_ip_address();
     let network_type = detect_network_type();
 
     Ok(NetworkInfo {
-        ip_address: Some(ip_address),
+        ip_address,
         network_type: Some(network_type),
         mac_address: Some("unavailable".to_string()),
     })
@@ -206,14 +206,20 @@ fn get_persistent_device_id() -> String {
 }
 
 fn detect_network_type() -> String {
+    static STORAGE: OnceLock<Mutex<Option<String>>> = OnceLock::new();
+    let storage = STORAGE.get_or_init(|| Mutex::new(None));
+
+    if let Ok(mut guard) = storage.lock() {
+        *guard = None;
+    }
+
     unsafe {
         let monitor = nw_path_monitor_create();
         if monitor.is_null() {
             return "unknown".to_string();
         }
 
-        let storage = Box::leak(Box::new(std::sync::Mutex::new(None::<String>)));
-        let storage_for_block = storage as *const std::sync::Mutex<Option<String>>;
+        let storage_for_block = storage as *const Mutex<Option<String>>;
 
         let block = RcBlock::new(move |path: *mut libc::c_void| {
             let path = path as nw_path_t;
@@ -251,7 +257,17 @@ fn detect_network_type() -> String {
         );
         nw_path_monitor_start(monitor);
 
-        std::thread::sleep(Duration::from_millis(500));
+        for _ in 0..10 {
+            if storage
+                .lock()
+                .ok()
+                .and_then(|guard| guard.clone())
+                .is_some()
+            {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
 
         nw_path_monitor_cancel(monitor);
         nw_release(monitor.cast());

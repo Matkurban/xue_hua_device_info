@@ -1,3 +1,38 @@
+## 1.1.0
+
+### Changed / 变更
+
+- **Android 统一 Rust 实现** — 移除 Kotlin `MethodChannel` 业务逻辑，改为 Rust FFI + 薄 Kotlin plugin（`loadLibrary` + `ndk-context` 初始化），与 iOS/桌面使用同一 FRB seam。  
+  **Android unified on Rust** — removed Kotlin `MethodChannel` business logic; Android now uses Rust FFI with a thin Kotlin plugin (`loadLibrary` + `ndk-context` init), sharing the same FRB seam as iOS/desktop.
+- **Android 构建** — 需 Android NDK（由 [Cargokit](https://github.com/irondash/cargokit) 集成），与 `xue_hua_audio` 等插件一致。  
+  **Android builds** — require the Android NDK (via Cargokit), consistent with `xue_hua_audio` and sibling plugins.
+- **Dart facade** — 全平台统一 `RustLib.init()`；Web 调用 `initialize()` 时抛出 `UnsupportedError`。  
+  **Dart facade** — all platforms use `RustLib.init()`; Web throws `UnsupportedError` from `initialize()`.
+- **Rust 平台 router** — 新增 `PlatformDeviceInfo` trait，按 android / ios / desktop 分发。  
+  **Rust platform router** — added `PlatformDeviceInfo` trait dispatching to android / ios / desktop adapters.
+
+### Fixed / 修复
+
+- **macOS** — 修复 `pmset` 输出 `"not charging"` 被误判为充电中的问题。  
+  **macOS** — fixed `"not charging"` in `pmset` output being misread as charging.
+- **Windows** — WMI/COM 失败时返回错误，不再静默返回空 `Ok`。  
+  **Windows** — WMI/COM failures now return errors instead of silent empty `Ok`.
+- **桌面电池** — `Full` 状态视为充电中。  
+  **Desktop battery** — `Full` state counts as charging.
+- **iOS** — 修复 `detect_network_type` 每次调用的内存泄漏；缩短网络类型检测等待。  
+  **iOS** — fixed per-call memory leak in `detect_network_type`; reduced network detection wait.
+- **Android 电量** — 过滤 `BATTERY_PROPERTY_CAPACITY` 返回的 `-1`（未知电量 → `null`）。  
+  **Android battery** — filters `-1` from `BATTERY_PROPERTY_CAPACITY` (unknown level → `null`).
+
+### Breaking / 破坏性变更
+
+- **离线 IP** — iOS/Android 无 IPv4 时 `ipAddress` 为 `null`，不再返回 `"0.0.0.0"`。  
+  **Offline IP** — `ipAddress` is `null` when no IPv4 is available on iOS/Android (no more `"0.0.0.0"`).
+- **桌面 MAC** — 无法获取时 `macAddress` 为 `null`，不再返回 `"00:00:00:00:00:00"`。  
+  **Desktop MAC** — `macAddress` is `null` when unavailable (no more `"00:00:00:00:00:00"`).
+- **Android 错误类型** — 与 Rust 平台一致，经 FRB 抛出 `String` 错误（不再使用 `PlatformException`）。  
+  **Android errors** — align with Rust platforms: FRB throws `String` errors (no more `PlatformException`).
+
 ## 1.0.1
 
 - **macOS 链接错误** — 将 `sysinfo` 限制为 `system`、`disk`、`network` 特性，避免编入未使用的 `user` 模块（OpenDirectory 符号），修复 `Undefined symbols for architecture arm64` 构建失败。  

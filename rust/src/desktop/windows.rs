@@ -27,45 +27,34 @@ struct Win32BIOS {
 }
 
 pub fn get_device_info() -> crate::Result<DeviceInfoResponse> {
-    let result = (|| -> Option<DeviceInfoResponse> {
-        let com_lib = COMLibrary::new().ok()?;
-        let wmi_connection = WMIConnection::new(com_lib).ok()?;
+    let com_lib = COMLibrary::new().map_err(|e| crate::Error::DeviceInfo(e.to_string()))?;
+    let wmi_connection =
+        WMIConnection::new(com_lib).map_err(|e| crate::Error::DeviceInfo(e.to_string()))?;
 
-        let computer_systems: Vec<Win32ComputerSystem> = wmi_connection
-            .raw_query("SELECT Manufacturer, Model, Name FROM Win32_ComputerSystem")
-            .ok()?;
-        let system_products: Vec<Win32ComputerSystemProduct> = wmi_connection
-            .raw_query("SELECT UUID, IdentifyingNumber FROM Win32_ComputerSystemProduct")
-            .ok()?;
-        let bios_data: Vec<Win32BIOS> = wmi_connection
-            .raw_query("SELECT SerialNumber FROM Win32_BIOS")
-            .ok()?;
+    let computer_systems: Vec<Win32ComputerSystem> = wmi_connection
+        .raw_query("SELECT Manufacturer, Model, Name FROM Win32_ComputerSystem")
+        .map_err(|e| crate::Error::DeviceInfo(e.to_string()))?;
+    let system_products: Vec<Win32ComputerSystemProduct> = wmi_connection
+        .raw_query("SELECT UUID, IdentifyingNumber FROM Win32_ComputerSystemProduct")
+        .map_err(|e| crate::Error::DeviceInfo(e.to_string()))?;
+    let bios_data: Vec<Win32BIOS> = wmi_connection
+        .raw_query("SELECT SerialNumber FROM Win32_BIOS")
+        .map_err(|e| crate::Error::DeviceInfo(e.to_string()))?;
 
-        let system_info = computer_systems.first();
-        let product_info = system_products.first();
-        let bios_info = bios_data.first();
+    let system_info = computer_systems.first();
+    let product_info = system_products.first();
+    let bios_info = bios_data.first();
 
-        Some(DeviceInfoResponse {
-            device_name: system_info.and_then(|s| s.name.clone()),
-            manufacturer: system_info.and_then(|s| s.manufacturer.clone()),
-            model: system_info.and_then(|s| s.model.clone()),
-            uuid: product_info.and_then(|p| p.uuid.clone()),
-            // serial tercihen BIOS, yoksa Product IdentifyingNumber
-            serial: bios_info
-                .and_then(|b| b.serial.clone())
-                .or_else(|| product_info.and_then(|p| p.identifying_number.clone())),
-            android_id: None,
-        })
-    })();
-
-    Ok(result.unwrap_or(DeviceInfoResponse {
-        device_name: None,
-        manufacturer: None,
-        model: None,
-        uuid: None,
-        serial: None,
+    Ok(DeviceInfoResponse {
+        device_name: system_info.and_then(|s| s.name.clone()),
+        manufacturer: system_info.and_then(|s| s.manufacturer.clone()),
+        model: system_info.and_then(|s| s.model.clone()),
+        uuid: product_info.and_then(|p| p.uuid.clone()),
+        serial: bios_info
+            .and_then(|b| b.serial.clone())
+            .or_else(|| product_info.and_then(|p| p.identifying_number.clone())),
         android_id: None,
-    }))
+    })
 }
 
 #[derive(Deserialize, Debug)]

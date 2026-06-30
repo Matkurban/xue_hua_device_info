@@ -15,10 +15,15 @@ void main() {
 
     final battery = await XueHuaDeviceInfo.getBatteryInfo();
     expect(battery, isA<BatteryInfo>());
+    if (battery.level != null) {
+      expect(battery.level, inInclusiveRange(0, 100));
+    }
 
     final network = await XueHuaDeviceInfo.getNetworkInfo();
     expect(network, isA<NetworkInfo>());
-    expect(network.ipAddress, isNotNull);
+    if (network.ipAddress != null) {
+      expect(network.ipAddress, isNot('0.0.0.0'));
+    }
 
     final storage = await XueHuaDeviceInfo.getStorageInfo();
     expect(storage, isA<StorageInfo>());

@@ -18,7 +18,7 @@ Based on [tauri-plugin-device-info](https://github.com/edisdev/tauri-plugin-devi
 | macOS    | Yes            | Rust + system_profiler |
 | Linux    | Yes            | Rust + `/sys` / `xrandr` |
 | iOS      | Yes            | Rust + UIKit |
-| Android  | Yes            | Kotlin MethodChannel |
+| Android  | Yes            | Rust + JNI + 薄 Kotlin init（Cargokit） |
 | Web      | **No**         | 不支持 / Not supported |
 
 ---
@@ -57,8 +57,8 @@ Future<void> main() async {
   // 1. Must initialize Flutter bindings first
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 2. 初始化原生库（Android 上为 no-op，但仍建议调用）
-  // 2. Initialize native library (no-op on Android, but still recommended)
+  // 2. 初始化原生 Rust 库（全平台统一，含 Android）
+  // 2. Initialize native Rust library (all platforms, including Android)
   await XueHuaDeviceInfo.initialize();
 
   // 3. 调用 API 获取设备信息
@@ -103,10 +103,10 @@ final display = results[4] as DisplayInfo;
 
 | 平台 / Platform | `initialize()` 行为 / Behavior |
 | --------------- | ------------------------------ |
-| Android         | 无操作（no-op），API 通过 Kotlin `MethodChannel` 调用 |
-| Windows / macOS / Linux / iOS | 加载 Rust FFI 库（`RustLib.init()`） |
+| Android / iOS / Windows / macOS / Linux | 加载 Rust FFI 库（`RustLib.init()`）；Android 另由薄 Kotlin plugin 初始化 `ndk-context` |
+| Web | 不支持 — `initialize()` 抛出 `UnsupportedError` |
 
-**必须**在调用任何 API 之前完成 `WidgetsFlutterBinding.ensureInitialized()` 和 `XueHuaDeviceInfo.initialize()`。
+**必须**在调用任何 API 之前完成 `WidgetsFlutterBinding.ensureInitialized()` 和 `XueHuaDeviceInfo.initialize()`（Web 除外）。
 
 You **must** call `WidgetsFlutterBinding.ensureInitialized()` and `XueHuaDeviceInfo.initialize()` before any API call.
 
@@ -127,19 +127,19 @@ You **must** call `WidgetsFlutterBinding.ensureInitialized()` and `XueHuaDeviceI
 
 | 平台 / Platform | 异常类型 / Exception | 触发条件 / When |
 | --------------- | -------------------- | --------------- |
-| Android         | `PlatformException`（`code: INVALID_RESPONSE`） | 原生返回非 `Map`，或存储数值类型异常 |
-| Windows / macOS / Linux / iOS | `String`（经 flutter_rust_bridge 抛出） | Rust 层采集失败 |
+| Android / Windows / macOS / Linux / iOS | `String`（经 flutter_rust_bridge 抛出） | Rust 层采集失败 |
+| Web | `UnsupportedError` | 调用 `initialize()` 或任意 API |
 
 示例 / Example:
 
 ```dart
 try {
   final device = await XueHuaDeviceInfo.getDeviceInfo();
-} on PlatformException catch (e) {
-  // Android
-  print('Platform error: ${e.code} — ${e.message}');
+} on UnsupportedError catch (e) {
+  // Web
+  print('Unsupported: $e');
 } catch (e) {
-  // Rust platforms
+  // Rust platforms (including Android)
   print('Error: $e');
 }
 ```
@@ -246,10 +246,10 @@ Network connection details.
 | --------------- | ---------------- |
 | iOS             | `"unavailable"`（隐私限制） |
 | Android         | `"restricted"`（隐私限制） |
-| Windows / macOS / Linux | 真实 MAC 地址，或 `"00:00:00:00:00:00"` |
+| Windows / macOS / Linux | 真实 MAC 地址，或 `null` |
 
-> 无网络时 `ipAddress` 可能为 `"0.0.0.0"`（Android / iOS）。  
-> When offline, `ipAddress` may be `"0.0.0.0"` (Android / iOS).
+> 无网络时 `ipAddress` 可能为 `null`（Android / iOS）。  
+> When offline, `ipAddress` may be `null` (Android / iOS).
 
 ---
 
@@ -327,7 +327,7 @@ Primary display properties.
 | `storageType` | Ssd/Hdd/… | Ssd/Hdd/… | Ssd/Hdd/… | `"internal"` | `"internal"` |
 | `storage` 范围 | 系统盘 C:\ | 系统盘 / | 系统盘 / | 用户主目录 | 内部数据分区 |
 | `display` 来源 | GetSystemMetrics | CoreGraphics | xrandr | UIScreen | DisplayMetrics |
-| 实现语言 / Impl | Rust | Rust | Rust | Rust | Kotlin |
+| 实现语言 / Impl | Rust | Rust | Rust | Rust | Rust + 薄 Kotlin init |
 
 > Linux 屏幕信息依赖 `xrandr` 命令，Wayland-only 环境可能无法获取分辨率。  
 > Linux display info requires the `xrandr` command; Wayland-only environments may not return resolution.
@@ -338,25 +338,25 @@ Primary display properties.
 
 ```mermaid
 flowchart LR
-  Dart["Dart XueHuaDeviceInfo"] --> Android["Android Kotlin MethodChannel"]
-  Dart --> Rust["Rust via flutter_rust_bridge"]
+  Dart["Dart XueHuaDeviceInfo"] --> Rust["Rust via flutter_rust_bridge"]
+  Kotlin["Android thin Kotlin init"] -.->|ndk-context| Rust
   Rust --> Desktop["desktop/ windows macos linux"]
-  Rust --> iOS["mobile/ios.rs"]
+  Rust --> Mobile["mobile/ ios android"]
 ```
 
 | 层级 / Layer | 说明 / Description |
 | ------------ | ------------------ |
 | **Dart** | `XueHuaDeviceInfo` 门面，位于 `lib/src/device_info.dart` |
-| **Android** | Kotlin `MethodChannel`，位于 `android/.../AndroidDeviceInfo.kt`，纯 Kotlin 实现，不编译 Rust |
+| **Android** | 薄 Kotlin plugin（`loadLibrary` + `initAndroid`）+ Rust JNI adapter（`rust/src/mobile/android.rs`） |
 | **Desktop / iOS** | Rust + `flutter_rust_bridge`（`rust/src/desktop/`, `rust/src/mobile/ios.rs`） |
-| **构建 / Build** | Android：仅 Kotlin；桌面 / iOS：[Cargokit](https://github.com/irondash/cargokit) 打包 Rust 库 |
+| **构建 / Build** | 全平台：[Cargokit](https://github.com/irondash/cargokit) 打包 Rust 库；Android 另需 NDK |
 
 ---
 
 ## 开发与测试 / Development
 
-> **Android 构建说明 / Android build note:** Android 端为纯 Kotlin 插件，**不需要** Rust 工具链或 NDK。  
-> The Android side is a pure Kotlin plugin and does **not** require the Rust toolchain or NDK.
+> **Android 构建说明 / Android build note:** Android 端通过 Cargokit 编译 Rust，需要配置 **Android NDK**（与 `xue_hua_audio` 等插件一致）。  
+> The Android side builds Rust via Cargokit and requires the **Android NDK** (same as `xue_hua_audio` and sibling plugins).
 
 修改 `rust/src/api/` 后重新生成 FRB 绑定：
 

@@ -43,7 +43,10 @@ pub fn get_battery_info() -> crate::Result<BatteryInfo> {
             .next()
         {
             let level = (battery.state_of_charge().value * 100.0).round();
-            let is_charging = battery.state() == battery::State::Charging;
+            let is_charging = matches!(
+                battery.state(),
+                battery::State::Charging | battery::State::Full
+            );
             let health = format!("{:?}", battery.state_of_health().value * 100.0);
 
             Ok(BatteryInfo {
@@ -57,14 +60,23 @@ pub fn get_battery_info() -> crate::Result<BatteryInfo> {
     }
 }
 
-fn get_default_mac_address() -> String {
+fn classify_macos_interface(name: &str) -> Option<String> {
+    #[cfg(target_os = "macos")]
+    {
+        return macos::classify_interface_name(name);
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = name;
+        None
+    }
+}
+
+fn get_default_mac_address() -> Option<String> {
     use default_net::get_default_interface;
     match get_default_interface() {
-        Ok(interface) => match interface.mac_addr {
-            Some(mac) => mac.to_string(),
-            None => "00:00:00:00:00:00".to_string(),
-        },
-        Err(_) => "00:00:00:00:00:00".to_string(),
+        Ok(interface) => interface.mac_addr.map(|mac| mac.to_string()),
+        Err(_) => None,
     }
 }
 
@@ -73,7 +85,7 @@ pub fn get_network_info() -> crate::Result<NetworkInfo> {
     let ip_addr = local_ip().ok();
     let ip_str = ip_addr.map(|ip| ip.to_string());
 
-    let mac_address = Some(get_default_mac_address());
+    let mac_address = get_default_mac_address();
 
     let mut network_type = Some("unknown".to_string());
 
@@ -91,12 +103,8 @@ pub fn get_network_info() -> crate::Result<NetworkInfo> {
                 network_type = Some("wifi".to_string());
             } else if name_lower.contains("eth") || name_lower.contains("ethernet") {
                 network_type = Some("ethernet".to_string());
-            } else if cfg!(target_os = "macos") && name_lower.starts_with("en") {
-                if name == "en0" {
-                    network_type = Some("wifi".to_string());
-                } else {
-                    network_type = Some("ethernet".to_string());
-                }
+            } else if let Some(kind) = classify_macos_interface(name) {
+                network_type = Some(kind);
             } else {
                 network_type = Some(name.to_string());
             }
@@ -108,6 +116,14 @@ pub fn get_network_info() -> crate::Result<NetworkInfo> {
         network_type,
         mac_address,
     })
+}
+
+fn format_storage_type(kind: sysinfo::DiskKind) -> String {
+    match kind {
+        sysinfo::DiskKind::SSD => "Ssd".to_string(),
+        sysinfo::DiskKind::HDD => "Hdd".to_string(),
+        sysinfo::DiskKind::Unknown(_) => "Unknown".to_string(),
+    }
 }
 
 pub fn get_storage_info() -> crate::Result<StorageInfo> {
@@ -124,7 +140,7 @@ pub fn get_storage_info() -> crate::Result<StorageInfo> {
         Ok(StorageInfo {
             total_space: disk.total_space(),
             free_space: disk.available_space(),
-            storage_type: Some(format!("{:?}", disk.kind())),
+            storage_type: Some(format_storage_type(disk.kind())),
         })
     } else {
         Ok(StorageInfo::default())
