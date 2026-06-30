@@ -16,9 +16,7 @@ class XueHuaDeviceInfo {
   /// Initializes the native Rust library. Call once before any other API.
   static Future<void> initialize() async {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'xue_hua_device_info is not supported on web.',
-      );
+      throw UnsupportedError('xue_hua_device_info is not supported on web.');
     }
     await RustLib.init();
   }

@@ -122,11 +122,7 @@ pub fn get_display_refresh_rate() -> Option<f64> {
 
     // If refresh rate is 0, it means the display uses a variable refresh rate
     // In that case, return None or a default value
-    if rate > 0.0 {
-        Some(rate)
-    } else {
-        None
-    }
+    if rate > 0.0 { Some(rate) } else { None }
 }
 
 #[cfg(test)]
@@ -150,14 +146,8 @@ mod tests {
 
     #[test]
     fn classify_interface_name_en0_is_wifi() {
-        assert_eq!(
-            classify_interface_name("en0"),
-            Some("wifi".to_string())
-        );
-        assert_eq!(
-            classify_interface_name("en1"),
-            Some("ethernet".to_string())
-        );
+        assert_eq!(classify_interface_name("en0"), Some("wifi".to_string()));
+        assert_eq!(classify_interface_name("en1"), Some("ethernet".to_string()));
         assert!(classify_interface_name("lo0").is_none());
     }
 
@@ -167,8 +157,7 @@ mod tests {
             "Now drawing from 'AC Power'\n -InternalBattery-0\t95%; charging; 0:30 remaining";
         let not_charging_output =
             "Now drawing from 'AC Power'\n -InternalBattery-0\t80%; not charging;";
-        let discharging_output =
-            "Now drawing from 'Battery Power'\n -InternalBattery-0\t85%; discharging; 3:45 remaining";
+        let discharging_output = "Now drawing from 'Battery Power'\n -InternalBattery-0\t85%; discharging; 3:45 remaining";
 
         assert!(parse_pmset_is_charging(charging_output));
         assert!(!parse_pmset_is_charging(not_charging_output));

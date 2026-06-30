@@ -1,11 +1,11 @@
 //! JNI helpers for Android platform adapters.
 
 use jni::{
-    objects::{JObject, JString, JValue},
-    sys::jint,
     Env, JavaVM,
     errors::Result as JniResult,
     jni_sig, jni_str,
+    objects::{JObject, JString, JValue},
+    sys::jint,
 };
 
 pub(crate) fn ensure_initialized() -> Result<(), String> {

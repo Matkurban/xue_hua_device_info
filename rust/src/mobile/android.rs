@@ -2,11 +2,11 @@
 
 use crate::models::*;
 use jni::{
-    objects::{JByteArray, JObject, JValue},
-    sys::jint,
     Env,
     errors::Result as JniResult,
     jni_sig, jni_str,
+    objects::{JByteArray, JObject, JValue},
+    sys::jint,
 };
 
 use super::jni_helpers::{
@@ -54,8 +54,11 @@ pub fn get_device_info() -> crate::Result<DeviceInfoResponse> {
         let context = application_context(env)?;
         let android_id =
             settings_secure_get_string(env, &context, "android_id")?.unwrap_or_default();
-        let device_name = settings_global_get_string(env, &context, "device_name")?
-            .or_else(|| settings_secure_get_string(env, &context, "bluetooth_name").ok().flatten());
+        let device_name = settings_global_get_string(env, &context, "device_name")?.or_else(|| {
+            settings_secure_get_string(env, &context, "bluetooth_name")
+                .ok()
+                .flatten()
+        });
         let manufacturer_obj = env
             .get_static_field(
                 jni_str!("android/os/Build"),
@@ -333,12 +336,7 @@ pub fn get_storage_info() -> crate::Result<StorageInfo> {
             .call_method(&stat, jni_str!("getTotalBytes"), jni_sig!("()J"), &[])?
             .j()? as u64;
         let free_space = env
-            .call_method(
-                &stat,
-                jni_str!("getAvailableBytes"),
-                jni_sig!("()J"),
-                &[],
-            )?
+            .call_method(&stat, jni_str!("getAvailableBytes"), jni_sig!("()J"), &[])?
             .j()? as u64;
 
         Ok(StorageInfo {
@@ -396,13 +394,8 @@ pub fn get_display_info() -> crate::Result<DisplayInfo> {
             Some(60.0)
         } else {
             Some(
-                env.call_method(
-                    &display,
-                    jni_str!("getRefreshRate"),
-                    jni_sig!("()F"),
-                    &[],
-                )?
-                .f()? as f64,
+                env.call_method(&display, jni_str!("getRefreshRate"), jni_sig!("()F"), &[])?
+                    .f()? as f64,
             )
         };
 
