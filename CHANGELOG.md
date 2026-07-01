@@ -1,3 +1,8 @@
+## 1.1.1 
+
+- fix ios build error
+
+
 ## 1.1.0
 
 ### Changed / 变更

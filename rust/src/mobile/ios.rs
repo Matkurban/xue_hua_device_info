@@ -21,7 +21,7 @@ use std::sync::{Mutex, OnceLock};
 const KEYCHAIN_SERVICE: &str = "com.xuehua.deviceinfo";
 const KEYCHAIN_ACCOUNT: &str = "unique_id";
 
-extern "C" {
+unsafe extern "C" {
     fn nw_path_monitor_set_update_handler(
         monitor: nw_path_monitor_t,
         update_handler: *const block2::Block<dyn Fn(nw_path_t)>,
