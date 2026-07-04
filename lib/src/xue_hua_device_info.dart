@@ -1,10 +1,8 @@
-import 'package:flutter/foundation.dart';
+import 'dart:developer';
 
 import 'rust/api/device_info.dart' as rust;
 import 'rust/frb_generated.dart';
 import 'rust/models.dart';
-
-export 'rust/models.dart';
 
 /// Device information plugin API.
 ///
@@ -15,10 +13,13 @@ class XueHuaDeviceInfo {
 
   /// Initializes the native Rust library. Call once before any other API.
   static Future<void> initialize() async {
-    if (kIsWeb) {
-      throw UnsupportedError('xue_hua_device_info is not supported on web.');
+    try {
+      if (!RustLib.instance.initialized) {
+        await RustLib.init();
+      }
+    } catch (e, s) {
+      log(e.toString(), error: e, stackTrace: s, name: 'XueHuaDeviceInfo.initialize');
     }
-    await RustLib.init();
   }
 
   /// Returns device identification and hardware information.
