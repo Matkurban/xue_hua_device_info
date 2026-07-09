@@ -1,6 +1,6 @@
 [package]
 name = "xue_hua_device_info"
-version = "1.1.0"
+version = "1.1.3"
 edition = "2024"
 
 [lib]
@@ -14,7 +14,8 @@ thiserror = "2.0.18"
 sysinfo = { version = "0.39.5", default-features = false, features = ["system", "disk", "network"] }
 local-ip-address = "0.6.13"
 default-net = "0.22.0"
-tokio = { version = "1.52.3", features = ["rt"] }
+tokio = { version = "1.52.3", features = ["rt", "macros"] }
+threadpool = "1.8.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = { version = "0.3.9", features = ["winbase", "winnt", "winuser", "shellscalingapi"] }
