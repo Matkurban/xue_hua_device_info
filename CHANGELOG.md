@@ -1,3 +1,8 @@
+## 1.1.5
+
+- **macOS / iOS** — 修复发布包中 Cargokit 脚本（`build_pod.sh` 等）带 CRLF 行尾导致 `/bin/sh` 报 `set: -: invalid option`、Xcode 构建失败；添加 `.gitattributes` 强制脚本与文本文件使用 LF。  
+  **macOS / iOS** — fixed published Cargokit scripts (`build_pod.sh`, etc.) shipping with CRLF line endings, which made `/bin/sh` fail with `set: -: invalid option` and broke Xcode builds; added `.gitattributes` to force LF for scripts and text files.
+
 ## 1.1.4
 
 - **Windows** — 适配 `wmi` 0.18（移除已废弃的 `COMLibrary`，改用 `WMIConnection::new()`）；修正 `GetDpiForSystem` 导入路径，修复 Windows 调试构建失败。  
