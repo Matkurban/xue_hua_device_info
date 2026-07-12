@@ -1,3 +1,8 @@
+## 1.1.4
+
+- **Windows** — 适配 `wmi` 0.18（移除已废弃的 `COMLibrary`，改用 `WMIConnection::new()`）；修正 `GetDpiForSystem` 导入路径，修复 Windows 调试构建失败。  
+  **Windows** — adapted to `wmi` 0.18 (dropped removed `COMLibrary`, use `WMIConnection::new()`); fixed `GetDpiForSystem` import path so Windows debug builds succeed again.
+
 ## 1.1.3
 
 - Android 使用 current_thread FRB handler，避免多插件并存时 pthread_key 耗尽。

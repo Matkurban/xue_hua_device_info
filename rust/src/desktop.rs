@@ -172,8 +172,7 @@ pub fn get_display_info() -> crate::Result<DisplayInfo> {
 
     #[cfg(target_os = "windows")]
     {
-        use winapi::um::shellscalingapi::GetDpiForSystem;
-        use winapi::um::winuser::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
+        use winapi::um::winuser::{GetDpiForSystem, GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
 
         let width = unsafe { GetSystemMetrics(SM_CXSCREEN) } as u32;
         let height = unsafe { GetSystemMetrics(SM_CYSCREEN) } as u32;

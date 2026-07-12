@@ -4,9 +4,14 @@
 #[cfg(target_os = "android")]
 use threadpool::ThreadPool;
 
+#[cfg(target_os = "android")]
 use flutter_rust_bridge::for_generated::{
     lazy_static, NoOpErrorListener, SimpleExecutor, SimpleHandler, SimpleThreadPool,
     FLUTTER_RUST_BRIDGE_RUNTIME_VERSION,
+};
+#[cfg(not(target_os = "android"))]
+use flutter_rust_bridge::for_generated::{
+    lazy_static, SimpleThreadPool, FLUTTER_RUST_BRIDGE_RUNTIME_VERSION,
 };
 use flutter_rust_bridge::DefaultHandler;
 

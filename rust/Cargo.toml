@@ -1,6 +1,6 @@
 [package]
 name = "xue_hua_device_info"
-version = "1.1.3"
+version = "1.1.4"
 edition = "2024"
 
 [lib]
@@ -18,7 +18,7 @@ tokio = { version = "1.52.3", features = ["rt", "macros"] }
 threadpool = "1.8.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-winapi = { version = "0.3.9", features = ["winbase", "winnt", "winuser", "shellscalingapi"] }
+winapi = { version = "0.3.9", features = ["winbase", "winnt", "winuser"] }
 wmi = "0.18.4"
 battery = "0.7.8"
 

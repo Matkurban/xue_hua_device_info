@@ -1,6 +1,6 @@
 use crate::models::DeviceInfoResponse;
 use serde::Deserialize;
-use wmi::{COMLibrary, WMIConnection};
+use wmi::WMIConnection;
 
 #[derive(Deserialize, Debug)]
 struct Win32ComputerSystem {
@@ -27,9 +27,8 @@ struct Win32BIOS {
 }
 
 pub fn get_device_info() -> crate::Result<DeviceInfoResponse> {
-    let com_lib = COMLibrary::new().map_err(|e| crate::Error::DeviceInfo(e.to_string()))?;
     let wmi_connection =
-        WMIConnection::new(com_lib).map_err(|e| crate::Error::DeviceInfo(e.to_string()))?;
+        WMIConnection::new().map_err(|e| crate::Error::DeviceInfo(e.to_string()))?;
 
     let computer_systems: Vec<Win32ComputerSystem> = wmi_connection
         .raw_query("SELECT Manufacturer, Model, Name FROM Win32_ComputerSystem")
@@ -64,8 +63,7 @@ struct Win32VideoController {
 }
 
 pub fn get_display_refresh_rate() -> Option<f64> {
-    let com_lib = COMLibrary::new().ok()?;
-    let wmi_connection = WMIConnection::new(com_lib).ok()?;
+    let wmi_connection = WMIConnection::new().ok()?;
 
     let results: Vec<Win32VideoController> = wmi_connection
         .raw_query("SELECT CurrentRefreshRate FROM Win32_VideoController")
