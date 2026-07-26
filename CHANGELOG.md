@@ -1,3 +1,8 @@
+## 1.1.6
+
+- **Android** — 修复在 Android 上调用设备信息接口时无响应（卡主）的问题：移除在单线程 Tokio 运行时中未被驱动的 `CurrentThreadAsyncRuntime`，改用标准 `DefaultHandler`，并将 API 重构为同步 `pub fn` 由线程池异步调度。  
+  **Android** — fixed get device info hanging/freezing on Android: removed the un-driven `CurrentThreadAsyncRuntime` single-threaded Tokio runtime in favor of standard `DefaultHandler`, and refactored API functions to synchronous `pub fn` executed on the thread pool.
+
 ## 1.1.5
 
 - **macOS / iOS** — 修复发布包中 Cargokit 脚本（`build_pod.sh` 等）带 CRLF 行尾导致 `/bin/sh` 报 `set: -: invalid option`、Xcode 构建失败；添加 `.gitattributes` 强制脚本与文本文件使用 LF。  

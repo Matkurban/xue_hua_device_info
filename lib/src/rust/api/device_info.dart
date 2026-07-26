@@ -7,8 +7,6 @@ import '../frb_generated.dart';
 import '../models.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `run_blocking`
-
 Future<DeviceInfoResponse> getDeviceInfo() =>
     RustLib.instance.api.crateApiDeviceInfoGetDeviceInfo();
 
