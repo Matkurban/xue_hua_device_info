@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.hardware.display.DisplayManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.BatteryManager
@@ -12,6 +13,7 @@ import android.os.Environment
 import android.os.StatFs
 import android.provider.Settings
 import android.util.DisplayMetrics
+import android.view.Display
 import android.view.WindowManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -150,13 +152,17 @@ class XueHuaDeviceInfoPlugin :
         val metrics = DisplayMetrics()
         @Suppress("DEPRECATION")
         wm.defaultDisplay.getRealMetrics(metrics)
-        val refreshRate =
+        val display =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                context.display?.refreshRate?.toDouble()
+                val dm = context.getSystemService(Context.DISPLAY_SERVICE) as? DisplayManager
+                dm?.getDisplay(Display.DEFAULT_DISPLAY)
             } else {
                 @Suppress("DEPRECATION")
-                wm.defaultDisplay.refreshRate.toDouble()
+                wm.defaultDisplay
             }
+        val refreshRate =
+            display?.refreshRate?.toDouble()
+                ?: @Suppress("DEPRECATION") wm.defaultDisplay.refreshRate.toDouble()
         return mapOf(
             "width" to metrics.widthPixels,
             "height" to metrics.heightPixels,
