@@ -52,12 +52,12 @@ class DeviceInfo {
   }
 
   Map<String, Object?> toMap() => {
-        'deviceId': deviceId,
-        'manufacturer': manufacturer,
-        'model': model,
-        'serial': serial,
-        'name': name,
-      };
+    'deviceId': deviceId,
+    'manufacturer': manufacturer,
+    'model': model,
+    'serial': serial,
+    'name': name,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -108,10 +108,10 @@ class BatteryInfo {
   }
 
   Map<String, Object?> toMap() => {
-        'level': level,
-        'isCharging': isCharging,
-        'health': health,
-      };
+    'level': level,
+    'isCharging': isCharging,
+    'health': health,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -160,10 +160,10 @@ class NetworkInfo {
   }
 
   Map<String, Object?> toMap() => {
-        'ipAddress': ipAddress,
-        'networkType': networkType,
-        'macAddress': macAddress,
-      };
+    'ipAddress': ipAddress,
+    'networkType': networkType,
+    'macAddress': macAddress,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -216,10 +216,10 @@ class StorageInfo {
   }
 
   Map<String, Object?> toMap() => {
-        'totalBytes': totalBytes,
-        'freeBytes': freeBytes,
-        'storageType': storageType,
-      };
+    'totalBytes': totalBytes,
+    'freeBytes': freeBytes,
+    'storageType': storageType,
+  };
 
   @override
   bool operator ==(Object other) =>
@@ -277,11 +277,11 @@ class DisplayInfo {
   }
 
   Map<String, Object?> toMap() => {
-        'width': width,
-        'height': height,
-        'scaleFactor': scaleFactor,
-        'refreshRate': refreshRate,
-      };
+    'width': width,
+    'height': height,
+    'scaleFactor': scaleFactor,
+    'refreshRate': refreshRate,
+  };
 
   @override
   bool operator ==(Object other) =>
