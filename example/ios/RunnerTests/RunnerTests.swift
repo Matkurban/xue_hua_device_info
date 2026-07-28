@@ -2,11 +2,19 @@ import Flutter
 import UIKit
 import XCTest
 
+@testable import xue_hua_device_info
+
 class RunnerTests: XCTestCase {
-
-  func testExample() {
-    // If you add code to the Runner application, consider adding tests here.
-    // See https://developer.apple.com/documentation/xctest for more information about using XCTest.
+  func testGetDeviceInfo() {
+    let plugin = XueHuaDeviceInfoPlugin()
+    let call = FlutterMethodCall(methodName: "getDeviceInfo", arguments: nil)
+    let resultExpectation = expectation(description: "result block must be called.")
+    plugin.handle(call) { result in
+      let map = result as? [String: Any?]
+      XCTAssertNotNil(map)
+      XCTAssertEqual(map?["manufacturer"] as? String, "Apple")
+      resultExpectation.fulfill()
+    }
+    waitForExpectations(timeout: 1)
   }
-
 }
