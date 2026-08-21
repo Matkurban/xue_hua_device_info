@@ -1,3 +1,9 @@
+# Change log
+
+## 2.0.1
+
+- The Gradle tool version has been downgraded to 8.13.2.
+
 ## 2.0.0
 
 * **Breaking:** Replace Rust FFI (flutter_rust_bridge / Cargokit) with MethodChannel native plugins.
