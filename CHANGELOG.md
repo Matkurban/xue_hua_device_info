@@ -1,5 +1,10 @@
 # Change log
 
+## 2.0.2
+
+- Bump Windows/Linux native unit-test googletest to v1.15.2 so CMake 4.x can configure the example.
+- Fix Windows native compile: include Winsock2 before `windows.h` / Flutter headers so MSVC `/WX` no longer fails on winsock redefinitions.
+
 ## 2.0.1
 
 - The Gradle tool version has been downgraded to 8.13.2.

@@ -1,10 +1,14 @@
-#include "xue_hua_device_info_plugin.h"
-
-// Winsock2 must be included before windows.h.
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+// Winsock2 must be included before windows.h, including Flutter headers that
+// pull windows.h in.
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <iphlpapi.h>
+
+#include "xue_hua_device_info_plugin.h"
 
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
