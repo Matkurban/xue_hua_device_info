@@ -10,14 +10,14 @@ Built with **MethodChannel** native implementations (Kotlin / Swift / C++). Web 
 
 ## Supported Platforms
 
-| Platform | Support | Notes |
-| -------- | ------- | ----- |
-| Android  | Yes | Kotlin + MethodChannel |
-| iOS      | Yes | Swift + SPM/CocoaPods |
-| macOS    | Yes | Swift + SPM/CocoaPods |
-| Windows  | Yes | C++ + MethodChannel |
-| Linux    | Yes | C++ + MethodChannel |
-| Web      | No | Not supported |
+| Platform | Support | Notes                  |
+|----------|---------|------------------------|
+| Android  | Yes     | Kotlin + MethodChannel |
+| iOS      | Yes     | Swift + SPM/CocoaPods  |
+| macOS    | Yes     | Swift + SPM/CocoaPods  |
+| Windows  | Yes     | C++ + MethodChannel    |
+| Linux    | Yes     | C++ + MethodChannel    |
+| Web      | No      | Not supported          |
 
 **Requirements:** Dart `^3.12.0`, Flutter `>=3.44.0`
 
@@ -27,7 +27,7 @@ Built with **MethodChannel** native implementations (Kotlin / Swift / C++). Web 
 
 ```yaml
 dependencies:
-  xue_hua_device_info: ^2.0.0
+  xue_hua_device_info: ^lasted
 ```
 
 ---
@@ -61,9 +61,9 @@ No `initialize()` call is required.
 
 ## API
 
-| Method | Returns |
-| ------ | ------- |
-| `getDeviceInfo()` | `DeviceInfo` |
+| Method             | Returns       |
+|--------------------|---------------|
+| `getDeviceInfo()`  | `DeviceInfo`  |
 | `getBatteryInfo()` | `BatteryInfo` |
 | `getNetworkInfo()` | `NetworkInfo` |
 | `getStorageInfo()` | `StorageInfo` |
@@ -71,45 +71,45 @@ No `initialize()` call is required.
 
 ### DeviceInfo
 
-| Field | Type | Notes |
-| ----- | ---- | ----- |
-| `deviceId` | `String?` | Android ID / IDFV / machine UUID |
-| `manufacturer` | `String?` | |
-| `model` | `String?` | |
-| `serial` | `String?` | Desktop when available; **always null on iOS/Android** (no public hardware serial on iOS) |
-| `name` | `String?` | Device or host name. On **iOS 16+**, without the `com.apple.developer.device-information.user-assigned-device-name` entitlement this is typically a generic label (e.g. `"iPhone"`), not the user-assigned device name. |
+| Field          | Type      | Notes                                                                                                                                                                                                                   |
+|----------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `deviceId`     | `String?` | Android ID / IDFV / machine UUID                                                                                                                                                                                        |
+| `manufacturer` | `String?` |                                                                                                                                                                                                                         |
+| `model`        | `String?` |                                                                                                                                                                                                                         |
+| `serial`       | `String?` | Desktop when available; **always null on iOS/Android** (no public hardware serial on iOS)                                                                                                                               |
+| `name`         | `String?` | Device or host name. On **iOS 16+**, without the `com.apple.developer.device-information.user-assigned-device-name` entitlement this is typically a generic label (e.g. `"iPhone"`), not the user-assigned device name. |
 
 ### BatteryInfo
 
-| Field | Type |
-| ----- | ---- |
-| `level` | `double?` (0–100) |
-| `isCharging` | `bool?` |
-| `health` | `String?` |
+| Field        | Type              |
+|--------------|-------------------|
+| `level`      | `double?` (0–100) |
+| `isCharging` | `bool?`           |
+| `health`     | `String?`         |
 
 ### NetworkInfo
 
-| Field | Type | Notes |
-| ----- | ---- | ----- |
-| `ipAddress` | `String?` | |
+| Field         | Type      | Notes                                                 |
+|---------------|-----------|-------------------------------------------------------|
+| `ipAddress`   | `String?` |                                                       |
 | `networkType` | `String?` | `wifi` / `ethernet` / `cellular` / `none` / `unknown` |
-| `macAddress` | `String?` | Desktop when available; `null` on mobile |
+| `macAddress`  | `String?` | Desktop when available; `null` on mobile              |
 
 ### StorageInfo
 
-| Field | Type |
-| ----- | ---- |
-| `totalBytes` | `int` |
-| `freeBytes` | `int` |
+| Field         | Type      |
+|---------------|-----------|
+| `totalBytes`  | `int`     |
+| `freeBytes`   | `int`     |
 | `storageType` | `String?` |
 
 ### DisplayInfo
 
-| Field | Type |
-| ----- | ---- |
-| `width` | `int` |
-| `height` | `int` |
-| `scaleFactor` | `double` |
+| Field         | Type      |
+|---------------|-----------|
+| `width`       | `int`     |
+| `height`      | `int`     |
+| `scaleFactor` | `double`  |
 | `refreshRate` | `double?` |
 
 ---

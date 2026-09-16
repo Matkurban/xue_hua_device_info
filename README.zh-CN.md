@@ -10,14 +10,14 @@ Flutter 设备信息插件：标识、电池、网络、存储、屏幕。
 
 ## 支持平台
 
-| 平台 | 支持 | 说明 |
-| ---- | ---- | ---- |
-| Android | 是 | Kotlin + MethodChannel |
-| iOS | 是 | Swift + SPM/CocoaPods |
-| macOS | 是 | Swift + SPM/CocoaPods |
-| Windows | 是 | C++ + MethodChannel |
-| Linux | 是 | C++ + MethodChannel |
-| Web | 否 | 不支持 |
+| 平台      | 支持 | 说明                     |
+|---------|----|------------------------|
+| Android | 是  | Kotlin + MethodChannel |
+| iOS     | 是  | Swift + SPM/CocoaPods  |
+| macOS   | 是  | Swift + SPM/CocoaPods  |
+| Windows | 是  | C++ + MethodChannel    |
+| Linux   | 是  | C++ + MethodChannel    |
+| Web     | 否  | 不支持                    |
 
 **要求：** Dart `^3.12.0`，Flutter `>=3.44.0`
 
