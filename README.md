@@ -11,7 +11,7 @@ Built with **MethodChannel** native implementations (Kotlin / Swift / C++). Web 
 ## Supported Platforms
 
 | Platform | Support | Notes                  |
-|----------|---------|------------------------|
+| -------- | ------- | ---------------------- |
 | Android  | Yes     | Kotlin + MethodChannel |
 | iOS      | Yes     | Swift + SPM/CocoaPods  |
 | macOS    | Yes     | Swift + SPM/CocoaPods  |
@@ -27,8 +27,22 @@ Built with **MethodChannel** native implementations (Kotlin / Swift / C++). Web 
 
 ```yaml
 dependencies:
-  xue_hua_device_info: ^lasted
+  xue_hua_device_info: ^2.0.3
 ```
+
+---
+
+## Package skills
+
+This package ships an AI agent skill that documents every public class and method.
+
+After adding the dependency, install it in your app project:
+
+```bash
+dart run skills@ get
+```
+
+That copies `xue_hua_device_info-usage` into your agent skills directory (for example `.agents/skills/`). The skill covers `XueHuaDeviceInfo` usage, model fields, `PlatformException` handling, and per-platform nullability.
 
 ---
 
@@ -62,7 +76,7 @@ No `initialize()` call is required.
 ## API
 
 | Method             | Returns       |
-|--------------------|---------------|
+| ------------------ | ------------- |
 | `getDeviceInfo()`  | `DeviceInfo`  |
 | `getBatteryInfo()` | `BatteryInfo` |
 | `getNetworkInfo()` | `NetworkInfo` |
@@ -72,7 +86,7 @@ No `initialize()` call is required.
 ### DeviceInfo
 
 | Field          | Type      | Notes                                                                                                                                                                                                                   |
-|----------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| -------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `deviceId`     | `String?` | Android ID / IDFV / machine UUID                                                                                                                                                                                        |
 | `manufacturer` | `String?` |                                                                                                                                                                                                                         |
 | `model`        | `String?` |                                                                                                                                                                                                                         |
@@ -82,7 +96,7 @@ No `initialize()` call is required.
 ### BatteryInfo
 
 | Field        | Type              |
-|--------------|-------------------|
+| ------------ | ----------------- |
 | `level`      | `double?` (0–100) |
 | `isCharging` | `bool?`           |
 | `health`     | `String?`         |
@@ -90,7 +104,7 @@ No `initialize()` call is required.
 ### NetworkInfo
 
 | Field         | Type      | Notes                                                 |
-|---------------|-----------|-------------------------------------------------------|
+| ------------- | --------- | ----------------------------------------------------- |
 | `ipAddress`   | `String?` |                                                       |
 | `networkType` | `String?` | `wifi` / `ethernet` / `cellular` / `none` / `unknown` |
 | `macAddress`  | `String?` | Desktop when available; `null` on mobile              |
@@ -98,7 +112,7 @@ No `initialize()` call is required.
 ### StorageInfo
 
 | Field         | Type      |
-|---------------|-----------|
+| ------------- | --------- |
 | `totalBytes`  | `int`     |
 | `freeBytes`   | `int`     |
 | `storageType` | `String?` |
@@ -106,7 +120,7 @@ No `initialize()` call is required.
 ### DisplayInfo
 
 | Field         | Type      |
-|---------------|-----------|
+| ------------- | --------- |
 | `width`       | `int`     |
 | `height`      | `int`     |
 | `scaleFactor` | `double`  |

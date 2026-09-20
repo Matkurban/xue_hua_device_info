@@ -10,14 +10,14 @@ Flutter 设备信息插件：标识、电池、网络、存储、屏幕。
 
 ## 支持平台
 
-| 平台      | 支持 | 说明                     |
-|---------|----|------------------------|
-| Android | 是  | Kotlin + MethodChannel |
-| iOS     | 是  | Swift + SPM/CocoaPods  |
-| macOS   | 是  | Swift + SPM/CocoaPods  |
-| Windows | 是  | C++ + MethodChannel    |
-| Linux   | 是  | C++ + MethodChannel    |
-| Web     | 否  | 不支持                    |
+| 平台    | 支持 | 说明                   |
+| ------- | ---- | ---------------------- |
+| Android | 是   | Kotlin + MethodChannel |
+| iOS     | 是   | Swift + SPM/CocoaPods  |
+| macOS   | 是   | Swift + SPM/CocoaPods  |
+| Windows | 是   | C++ + MethodChannel    |
+| Linux   | 是   | C++ + MethodChannel    |
+| Web     | 否   | 不支持                 |
 
 **要求：** Dart `^3.12.0`，Flutter `>=3.44.0`
 
@@ -27,8 +27,22 @@ Flutter 设备信息插件：标识、电池、网络、存储、屏幕。
 
 ```yaml
 dependencies:
-  xue_hua_device_info: ^2.0.0
+  xue_hua_device_info: ^2.0.3
 ```
+
+---
+
+## Package skills
+
+本包在 `skills/` 目录随包发布面向 AI 编码助手的 skill，逐项说明全部公开类与方法。
+
+在依赖本包的应用项目中执行：
+
+```bash
+dart run skills@ get
+```
+
+安装名为 `xue_hua_device_info-usage` 的 skill（通常位于 `.agents/skills/`）。内容包括 `XueHuaDeviceInfo` 用法、模型字段、`PlatformException` 处理，以及各平台字段是否可空。
 
 ---
 
