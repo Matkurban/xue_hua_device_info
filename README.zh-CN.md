@@ -27,7 +27,7 @@ Flutter 设备信息插件：标识、电池、网络、存储、屏幕。
 
 ```yaml
 dependencies:
-  xue_hua_device_info: ^2.0.3
+  xue_hua_device_info: ^2.0.4
 ```
 
 ---

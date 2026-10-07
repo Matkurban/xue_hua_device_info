@@ -27,7 +27,7 @@ Built with **MethodChannel** native implementations (Kotlin / Swift / C++). Web 
 
 ```yaml
 dependencies:
-  xue_hua_device_info: ^2.0.3
+  xue_hua_device_info: ^2.0.4
 ```
 
 ---

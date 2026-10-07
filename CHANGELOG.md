@@ -1,5 +1,9 @@
 # Change log
 
+## 2.0.4
+
+- Upgrade the Android toolchain to Android Gradle Plugin 9.1.0, Gradle 9.3.1, and Kotlin 2.4.0.
+
 ## 2.0.3
 
 - Ship a package skill (`xue_hua_device_info-usage`) under `skills/` so consumers can install author-maintained agent instructions with `dart run skills@ get`.
