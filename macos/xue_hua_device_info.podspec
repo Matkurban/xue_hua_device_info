@@ -11,7 +11,7 @@ Flutter plugin for device info: battery, network, storage, display, and system d
                        DESC
   s.homepage         = 'https://github.com/Matkurban/xue_hua_device_info'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'XueHua' => 'email@example.com' }
+  s.author           = { 'XueHua' => '3496354336@qq.com' }
   s.source           = { :path => '.' }
   s.source_files = 'xue_hua_device_info/Sources/xue_hua_device_info/**/*'
   s.dependency 'FlutterMacOS'
