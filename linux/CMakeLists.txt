@@ -14,6 +14,7 @@ set(PLUGIN_NAME "xue_hua_device_info_plugin")
 # Any new source files that you add to the plugin should be added here.
 list(APPEND PLUGIN_SOURCES
   "xue_hua_device_info_plugin.cc"
+  "device_info_helpers.cc"
 )
 
 # Define the plugin library target. Its name must not be changed (see comment
@@ -33,6 +34,7 @@ apply_standard_settings(${PLUGIN_NAME})
 set_target_properties(${PLUGIN_NAME} PROPERTIES
   CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(${PLUGIN_NAME} PRIVATE FLUTTER_PLUGIN_IMPL)
+target_compile_options(${PLUGIN_NAME} PRIVATE -Wall -Wextra)
 
 # Source include directories and library dependencies. Add any plugin-specific
 # dependencies here.
@@ -78,9 +80,11 @@ FetchContent_MakeAvailable(googletest)
 # sources directly into the test binary rather than using the shared library.
 add_executable(${TEST_RUNNER}
   test/xue_hua_device_info_plugin_test.cc
+  test/device_info_helpers_test.cc
   ${PLUGIN_SOURCES}
 )
 apply_standard_settings(${TEST_RUNNER})
+target_compile_options(${TEST_RUNNER} PRIVATE -Wall -Wextra)
 target_include_directories(${TEST_RUNNER} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(${TEST_RUNNER} PRIVATE flutter)
 target_link_libraries(${TEST_RUNNER} PRIVATE PkgConfig::GTK)

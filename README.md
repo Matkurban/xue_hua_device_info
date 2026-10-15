@@ -27,7 +27,7 @@ Built with **MethodChannel** native implementations (Kotlin / Swift / C++). Web 
 
 ```yaml
 dependencies:
-  xue_hua_device_info: ^2.0.5
+  xue_hua_device_info: ^2.0.6
 ```
 
 ---
@@ -125,6 +125,14 @@ No `initialize()` call is required.
 | `height`      | `int`     |
 | `scaleFactor` | `double`  |
 | `refreshRate` | `double?` |
+
+### Linux notes
+
+- **`deviceId`**: DMI `product_uuid` when readable, otherwise `/etc/machine-id`, then `/var/lib/dbus/machine-id`. `product_uuid` is usually root-only (`0400`), so an **unprivileged process typically gets the machine-id while a root process gets the DMI UUID** — the id can differ by privilege level. Placeholder values (all-zero/all-F UUIDs, `uninitialized`) are skipped. Treat it as stable per (machine, privilege), not as a hardware-bound identifier; per machine-id(5) the machine-id is confidential, so hash it with an app-specific key if you transmit it. `serial` is likewise root-only and `null` otherwise.
+- **Battery**: scans `/sys/class/power_supply/*` for `type=Battery` (peripheral batteries with `scope=Device` are skipped). `health` comes from the kernel `health` file when present (e.g. `Good`), otherwise `null`. Desktops without a battery return `null` fields.
+- **Network**: one interface is chosen (up, non-loopback, has IPv4; the default-route interface from `/proc/net/route` is preferred, physical interfaces are preferred over docker/veth/bridge/tun) and `ipAddress`, `macAddress` and `networkType` all come from that same interface. Wi-Fi is detected via `/sys/class/net/<if>/wireless`.
+- **Display**: uses GDK only (primary monitor, scale factor, refresh rate); no external tools such as `xrandr` are required or spawned. Without a display (headless) `width`/`height` are `0`.
+- Build requires the GTK 3 development package (as for any Flutter Linux app).
 
 ---
 

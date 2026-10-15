@@ -24,10 +24,7 @@ class MockXueHuaDeviceInfoPlatform
 
   @override
   Future<NetworkInfo> getNetworkInfo() async {
-    return const NetworkInfo(
-      ipAddress: '192.168.1.2',
-      networkType: 'wifi',
-    );
+    return const NetworkInfo(ipAddress: '192.168.1.2', networkType: 'wifi');
   }
 
   @override

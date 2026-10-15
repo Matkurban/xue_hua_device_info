@@ -12,39 +12,39 @@ void main() {
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-      switch (methodCall.method) {
-        case 'getDeviceInfo':
-          return {
-            'deviceId': 'abc',
-            'manufacturer': 'Acme',
-            'model': 'X1',
-            'serial': null,
-            'name': 'phone',
-          };
-        case 'getBatteryInfo':
-          return {'level': 50, 'isCharging': true, 'health': 'good'};
-        case 'getNetworkInfo':
-          return {
-            'ipAddress': '10.0.0.2',
-            'networkType': 'wifi',
-            'macAddress': null,
-          };
-        case 'getStorageInfo':
-          return {
-            'totalBytes': 2048,
-            'freeBytes': 1024,
-            'storageType': 'internal',
-          };
-        case 'getDisplayInfo':
-          return {
-            'width': 1440,
-            'height': 3200,
-            'scaleFactor': 3.0,
-            'refreshRate': 120.0,
-          };
-      }
-      return null;
-    });
+          switch (methodCall.method) {
+            case 'getDeviceInfo':
+              return {
+                'deviceId': 'abc',
+                'manufacturer': 'Acme',
+                'model': 'X1',
+                'serial': null,
+                'name': 'phone',
+              };
+            case 'getBatteryInfo':
+              return {'level': 50, 'isCharging': true, 'health': 'good'};
+            case 'getNetworkInfo':
+              return {
+                'ipAddress': '10.0.0.2',
+                'networkType': 'wifi',
+                'macAddress': null,
+              };
+            case 'getStorageInfo':
+              return {
+                'totalBytes': 2048,
+                'freeBytes': 1024,
+                'storageType': 'internal',
+              };
+            case 'getDisplayInfo':
+              return {
+                'width': 1440,
+                'height': 3200,
+                'scaleFactor': 3.0,
+                'refreshRate': 120.0,
+              };
+          }
+          return null;
+        });
   });
 
   tearDown(() {
@@ -67,28 +67,35 @@ void main() {
     expect(display.refreshRate, 120);
   });
 
-  test('method channel throws PlatformException on bad storage payload', () async {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-      if (methodCall.method == 'getStorageInfo') {
-        return {'totalBytes': 'oops', 'freeBytes': 1};
-      }
-      return null;
-    });
+  test(
+    'method channel throws PlatformException on bad storage payload',
+    () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+            if (methodCall.method == 'getStorageInfo') {
+              return {'totalBytes': 'oops', 'freeBytes': 1};
+            }
+            return null;
+          });
 
-    expect(
-      () => platform.getStorageInfo(),
-      throwsA(
-        isA<PlatformException>().having((e) => e.code, 'code', 'bad_response'),
-      ),
-    );
-  });
+      expect(
+        () => platform.getStorageInfo(),
+        throwsA(
+          isA<PlatformException>().having(
+            (e) => e.code,
+            'code',
+            'bad_response',
+          ),
+        ),
+      );
+    },
+  );
 
   test('method channel throws PlatformException on non-map response', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-      return 'not-a-map';
-    });
+          return 'not-a-map';
+        });
 
     expect(
       () => platform.getDeviceInfo(),
@@ -98,23 +105,26 @@ void main() {
     );
   });
 
-  test('method channel throws PlatformException on wrong string type', () async {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
-      return {
-        'deviceId': 42,
-        'manufacturer': 'Acme',
-        'model': 'X1',
-      };
-    });
+  test(
+    'method channel throws PlatformException on wrong string type',
+    () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+            return {'deviceId': 42, 'manufacturer': 'Acme', 'model': 'X1'};
+          });
 
-    expect(
-      () => platform.getDeviceInfo(),
-      throwsA(
-        isA<PlatformException>().having((e) => e.code, 'code', 'bad_response'),
-      ),
-    );
-  });
+      expect(
+        () => platform.getDeviceInfo(),
+        throwsA(
+          isA<PlatformException>().having(
+            (e) => e.code,
+            'code',
+            'bad_response',
+          ),
+        ),
+      );
+    },
+  );
 
   test('models support equality', () {
     expect(

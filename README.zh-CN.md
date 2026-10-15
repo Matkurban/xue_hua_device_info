@@ -27,7 +27,7 @@ Flutter 设备信息插件：标识、电池、网络、存储、屏幕。
 
 ```yaml
 dependencies:
-  xue_hua_device_info: ^2.0.5
+  xue_hua_device_info: ^2.0.6
 ```
 
 ---
@@ -84,6 +84,13 @@ Future<void> main() async {
 iOS **无法**通过公开 API 获取硬件序列号，因此 `serial` 为 `null`。
 
 iOS 16+ 若未申请 `com.apple.developer.device-information.user-assigned-device-name` entitlement，`name` 通常是通用名（如 `"iPhone"`），不是用户设置的设备名。
+
+## Linux 说明
+
+- **`deviceId`**：优先读取 DMI `product_uuid`，不可读时依次回退到 `/etc/machine-id`、`/var/lib/dbus/machine-id`。`product_uuid` 通常仅 root 可读，因此**普通用户进程一般得到 machine-id，root 进程得到 DMI UUID**，两者可能不同；全 0/全 F 的占位 UUID 及 `uninitialized` 会被跳过。按 machine-id(5)，machine-id 属保密信息，如需上传请用应用专属密钥做哈希。`serial` 同样仅 root 可读，否则为 `null`。
+- **电池**：遍历 `/sys/class/power_supply/*`，选择 `type=Battery`（跳过 `scope=Device` 的外设电池）；`health` 来自内核 `health` 文件，不存在则为 `null`。无电池的台式机各字段为 `null`。
+- **网络**：只选定一个网卡（已启用、非回环、有 IPv4；优先默认路由网卡，物理网卡优先于 docker/veth/网桥/tun），IP、MAC、网络类型都取自同一网卡。通过 `/sys/class/net/<if>/wireless` 识别 Wi-Fi。
+- **显示**：仅使用 GDK（主显示器、缩放、刷新率），不再调用 `xrandr`。无显示环境（headless）下 `width`/`height` 为 `0`。
 
 ---
 

@@ -1,5 +1,13 @@
 # Change log
 
+## 2.0.6
+
+- Linux: read display info via GDK only (primary monitor, scale factor, `gdk_monitor_get_refresh_rate`); removed the blocking `popen("xrandr")` call and safely handles a missing display or monitor.
+- Linux: network info now picks a single interface (up, non-loopback, IPv4; default route from `/proc/net/route` preferred, virtual docker/veth/bridge/tun interfaces deprioritized) and derives IP, MAC and type from it; Wi-Fi detected via `/sys/class/net/<if>/wireless`; interfaces whose names merely start with `lo` are no longer skipped.
+- Linux: `deviceId` order is now documented and consistent: DMI `product_uuid` → `/etc/machine-id` → `/var/lib/dbus/machine-id`. Non-root processes usually fall back to the machine-id (see README).
+- Linux: battery scans `/sys/class/power_supply/*` (`type=Battery`, skips `scope=Device`) and fills `health` from the `health` file when present.
+- Linux: pure helpers moved to `device_info_helpers.{h,cc}` with real gtest unit tests (fake sysfs roots).
+
 ## 2.0.5
 
 - Bump Windows/Linux native unit-test googletest to v1.18.0.

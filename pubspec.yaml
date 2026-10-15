@@ -1,6 +1,6 @@
 name: xue_hua_device_info
 description: "Flutter plugin for device info: battery, network, storage, display, and system details."
-version: 2.0.5
+version: 2.0.6
 homepage: https://github.com/Matkurban
 repository: https://github.com/Matkurban/xue_hua_device_info
 

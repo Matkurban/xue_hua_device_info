@@ -7,6 +7,7 @@
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <unistd.h>
 
 #include <cstdio>
@@ -15,6 +16,17 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
+
+#include "device_info_helpers.h"
+
+using xue_hua_device_info::BatteryReading;
+using xue_hua_device_info::NetworkSelection;
+using xue_hua_device_info::ParseDefaultRouteInterface;
+using xue_hua_device_info::ReadBattery;
+using xue_hua_device_info::ReadTrimmedFile;
+using xue_hua_device_info::ResolveDeviceId;
+using xue_hua_device_info::SelectNetwork;
 
 #define XUE_HUA_DEVICE_INFO_PLUGIN(obj) \
   (G_TYPE_CHECK_INSTANCE_CAST((obj), xue_hua_device_info_plugin_get_type(), \
@@ -26,24 +38,6 @@ struct _XueHuaDeviceInfoPlugin {
 
 G_DEFINE_TYPE(XueHuaDeviceInfoPlugin, xue_hua_device_info_plugin, g_object_get_type())
 
-static std::string ReadTrimmedFile(const char* path) {
-  std::ifstream input(path);
-  if (!input.is_open()) {
-    return {};
-  }
-  std::stringstream buffer;
-  buffer << input.rdbuf();
-  std::string value = buffer.str();
-  while (!value.empty() &&
-         (value.back() == '\n' || value.back() == '\r' || value.back() == ' ')) {
-    value.pop_back();
-  }
-  if (value == "None" || value == "To be filled by O.E.M.") {
-    return {};
-  }
-  return value;
-}
-
 static FlValue* NullableString(const std::string& value) {
   if (value.empty()) {
     return fl_value_new_null();
@@ -51,98 +45,42 @@ static FlValue* NullableString(const std::string& value) {
   return fl_value_new_string(value.c_str());
 }
 
-static std::string LocalIpv4() {
+static std::vector<xue_hua_device_info::NetworkCandidate> EnumerateIpv4() {
+  std::vector<xue_hua_device_info::NetworkCandidate> result;
   struct ifaddrs* ifaddr = nullptr;
   if (getifaddrs(&ifaddr) != 0) {
-    return {};
+    return result;
   }
-  std::string result;
-  for (struct ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
-    if (ifa->ifa_addr == nullptr || ifa->ifa_addr->sa_family != AF_INET) {
-      continue;
-    }
-    if (strncmp(ifa->ifa_name, "lo", 2) == 0) {
-      continue;
-    }
-    char host[INET_ADDRSTRLEN] = {};
-    auto* addr = reinterpret_cast<sockaddr_in*>(ifa->ifa_addr);
-    inet_ntop(AF_INET, &addr->sin_addr, host, INET_ADDRSTRLEN);
-    std::string candidate(host);
-    if (!candidate.empty() && candidate.rfind("127.", 0) != 0) {
-      result = candidate;
-      if (strncmp(ifa->ifa_name, "eth", 3) == 0 ||
-          strncmp(ifa->ifa_name, "en", 2) == 0 ||
-          strncmp(ifa->ifa_name, "wl", 2) == 0) {
-        break;
-      }
-    }
-  }
-  freeifaddrs(ifaddr);
-  return result;
-}
-
-static std::string PrimaryMac() {
-  struct ifaddrs* ifaddr = nullptr;
-  if (getifaddrs(&ifaddr) != 0) {
-    return {};
-  }
-  std::string result;
-  for (struct ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
-    if (ifa->ifa_name == nullptr) {
-      continue;
-    }
-    if (strncmp(ifa->ifa_name, "lo", 2) == 0) {
-      continue;
-    }
-    std::string path = std::string("/sys/class/net/") + ifa->ifa_name + "/address";
-    std::string mac = ReadTrimmedFile(path.c_str());
-    if (!mac.empty() && mac != "00:00:00:00:00:00") {
-      result = mac;
-      if (strncmp(ifa->ifa_name, "eth", 3) == 0 ||
-          strncmp(ifa->ifa_name, "en", 2) == 0 ||
-          strncmp(ifa->ifa_name, "wl", 2) == 0) {
-        break;
-      }
-    }
-  }
-  freeifaddrs(ifaddr);
-  return result;
-}
-
-static std::string NetworkType() {
-  std::string ip = LocalIpv4();
-  if (ip.empty()) {
-    return "none";
-  }
-  struct ifaddrs* ifaddr = nullptr;
-  if (getifaddrs(&ifaddr) != 0) {
-    return "unknown";
-  }
-  std::string type = "unknown";
   for (struct ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
     if (ifa->ifa_name == nullptr || ifa->ifa_addr == nullptr ||
         ifa->ifa_addr->sa_family != AF_INET) {
       continue;
     }
-    if (strncmp(ifa->ifa_name, "wl", 2) == 0 ||
-        strncmp(ifa->ifa_name, "wlan", 4) == 0) {
-      type = "wifi";
-      break;
+    char host[INET_ADDRSTRLEN] = {};
+    auto* addr = reinterpret_cast<sockaddr_in*>(ifa->ifa_addr);
+    if (inet_ntop(AF_INET, &addr->sin_addr, host, INET_ADDRSTRLEN) == nullptr) {
+      continue;
     }
-    if (strncmp(ifa->ifa_name, "eth", 3) == 0 ||
-        strncmp(ifa->ifa_name, "en", 2) == 0) {
-      type = "ethernet";
-    }
+    xue_hua_device_info::NetworkCandidate candidate;
+    candidate.name = ifa->ifa_name;
+    candidate.ipv4 = host;
+    candidate.is_up = (ifa->ifa_flags & IFF_UP) != 0;
+    candidate.is_loopback = (ifa->ifa_flags & IFF_LOOPBACK) != 0;
+    result.push_back(candidate);
   }
   freeifaddrs(ifaddr);
-  return type;
+  return result;
+}
+
+static std::string ReadWholeFile(const char* path) {
+  std::ifstream input(path);
+  std::stringstream buffer;
+  buffer << input.rdbuf();
+  return buffer.str();
 }
 
 static FlValue* BuildDeviceInfo() {
-  std::string uuid = ReadTrimmedFile("/sys/class/dmi/id/product_uuid");
-  if (uuid.empty()) {
-    uuid = ReadTrimmedFile("/etc/machine-id");
-  }
+  std::string uuid = ResolveDeviceId();
   std::string manufacturer = ReadTrimmedFile("/sys/class/dmi/id/sys_vendor");
   std::string model = ReadTrimmedFile("/sys/class/dmi/id/product_name");
   std::string serial = ReadTrimmedFile("/sys/class/dmi/id/product_serial");
@@ -162,39 +100,31 @@ static FlValue* BuildDeviceInfo() {
 }
 
 static FlValue* BuildBatteryInfo() {
-  std::string capacity = ReadTrimmedFile("/sys/class/power_supply/BAT0/capacity");
-  if (capacity.empty()) {
-    capacity = ReadTrimmedFile("/sys/class/power_supply/BAT1/capacity");
-  }
-  std::string status = ReadTrimmedFile("/sys/class/power_supply/BAT0/status");
-  if (status.empty()) {
-    status = ReadTrimmedFile("/sys/class/power_supply/BAT1/status");
-  }
-
+  const BatteryReading battery = ReadBattery();
   g_autoptr(FlValue) map = fl_value_new_map();
-  char* end = nullptr;
-  const double parsed = capacity.empty() ? -1.0 : strtod(capacity.c_str(), &end);
-  const bool level_ok =
-      !capacity.empty() && end != capacity.c_str() && parsed >= 0.0 && parsed <= 100.0;
-  if (!level_ok) {
+  if (!battery.found) {
     fl_value_set_string_take(map, "level", fl_value_new_null());
     fl_value_set_string_take(map, "isCharging", fl_value_new_null());
     fl_value_set_string_take(map, "health", fl_value_new_null());
   } else {
-    fl_value_set_string_take(map, "level", fl_value_new_float(parsed));
-    bool charging = status == "Charging" || status == "Full";
-    fl_value_set_string_take(map, "isCharging", fl_value_new_bool(charging));
-    fl_value_set_string_take(map, "health", fl_value_new_null());
+    fl_value_set_string_take(map, "level", fl_value_new_float(battery.level));
+    fl_value_set_string_take(map, "isCharging",
+                             fl_value_new_bool(battery.is_charging));
+    fl_value_set_string_take(map, "health", NullableString(battery.health));
   }
   return fl_value_ref(map);
 }
 
 static FlValue* BuildNetworkInfo() {
+  const NetworkSelection net = SelectNetwork(
+      EnumerateIpv4(),
+      ParseDefaultRouteInterface(ReadWholeFile("/proc/net/route")));
   g_autoptr(FlValue) map = fl_value_new_map();
-  fl_value_set_string_take(map, "ipAddress", NullableString(LocalIpv4()));
-  fl_value_set_string_take(map, "networkType",
-                           fl_value_new_string(NetworkType().c_str()));
-  fl_value_set_string_take(map, "macAddress", NullableString(PrimaryMac()));
+  fl_value_set_string_take(map, "ipAddress", NullableString(net.ipv4));
+  fl_value_set_string_take(
+      map, "networkType",
+      fl_value_new_string(net.found ? net.type.c_str() : "none"));
+  fl_value_set_string_take(map, "macAddress", NullableString(net.mac));
   return fl_value_ref(map);
 }
 
@@ -215,57 +145,35 @@ static FlValue* BuildStorageInfo() {
   return fl_value_ref(map);
 }
 
+static GdkMonitor* PickMonitor(GdkDisplay* display) {
+  if (display == nullptr) {
+    return nullptr;
+  }
+  GdkMonitor* monitor = gdk_display_get_primary_monitor(display);
+  if (monitor == nullptr && gdk_display_get_n_monitors(display) > 0) {
+    monitor = gdk_display_get_monitor(display, 0);
+  }
+  return monitor;
+}
+
 static FlValue* BuildDisplayInfo() {
   int width = 0;
   int height = 0;
-  double refresh = 0;
-  FILE* pipe = popen("xrandr --current 2>/dev/null", "r");
-  if (pipe != nullptr) {
-    char line[512];
-    while (fgets(line, sizeof(line), pipe) != nullptr) {
-      // Look for: "   1920x1080     60.00*+"
-      int w = 0;
-      int h = 0;
-      double rate = 0;
-      char mark = 0;
-      if (sscanf(line, " %dx%d %lf%c", &w, &h, &rate, &mark) >= 3) {
-        if (strchr(line, '*') != nullptr) {
-          width = w;
-          height = h;
-          refresh = rate;
-          break;
-        }
-      }
-    }
-    pclose(pipe);
-  }
-
-  // Fallback via GDK if xrandr unavailable.
-  if (width == 0 || height == 0) {
-    GdkDisplay* display = gdk_display_get_default();
-    if (display != nullptr) {
-      GdkMonitor* monitor = gdk_display_get_primary_monitor(display);
-      if (monitor == nullptr && gdk_display_get_n_monitors(display) > 0) {
-        monitor = gdk_display_get_monitor(display, 0);
-      }
-      if (monitor != nullptr) {
-        GdkRectangle geometry = {};
-        gdk_monitor_get_geometry(monitor, &geometry);
-        width = geometry.width * gdk_monitor_get_scale_factor(monitor);
-        height = geometry.height * gdk_monitor_get_scale_factor(monitor);
-      }
-    }
-  }
-
   double scale = 1.0;
-  GdkDisplay* display = gdk_display_get_default();
-  if (display != nullptr) {
-    GdkMonitor* monitor = gdk_display_get_primary_monitor(display);
-    if (monitor == nullptr && gdk_display_get_n_monitors(display) > 0) {
-      monitor = gdk_display_get_monitor(display, 0);
-    }
-    if (monitor != nullptr) {
-      scale = static_cast<double>(gdk_monitor_get_scale_factor(monitor));
+  double refresh = 0;
+
+  GdkMonitor* monitor = PickMonitor(gdk_display_get_default());
+  if (monitor != nullptr) {
+    GdkRectangle geometry = {};
+    gdk_monitor_get_geometry(monitor, &geometry);
+    const int factor = gdk_monitor_get_scale_factor(monitor);
+    scale = factor > 0 ? static_cast<double>(factor) : 1.0;
+    width = static_cast<int>(geometry.width * scale);
+    height = static_cast<int>(geometry.height * scale);
+    // GDK reports the refresh rate in millihertz (0 when unknown).
+    const int refresh_mhz = gdk_monitor_get_refresh_rate(monitor);
+    if (refresh_mhz > 0) {
+      refresh = refresh_mhz / 1000.0;
     }
   }
 
@@ -282,7 +190,7 @@ static FlValue* BuildDisplayInfo() {
 }
 
 static void xue_hua_device_info_plugin_handle_method_call(
-    XueHuaDeviceInfoPlugin* self,
+    XueHuaDeviceInfoPlugin* /*self*/,
     FlMethodCall* method_call) {
   g_autoptr(FlMethodResponse) response = nullptr;
   const gchar* method = fl_method_call_get_name(method_call);
@@ -317,9 +225,9 @@ static void xue_hua_device_info_plugin_class_init(XueHuaDeviceInfoPluginClass* k
   G_OBJECT_CLASS(klass)->dispose = xue_hua_device_info_plugin_dispose;
 }
 
-static void xue_hua_device_info_plugin_init(XueHuaDeviceInfoPlugin* self) {}
+static void xue_hua_device_info_plugin_init(XueHuaDeviceInfoPlugin* /*self*/) {}
 
-static void method_call_cb(FlMethodChannel* channel, FlMethodCall* method_call,
+static void method_call_cb(FlMethodChannel* /*channel*/, FlMethodCall* method_call,
                            gpointer user_data) {
   XueHuaDeviceInfoPlugin* plugin = XUE_HUA_DEVICE_INFO_PLUGIN(user_data);
   xue_hua_device_info_plugin_handle_method_call(plugin, method_call);
