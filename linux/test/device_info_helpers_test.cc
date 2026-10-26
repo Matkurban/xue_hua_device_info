@@ -268,5 +268,60 @@ TEST_F(FakeRootTest, SelectNetworkIgnoresZeroMac) {
   EXPECT_EQ(s.mac, "");
 }
 
+
+TEST_F(FakeRootTest, ResolveStorageTypeFromDevSsdAndHdd) {
+  Write("sys/dev/block/8:0/queue/rotational", "0\n");
+  Write("sys/dev/block/8:16/queue/rotational", "1\n");
+  EXPECT_EQ(ResolveStorageTypeFromDev(8, 0, root_), "ssd");
+  EXPECT_EQ(ResolveStorageTypeFromDev(8, 16, root_), "hdd");
+  EXPECT_EQ(ResolveStorageTypeFromDev(0, 0, root_), "");
+  EXPECT_EQ(ResolveStorageTypeFromDev(9, 9, root_), "");
+}
+
+TEST_F(FakeRootTest, ResolveStorageTypeFromDevFollowsSlaves) {
+  Mkdir("sys/dev/block/253:0/slaves");
+  Write("sys/dev/block/253:0/slaves/sda", "");
+  Write("sys/block/sda/queue/rotational", "0\n");
+  EXPECT_EQ(ResolveStorageTypeFromDev(253, 0, root_), "ssd");
+}
+
+TEST_F(FakeRootTest, ResolveStorageTypeFromDevPartitionUsesParentDev) {
+  // Partition node without its own queue; parent disk listed via ../dev.
+  // Create a real directory layout with a parent folder and a partition child
+  // so relative ".." resolves correctly on disk.
+  Mkdir("sys/dev/block/disk");
+  Write("sys/dev/block/disk/dev", "8:0\n");
+  Write("sys/dev/block/disk/queue/rotational", "1\n");
+  Mkdir("sys/dev/block/disk/part1");
+  Write("sys/dev/block/disk/part1/partition", "1\n");
+  // Symlink maj:min entries like the kernel does.
+  ASSERT_EQ(symlink((root_ + "/sys/dev/block/disk").c_str(),
+                    (root_ + "/sys/dev/block/8:0").c_str()),
+            0);
+  ASSERT_EQ(symlink((root_ + "/sys/dev/block/disk/part1").c_str(),
+                    (root_ + "/sys/dev/block/8:1").c_str()),
+            0);
+  EXPECT_EQ(ResolveStorageTypeFromDev(8, 1, root_), "hdd");
+}
+
+TEST_F(FakeRootTest, ClassifyBondAsEthernet) {
+  Mkdir("sys/class/net/bond0/bonding");
+  EXPECT_EQ(ClassifyInterface("bond0", root_), InterfaceKind::kEthernet);
+  EXPECT_EQ(ClassifyInterface("bond1", root_), InterfaceKind::kEthernet);
+}
+
+TEST_F(FakeRootTest, SelectNetworkDeprioritizesLinkLocal) {
+  Write("sys/class/net/eth0/address", "aa:aa:aa:aa:aa:aa\n");
+  Write("sys/class/net/eth1/address", "bb:bb:bb:bb:bb:bb\n");
+  std::vector<NetworkCandidate> c = {
+      {"eth0", "169.254.10.20", true, false},
+      {"eth1", "10.0.0.5", true, false},
+  };
+  NetworkSelection s = SelectNetwork(c, "", root_);
+  ASSERT_TRUE(s.found);
+  EXPECT_EQ(s.name, "eth1");
+  EXPECT_EQ(s.ipv4, "10.0.0.5");
+}
+
 }  // namespace test
 }  // namespace xue_hua_device_info

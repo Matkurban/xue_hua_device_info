@@ -230,7 +230,7 @@ Primary storage capacity. `totalBytes` and `freeBytes` are required non-nullable
 | ------------- | --------- | ---------------------------------------------------------------------------------------------- |
 | `totalBytes`  | `int`     | Total capacity in bytes. Hosts may send `0` on failure.                                        |
 | `freeBytes`   | `int`     | Free / available bytes (host-defined “available”). Hosts may send `0` on failure.              |
-| `storageType` | `String?` | Kind when the host supplies one. Android and iOS send `"internal"`. Desktop hosts send `null`. |
+| `storageType` | `String?` | Kind when the host supplies one. Android and iOS send `"internal"`. Linux may send `"ssd"` / `"hdd"` from sysfs `queue/rotational`; other desktop hosts send `null`. |
 
 There is no `usedBytes` getter.
 

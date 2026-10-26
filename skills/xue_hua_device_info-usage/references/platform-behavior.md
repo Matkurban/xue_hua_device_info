@@ -70,9 +70,9 @@ iOS starts `NWPathMonitor` at plugin registration. `getNetworkInfo` uses the las
 | ------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | `totalBytes`  | `StatFs` of `Environment.getDataDirectory()`: `blockCountLong * blockSizeLong` | `volumeTotalCapacity` of `NSHomeDirectory()`, or `0` | `volumeTotalCapacity` of `/`, or `0`                             | `GetDiskFreeSpaceExW` on the Windows-directory drive (else `C:\`); `0` on failure | `statvfs("/")` `f_blocks * f_frsize`; `0` on failure |
 | `freeBytes`   | `availableBlocksLong * blockSizeLong`                                          | `volumeAvailableCapacityForImportantUsage`, or `0`   | important-usage capacity, else `volumeAvailableCapacity`, or `0` | caller-available bytes from `GetDiskFreeSpaceExW`; `0` on failure                 | `f_bavail * f_frsize`; `0` on failure                |
-| `storageType` | `"internal"`                                                                   | `"internal"`                                         | **`null`**                                                       | **`null`**                                                                        | **`null`**                                           |
+| `storageType` | `"internal"`                                                                   | `"internal"`                                         | **`null`**                                                       | **`null`**                                                                        | `"ssd"` / `"hdd"` from `queue/rotational`, else **`null`** |
 
-These are primary-volume numbers, not a list of disks. Do not assume `storageType` is `ssd` / `hdd`; current hosts never send those strings.
+These are primary-volume numbers, not a list of disks. On Linux, `storageType` may be `"ssd"` or `"hdd"` from `queue/rotational` when the backing block device exposes it; other desktop hosts still send `null`.
 
 ---
 
@@ -80,11 +80,11 @@ These are primary-volume numbers, not a list of disks. Do not assume `storageTyp
 
 | Field              | Android                                                             | iOS                                                  | macOS                                                        | Windows                                                          | Linux                                                                                           |
 | ------------------ | ------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `width` / `height` | `DisplayMetrics` from deprecated `getRealMetrics` (physical pixels) | `UIScreen.main.bounds` × `scale`, truncated to `int` | `CGDisplayPixelsWide` / `High` of the main display           | `SM_CXSCREEN` / `SM_CYSCREEN`                                    | `xrandr --current` mode marked `*`; else GDK primary (or first) monitor geometry × scale factor |
+| `width` / `height` | `DisplayMetrics` from deprecated `getRealMetrics` (physical pixels) | `UIScreen.main.bounds` × `scale`, truncated to `int` | `CGDisplayPixelsWide` / `High` of the main display           | `SM_CXSCREEN` / `SM_CYSCREEN`                                    | GDK primary (or first) monitor geometry × `gdk_monitor_get_scale_factor` (device pixels) |
 | `scaleFactor`      | `DisplayMetrics.density` as `double`                                | `UIScreen.main.scale` as `double`                    | `NSScreen.main.backingScaleFactor`, or `1.0`                 | `LOGPIXELSX / 96.0` (1.0 if no DC)                               | GDK primary/first `gdk_monitor_get_scale_factor`, or `1.0`                                      |
-| `refreshRate`      | default display `refreshRate` as `double`                           | `UIScreen.maximumFramesPerSecond` as `double`        | `CGDisplayCopyDisplayMode.refreshRate` if `> 0`; else `null` | `EnumDisplaySettings` `dmDisplayFrequency` if `> 1`; else `null` | xrandr rate when a `*` mode is parsed; else `null` (GDK fallback does not fill refresh)         |
+| `refreshRate`      | default display `refreshRate` as `double`                           | `UIScreen.maximumFramesPerSecond` as `double`        | `CGDisplayCopyDisplayMode.refreshRate` if `> 0`; else `null` | `EnumDisplaySettings` `dmDisplayFrequency` if `> 1`; else `null` | `gdk_monitor_get_refresh_rate` (millihertz → Hz) when `> 0`; else `null`                         |
 
-Linux without `xrandr` may still get width/height/scale from GDK and leave `refreshRate` `null`. Width/height can be `0` if both xrandr and GDK fail.
+Linux uses GDK only. Width/height can be `0` if no display/monitor is available (e.g. truly headless). `refreshRate` is `null` when GDK reports 0 millihertz.
 
 This is the primary display only.
 

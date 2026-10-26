@@ -69,6 +69,16 @@ NetworkSelection SelectNetwork(const std::vector<NetworkCandidate>& candidates,
                                const std::string& default_route_iface,
                                const std::string& root = "");
 
+// Resolves storage kind for the filesystem that contains `path` (typically "/"):
+// looks up st_dev in <root>/sys/dev/block/<maj>:<min>/queue/rotational (and the
+// parent disk when the node is a partition). Returns "ssd" (0), "hdd" (1), or ""
+// when unknown. Pure helper: pass maj/min directly for unit tests via the
+// overload that skips stat(2).
+std::string ResolveStorageTypeFromDev(unsigned major, unsigned minor,
+                                      const std::string& root = "");
+std::string ResolveStorageType(const std::string& path = "/",
+                               const std::string& root = "");
+
 }  // namespace xue_hua_device_info
 
 #endif  // XUE_HUA_DEVICE_INFO_HELPERS_H_

@@ -26,6 +26,7 @@ using xue_hua_device_info::ParseDefaultRouteInterface;
 using xue_hua_device_info::ReadBattery;
 using xue_hua_device_info::ReadTrimmedFile;
 using xue_hua_device_info::ResolveDeviceId;
+using xue_hua_device_info::ResolveStorageType;
 using xue_hua_device_info::SelectNetwork;
 
 #define XUE_HUA_DEVICE_INFO_PLUGIN(obj) \
@@ -87,6 +88,8 @@ static FlValue* BuildDeviceInfo() {
   char hostname[256] = {};
   std::string name;
   if (gethostname(hostname, sizeof(hostname)) == 0) {
+    // POSIX: truncated names may omit the NUL terminator.
+    hostname[sizeof(hostname) - 1] = '\0';
     name = hostname;
   }
 
@@ -138,10 +141,13 @@ static FlValue* BuildStorageInfo() {
     free_bytes = static_cast<int64_t>(stat.f_bavail) *
                  static_cast<int64_t>(stat.f_frsize);
   }
+  // Kernel Documentation/block/queue-sysfs.rst: queue/rotational is 0 for
+  // non-rotational (SSD) and 1 for rotational (HDD). Mapped to "ssd"/"hdd".
+  const std::string storage_type = ResolveStorageType("/");
   g_autoptr(FlValue) map = fl_value_new_map();
   fl_value_set_string_take(map, "totalBytes", fl_value_new_int(total));
   fl_value_set_string_take(map, "freeBytes", fl_value_new_int(free_bytes));
-  fl_value_set_string_take(map, "storageType", fl_value_new_null());
+  fl_value_set_string_take(map, "storageType", NullableString(storage_type));
   return fl_value_ref(map);
 }
 

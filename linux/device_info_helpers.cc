@@ -2,6 +2,7 @@
 
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -42,7 +43,7 @@ bool IsVirtualName(const std::string& name) {
   static const char* const kPrefixes[] = {
       "docker", "veth", "br-", "br0", "virbr", "vmnet", "vboxnet", "tun",
       "tap",    "wg",   "tailscale", "zt", "lxc", "lxd", "cni", "flannel",
-      "cali",   "dummy", "ifb", "bond", "macvtap", "podman", "vnet"};
+      "cali",   "dummy", "ifb", "macvtap", "podman", "vnet"};
   for (const char* prefix : kPrefixes) {
     if (StartsWith(name, prefix)) {
       return true;
@@ -153,6 +154,10 @@ InterfaceKind ClassifyInterface(const std::string& name,
   if (PathExists(dir + "/wireless") || PathExists(dir + "/phy80211")) {
     return InterfaceKind::kWifi;
   }
+  // Bonding masters carry traffic for real NICs; treat as ethernet.
+  if (PathExists(dir + "/bonding") || StartsWith(name, "bond")) {
+    return InterfaceKind::kEthernet;
+  }
   if (PathExists(dir + "/bridge") || PathExists(dir + "/tun_flags") ||
       IsVirtualName(name)) {
     return InterfaceKind::kVirtual;
@@ -214,12 +219,15 @@ NetworkSelection SelectNetwork(const std::vector<NetworkCandidate>& candidates,
     const bool physical = kind != InterfaceKind::kVirtual;
     const bool is_default = !default_route_iface.empty() &&
                             c.name == default_route_iface;
+    const bool link_local = StartsWith(c.ipv4, "169.254.");
     int score = 0;
     if (physical) score += 8;
     if (is_default) score += 4;
     if (kind == InterfaceKind::kWifi || kind == InterfaceKind::kEthernet) {
       score += 1;
     }
+    // RFC 3927 link-local addresses are last-resort; prefer routable IPs.
+    if (link_local) score -= 16;
     if (score > best_score) {  // first wins on ties (stable order)
       best_score = score;
       best = &c;
@@ -250,6 +258,61 @@ NetworkSelection SelectNetwork(const std::vector<NetworkCandidate>& candidates,
       break;
   }
   return result;
+}
+
+
+std::string ResolveStorageTypeFromDev(unsigned major_num, unsigned minor_num,
+                                      const std::string& root) {
+  if (major_num == 0) {
+    return {};
+  }
+  const std::string base =
+      root + "/sys/dev/block/" + std::to_string(major_num) + ":" +
+      std::to_string(minor_num);
+  // Prefer this node's queue; partitions often inherit via a sibling path.
+  std::string rotational = ReadTrimmedFile(base + "/queue/rotational");
+  if (rotational.empty()) {
+    // Partition nodes expose a `partition` file; parent disk is `..`.
+    if (PathExists(base + "/partition")) {
+      rotational = ReadTrimmedFile(base + "/../queue/rotational");
+      if (rotational.empty()) {
+        const std::string parent_dev = ReadTrimmedFile(base + "/../dev");
+        if (!parent_dev.empty()) {
+          rotational = ReadTrimmedFile(root + "/sys/dev/block/" + parent_dev +
+                                       "/queue/rotational");
+        }
+      }
+    }
+  }
+  // Device-mapper / stacked devices: inspect the first slave when present.
+  if (rotational.empty()) {
+    const std::string slaves = base + "/slaves";
+    for (const std::string& slave : ListDir(slaves)) {
+      rotational = ReadTrimmedFile(root + "/sys/block/" + slave +
+                                   "/queue/rotational");
+      if (!rotational.empty()) {
+        break;
+      }
+    }
+  }
+  if (rotational == "0") {
+    return "ssd";
+  }
+  if (rotational == "1") {
+    return "hdd";
+  }
+  return {};
+}
+
+std::string ResolveStorageType(const std::string& path, const std::string& root) {
+  struct stat st;
+  // When `root` is set (unit tests), only the sysfs tree is faked; `path` is
+  // still resolved against the real filesystem unless callers use
+  // ResolveStorageTypeFromDev directly.
+  if (stat(path.c_str(), &st) != 0) {
+    return {};
+  }
+  return ResolveStorageTypeFromDev(major(st.st_dev), minor(st.st_dev), root);
 }
 
 }  // namespace xue_hua_device_info

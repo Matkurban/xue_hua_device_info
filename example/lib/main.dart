@@ -40,10 +40,11 @@ class _MyAppState extends State<MyApp> {
         _summary = [
           'Device: ${device.manufacturer} ${device.model}',
           'ID: ${device.deviceId}',
-          'Battery: ${battery.level}% charging=${battery.isCharging}',
-          'Network: ${network.networkType} ${network.ipAddress}',
-          'Storage: ${storage.freeBytes}/${storage.totalBytes}',
-          'Display: ${display.width}x${display.height} @${display.refreshRate}',
+          'Name: ${device.name}',
+          'Battery: ${battery.level}% charging=${battery.isCharging} health=${battery.health}',
+          'Network: ${network.networkType} ${network.ipAddress} mac=${network.macAddress}',
+          'Storage: ${storage.freeBytes}/${storage.totalBytes} type=${storage.storageType}',
+          'Display: ${display.width}x${display.height} scale=${display.scaleFactor} @${display.refreshRate}',
         ].join('\n');
       });
     } catch (e) {
@@ -58,9 +59,13 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(title: const Text('XueHua Device Info')),
         body: Padding(
           padding: const EdgeInsets.all(16),
-          child: SelectableText(_summary),
+          child: SelectableText(
+            _summary,
+            key: const Key('device_info_summary'),
+          ),
         ),
         floatingActionButton: FloatingActionButton(
+          key: const Key('refresh_fab'),
           onPressed: _load,
           child: const Icon(Icons.refresh),
         ),

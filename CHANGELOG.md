@@ -1,5 +1,14 @@
 # Change log
 
+## 2.0.7
+
+- Linux: fill `storageType` from `/sys/dev/block/<maj>:<min>/queue/rotational` (`0` → `ssd`, `1` → `hdd`), including partition parent and device-mapper `slaves` fallbacks (kernel Documentation/block/queue-sysfs.rst).
+- Linux: deprioritize RFC 3927 link-local (`169.254.0.0/16`) addresses when selecting the network interface.
+- Linux: classify bonding masters (`/sys/class/net/<if>/bonding` or `bond*` names) as ethernet instead of virtual.
+- Linux: force NUL-terminate the `gethostname` buffer before copying into `DeviceInfo.name`.
+- Linux: silence the CMake FetchContent `DOWNLOAD_EXTRACT_TIMESTAMP` author warning for googletest.
+- Example: add `Key`s and richer summary lines; expand `integration_test` to exercise every public API and drive the refresh FAB (Flutter's supported successor to `flutter_driver`).
+
 ## 2.0.6
 
 - Linux: read display info via GDK only (primary monitor, scale factor, `gdk_monitor_get_refresh_rate`); removed the blocking `popen("xrandr")` call and safely handles a missing display or monitor.
