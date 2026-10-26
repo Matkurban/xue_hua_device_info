@@ -27,7 +27,7 @@ Built with **MethodChannel** native implementations (Kotlin / Swift / C++). Web 
 
 ```yaml
 dependencies:
-  xue_hua_device_info: ^2.0.8
+  xue_hua_device_info: ^2.0.9
 ```
 
 ---
@@ -115,7 +115,7 @@ No `initialize()` call is required.
 | ------------- | --------- |
 | `totalBytes`  | `int`     |
 | `freeBytes`   | `int`     |
-| `storageType` | `String?` | Android/iOS: `internal`. Linux: `ssd`/`hdd` when known |
+| `storageType` | `String?` | Android/iOS: `internal`. Linux/Windows/macOS: `ssd`/`hdd` when known |
 
 ### DisplayInfo
 
@@ -133,6 +133,15 @@ No `initialize()` call is required.
 - **Network**: one interface is chosen (up, non-loopback, has IPv4; the default-route interface from `/proc/net/route` is preferred, physical interfaces are preferred over docker/veth/bridge/tun) and `ipAddress`, `macAddress` and `networkType` all come from that same interface. Wi-Fi is detected via `/sys/class/net/<if>/wireless`.
 - **Display**: uses GDK only (primary monitor, scale factor, refresh rate); no external tools such as `xrandr` are required or spawned. Without a display (headless) `width`/`height` are `0`.
 - Build requires the GTK 3 development package (as for any Flutter Linux app).
+
+
+### macOS notes
+
+- **Network**: one interface is chosen (`SCDynamicStore` `State:/Network/Global/IPv4` → `PrimaryInterface` when it has a usable IPv4; otherwise the best physical `en*`/`eth*`). `ipAddress`, `macAddress` and `networkType` all come from that interface. Link-local (`169.254/16`) and Clash-style fake-IP (`198.18.0.0/15`) addresses are skipped. Type uses `SCNetworkInterfaceGetInterfaceType` (`IEEE80211` → `wifi`, `Ethernet` → `ethernet`).
+- **Storage**: `storageType` is `ssd` or `hdd` from IOKit Device Characteristics `Medium Type` on the root volume's IOMedia (via DiskArbitration), else `null`.
+- **Display**: physical pixels from `CGDisplayMode.pixelWidth/Height` (Retina-correct). Refresh rate from the display mode, or `NSScreen.maximumFramesPerSecond` when the mode reports 0.
+- **Battery**: prefers a present `InternalBattery` source. `health` is `kIOPSBatteryHealthKey` (`Good`/`Fair`/`Poor`) when Apple publishes it; many Macs omit the key → `null`.
+
 
 ---
 

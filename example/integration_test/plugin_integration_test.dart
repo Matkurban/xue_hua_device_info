@@ -54,9 +54,15 @@ void main() {
     expect(storage.totalBytes, greaterThan(0));
     expect(storage.freeBytes, greaterThanOrEqualTo(0));
     expect(storage.freeBytes, lessThanOrEqualTo(storage.totalBytes));
-    if (Platform.isLinux || Platform.isWindows) {
-      // Linux: queue/rotational. Windows: DEVICE_SEEK_PENALTY_DESCRIPTOR.
+    if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+      // Linux: queue/rotational. Windows: seek-penalty IOCTL.
+      // macOS: IOKit Device Characteristics Medium Type.
       expect(storage.storageType, anyOf(isNull, 'ssd', 'hdd'));
+    }
+    if (Platform.isMacOS) {
+      // Retina physical pixels (CGDisplayMode.pixelWidth/Height), not points.
+      expect(display.width, greaterThanOrEqualTo(800));
+      expect(display.height, greaterThanOrEqualTo(600));
     }
 
     // Display — under xvfb a virtual monitor is present.

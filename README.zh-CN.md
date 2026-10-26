@@ -27,7 +27,7 @@ Flutter 设备信息插件：标识、电池、网络、存储、屏幕。
 
 ```yaml
 dependencies:
-  xue_hua_device_info: ^2.0.8
+  xue_hua_device_info: ^2.0.9
 ```
 
 ---
@@ -91,6 +91,14 @@ iOS 16+ 若未申请 `com.apple.developer.device-information.user-assigned-devic
 - **电池**：遍历 `/sys/class/power_supply/*`，选择 `type=Battery`（跳过 `scope=Device` 的外设电池）；`health` 来自内核 `health` 文件，不存在则为 `null`。无电池的台式机各字段为 `null`。
 - **网络**：只选定一个网卡（已启用、非回环、有 IPv4；优先默认路由网卡，物理网卡优先于 docker/veth/网桥/tun），IP、MAC、网络类型都取自同一网卡。通过 `/sys/class/net/<if>/wireless` 识别 Wi-Fi。
 - **显示**：仅使用 GDK（主显示器、缩放、刷新率），不再调用 `xrandr`。无显示环境（headless）下 `width`/`height` 为 `0`。
+
+## macOS 说明
+
+- **网络**：只选定一个网卡（优先 `SCDynamicStore` 的 `PrimaryInterface` 且有可用 IPv4，否则选最佳物理 `en*`/`eth*`），IP、MAC、类型都取自同一网卡；跳过链路本地地址与 Clash 风格 fake-IP（`198.18.0.0/15`）。类型来自 `SCNetworkInterfaceGetInterfaceType`。
+- **存储**：根卷 IOMedia 的 IOKit `Medium Type` → `ssd`/`hdd`，否则为 `null`。
+- **显示**：物理像素使用 `CGDisplayMode.pixelWidth/Height`（Retina 正确）；刷新率在模式为 0 时回退到 `NSScreen.maximumFramesPerSecond`。
+- **电池**：优先在位的 `InternalBattery`；`health` 在系统发布 `BatteryHealth` 时为 `Good`/`Fair`/`Poor`，否则为 `null`。
+
 
 ---
 

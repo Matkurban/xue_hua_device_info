@@ -80,6 +80,7 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
         default:
             isCharging = nil
         }
+        // UIDevice has no public battery-health API.
         return [
             "level": levelPercent,
             "isCharging": isCharging,
@@ -102,17 +103,23 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
             networkType = "unknown"
         }
         return [
-            "ipAddress": localIPv4(),
+            "ipAddress": localIPv4(preferCellular: networkType == "cellular"),
             "networkType": networkType,
             "macAddress": nil,
         ]
     }
 
-    private func localIPv4() -> String? {
-        var address: String?
+    /// Prefer en0 (Wi-Fi); for cellular prefer pdp_ip*. Skip loopback, RFC 3927
+    /// link-local (169.254/16), and Clash-style fake-IP (198.18.0.0/15).
+    private func localIPv4(preferCellular: Bool) -> String? {
         var ifaddr: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&ifaddr) == 0, let first = ifaddr else { return nil }
         defer { freeifaddrs(ifaddr) }
+
+        var bestEn0: String?
+        var bestEn: String?
+        var bestCellular: String?
+        var bestOther: String?
 
         var ptr: UnsafeMutablePointer<ifaddrs>? = first
         while let current = ptr {
@@ -121,7 +128,9 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
             let family = addr.pointee.sa_family
             guard family == UInt8(AF_INET) else { continue }
             let name = String(cString: current.pointee.ifa_name)
-            guard name == "en0" || name.hasPrefix("en") || name.hasPrefix("pdp_ip") else { continue }
+            guard name == "en0" || name.hasPrefix("en") || name.hasPrefix("pdp_ip") else {
+                continue
+            }
 
             var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
             getnameinfo(
@@ -134,14 +143,33 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
                 NI_NUMERICHOST
             )
             let candidate = String(cString: hostname)
-            if !candidate.hasPrefix("127.") {
-                address = candidate
-                if name == "en0" {
-                    break
-                }
+            guard !isUnusableIPv4(candidate) else { continue }
+
+            if name == "en0" {
+                bestEn0 = candidate
+            } else if name.hasPrefix("en") {
+                if bestEn == nil { bestEn = candidate }
+            } else if name.hasPrefix("pdp_ip") {
+                if bestCellular == nil { bestCellular = candidate }
+            } else if bestOther == nil {
+                bestOther = candidate
             }
         }
-        return address
+
+        if preferCellular {
+            return bestCellular ?? bestEn0 ?? bestEn ?? bestOther
+        }
+        return bestEn0 ?? bestEn ?? bestCellular ?? bestOther
+    }
+
+    private func isUnusableIPv4(_ ip: String) -> Bool {
+        if ip.hasPrefix("127.") { return true }
+        if ip.hasPrefix("169.254.") { return true }
+        let parts = ip.split(separator: ".").compactMap { Int($0) }
+        if parts.count == 4, parts[0] == 198, (parts[1] == 18 || parts[1] == 19) {
+            return true
+        }
+        return false
     }
 
     private func getStorageInfo() -> [String: Any?] {

@@ -16,7 +16,7 @@ Flutter plugin for device info: battery, network, storage, display, and system d
   s.source_files = 'xue_hua_device_info/Sources/xue_hua_device_info/**/*'
   s.dependency 'FlutterMacOS'
   s.platform = :osx, '10.15'
-  s.frameworks = 'IOKit', 'SystemConfiguration', 'CoreGraphics'
+  s.frameworks = 'IOKit', 'SystemConfiguration', 'CoreGraphics', 'DiskArbitration'
 
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
   s.swift_version = '5.0'

@@ -1,5 +1,16 @@
 # Change log
 
+## 2.0.9
+
+- macOS: report physical Retina pixels via `CGDisplayMode.pixelWidth/Height` (was half-size from `CGDisplayPixelsWide/High` on HiDPI).
+- macOS: fall back to `NSScreen.maximumFramesPerSecond` when `CGDisplayMode.refreshRate` is 0.
+- macOS: fill `storageType` as `ssd`/`hdd` from IOKit `Device Characteristics` → `Medium Type` (`Solid State` / `Rotational`) via DiskArbitration `DADiskCopyIOMedia` (IOStorageDeviceCharacteristics.h).
+- macOS: select one network interface (prefer `SCDynamicStore` `PrimaryInterface` with a usable IPv4) so IP, MAC and type stay consistent; skip RFC 3927 `169.254/16` and Clash fake-IP `198.18.0.0/15`; classify with `SCNetworkInterfaceGetInterfaceType`.
+- macOS: prefer present `InternalBattery` power source; normalize level with `Max Capacity`; surface `kIOPSBatteryHealthKey` (`Good`/`Fair`/`Poor`) when published.
+- iOS: skip link-local and fake-IP addresses when picking IPv4; prefer `en0` for Wi-Fi and `pdp_ip*` when `NWPathMonitor` reports cellular.
+- Docs: macOS/iOS network, storage, display, and battery notes; platform-behavior skill reference.
+
+
 ## 2.0.8
 
 - Windows: pick a single network adapter (prefer `GetBestInterfaceEx` physical Wi-Fi/Ethernet; deprioritize Hyper-V/VPN/tunnel adapters) so IP, MAC and type stay consistent.
