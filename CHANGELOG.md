@@ -1,5 +1,14 @@
 # Change log
 
+## 2.0.8
+
+- Windows: pick a single network adapter (prefer `GetBestInterfaceEx` physical Wi-Fi/Ethernet; deprioritize Hyper-V/VPN/tunnel adapters) so IP, MAC and type stay consistent.
+- Windows: skip RFC 2544 `198.18.0.0/15` fake-IP addresses used by local proxies (Clash Meta, etc.).
+- Windows: fill `storageType` as `ssd`/`hdd` via `IOCTL_STORAGE_QUERY_PROPERTY` + `StorageDeviceSeekPenaltyProperty` (Microsoft winioctl / Raymond Chen guidance).
+- Windows: extract pure helpers to `device_info_helpers.{h,cpp}` with gtest coverage; compile with `/W4 /utf-8`.
+- Example: migrate from deprecated `package:flutter/material.dart` to `package:material_ui/material_ui.dart` (Flutter 3.47+).
+- Docs: update Windows network/storage notes in platform-behavior and README.
+
 ## 2.0.7
 
 - Linux: fill `storageType` from `/sys/dev/block/<maj>:<min>/queue/rotational` (`0` → `ssd`, `1` → `hdd`), including partition parent and device-mapper `slaves` fallbacks (kernel Documentation/block/queue-sysfs.rst).

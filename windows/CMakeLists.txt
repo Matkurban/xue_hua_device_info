@@ -20,6 +20,8 @@ set(PLUGIN_NAME "xue_hua_device_info_plugin")
 list(APPEND PLUGIN_SOURCES
   "xue_hua_device_info_plugin.cpp"
   "xue_hua_device_info_plugin.h"
+  "device_info_helpers.cpp"
+  "device_info_helpers.h"
 )
 
 # Define the plugin library target. Its name must not be changed (see comment
@@ -43,6 +45,9 @@ set_target_properties(${PLUGIN_NAME} PROPERTIES
 target_compile_definitions(${PLUGIN_NAME} PRIVATE
   FLUTTER_PLUGIN_IMPL
   WIN32_LEAN_AND_MEAN)
+# Match Linux: surface unused params / suspicious code without turning /WX on
+# for consumers (apply_standard_settings may already set /W4).
+target_compile_options(${PLUGIN_NAME} PRIVATE /W4 /utf-8)
 
 # Source include directories and library dependencies. Add any plugin-specific
 # dependencies here.
@@ -74,6 +79,7 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/v1.18.0.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 # Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -85,10 +91,12 @@ FetchContent_MakeAvailable(googletest)
 # directly into the test binary rather than using the DLL.
 add_executable(${TEST_RUNNER}
   test/xue_hua_device_info_plugin_test.cpp
+  test/device_info_helpers_test.cpp
   ${PLUGIN_SOURCES}
 )
 apply_standard_settings(${TEST_RUNNER})
 target_compile_definitions(${TEST_RUNNER} PRIVATE WIN32_LEAN_AND_MEAN)
+target_compile_options(${TEST_RUNNER} PRIVATE /W4 /utf-8)
 target_include_directories(${TEST_RUNNER} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(${TEST_RUNNER} PRIVATE flutter_wrapper_plugin)
 target_link_libraries(${TEST_RUNNER} PRIVATE iphlpapi ws2_32)

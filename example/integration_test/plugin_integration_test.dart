@@ -1,6 +1,6 @@
 import 'dart:io' show Platform;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:xue_hua_device_info/xue_hua_device_info.dart';
@@ -54,8 +54,8 @@ void main() {
     expect(storage.totalBytes, greaterThan(0));
     expect(storage.freeBytes, greaterThanOrEqualTo(0));
     expect(storage.freeBytes, lessThanOrEqualTo(storage.totalBytes));
-    if (Platform.isLinux) {
-      // Linux now reports ssd/hdd from queue/rotational when available.
+    if (Platform.isLinux || Platform.isWindows) {
+      // Linux: queue/rotational. Windows: DEVICE_SEEK_PENALTY_DESCRIPTOR.
       expect(storage.storageType, anyOf(isNull, 'ssd', 'hdd'));
     }
 
