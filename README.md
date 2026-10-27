@@ -143,6 +143,14 @@ No `initialize()` call is required.
 - **Battery**: prefers a present `InternalBattery` source. `health` is `kIOPSBatteryHealthKey` (`Good`/`Fair`/`Poor`) when Apple publishes it; many Macs omit the key → `null`.
 
 
+### Android notes
+
+- **Network**: IPv4 comes from `ConnectivityManager.getLinkProperties(activeNetwork)` (prefer site-local); falls back to a filtered `NetworkInterface` scan. Link-local (`169.254/16`) and Clash-style fake-IP (`198.18.0.0/15`) are skipped. `networkType` uses active `NetworkCapabilities` transports. `macAddress` is always `null` (Android privacy).
+- **Display**: physical pixels and refresh from `Display.getMode()` (`physicalWidth` / `physicalHeight` / `refreshRate`); `scaleFactor` is `DisplayMetrics.density`.
+- **Storage**: `storageType` is always `"internal"` (no public rotational/SSD API on phones).
+- **Device**: `deviceId` is `Settings.Secure.ANDROID_ID`; `serial` is always `null`.
+
+
 ---
 
 ## Architecture

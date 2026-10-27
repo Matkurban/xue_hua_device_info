@@ -37,10 +37,10 @@ android {
 
     sourceSets {
         getByName("main") {
-            java.srcDirs("src/main/kotlin")
+            java.directories.add("src/main/kotlin")
         }
         getByName("test") {
-            java.srcDirs("src/test/kotlin")
+            java.directories.add("src/test/kotlin")
         }
     }
 

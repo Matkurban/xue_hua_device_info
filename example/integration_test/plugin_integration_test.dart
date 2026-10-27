@@ -59,6 +59,9 @@ void main() {
       // macOS: IOKit Device Characteristics Medium Type.
       expect(storage.storageType, anyOf(isNull, 'ssd', 'hdd'));
     }
+    if (Platform.isAndroid || Platform.isIOS) {
+      expect(storage.storageType, 'internal');
+    }
     if (Platform.isMacOS) {
       // Retina physical pixels (CGDisplayMode.pixelWidth/Height), not points.
       expect(display.width, greaterThanOrEqualTo(800));

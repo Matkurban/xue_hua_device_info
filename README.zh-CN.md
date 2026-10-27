@@ -108,3 +108,10 @@ iOS 16+ 若未申请 `com.apple.developer.device-information.user-assigned-devic
 - 模型与字段重设计
 - 移除 `initialize()`
 - iOS 不再用 Keychain UUID 冒充 `serial`
+
+## Android 说明
+
+- 网络：优先用活跃网络的 `LinkProperties` 取 IPv4（跳过链路本地与假 IP）；`macAddress` 恒为 `null`。
+- 显示：用 `Display.getMode()` 的物理分辨率与刷新率。
+- 存储：`storageType` 固定为 `internal`。
+

@@ -1,5 +1,12 @@
 # Change log
 
+## 2.0.10
+
+- Android: prefer IPv4 from active `ConnectivityManager.getLinkProperties` (site-local first); fall back to filtered `NetworkInterface` scan; skip link-local (`169.254/16`) and Clash-style fake-IP (`198.18.0.0/15`).
+- Android: report display size/refresh from `Display.getMode()` physical width/height and mode refresh rate (API 23+; minSdk 24), with `DisplayMetrics` fallback.
+- Android: extract pure battery-health / IPv4 helpers for unit tests; keep `storageType` as `internal`; document Android network/display/storage notes.
+- Example: assert `storageType == internal` on Android/iOS in integration tests.
+
 ## 2.0.9
 
 - macOS: report physical Retina pixels via `CGDisplayMode.pixelWidth/Height` (was half-size from `CGDisplayPixelsWide/High` on HiDPI).
