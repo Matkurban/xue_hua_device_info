@@ -1,5 +1,12 @@
 # Change log
 
+## 2.0.11
+
+- Example: add `test_driver/integration_test.dart` for `flutter drive`; set example `version` so iOS CFBundleShortVersionString/CFBundleVersion are present (clears Xcode version warnings).
+  示例：补充 `test_driver/integration_test.dart` 以支持 `flutter drive`；为 example 设置 `version`，使 iOS CFBundleShortVersionString/CFBundleVersion 有值（消除 Xcode 版本警告）。
+- Verified iOS integration_test / flutter drive on ios17 / ios18 / ios26 / ios27 simulators with zero compile warnings.
+  已在 ios17 / ios18 / ios26 / ios27 模拟器上验证 integration_test / flutter drive，且零编译警告。
+
 ## 2.0.10
 
 - Android: prefer IPv4 from active `ConnectivityManager.getLinkProperties` (site-local first); fall back to filtered `NetworkInterface` scan; skip link-local (`169.254/16`) and Clash-style fake-IP (`198.18.0.0/15`).
