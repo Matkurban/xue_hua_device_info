@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../messages.g.dart';
 import 'device_enums.dart';
+import 'model_utils.dart';
 
 /// Immutable snapshot of active network connectivity, transport type, and interface addresses.
 @immutable
@@ -43,21 +44,24 @@ class NetworkInfo {
                ? 'none'
                : 'unknown');
 
-  /// Creates a [NetworkInfo] domain model from a Pigeon [PigeonNetworkInfo] message.
-  factory NetworkInfo.fromPigeon(PigeonNetworkInfo message) {
+  /// Creates a [NetworkInfo] domain model from a Pigeon [WireNetworkInfo] message.
+  factory NetworkInfo.fromPigeon(WireNetworkInfo message) {
     final resolvedType =
-        message.connectionType != PigeonNetworkConnectionType.unknown
+        message.connectionType != WireNetworkConnectionType.unknown
         ? NetworkConnectionType.fromPigeon(message.connectionType)
         : NetworkConnectionType.fromCode(message.networkType);
     final rawType = message.networkType.trim();
-    final canonicalType = rawType.isNotEmpty ? rawType : resolvedType.code;
+    final canonicalType =
+        rawType.isEmpty || rawType.toLowerCase() == 'unknown'
+        ? resolvedType.code
+        : rawType;
 
     return NetworkInfo(
-      ipAddress: _nonEmptyOrNull(message.ipAddress),
+      ipAddress: nonEmptyOrNull(message.ipAddress),
       connectionType: resolvedType,
       networkType: canonicalType,
-      macAddress: _nonEmptyOrNull(message.macAddress),
-      interfaceName: _nonEmptyOrNull(message.interfaceName),
+      macAddress: nonEmptyOrNull(message.macAddress),
+      interfaceName: nonEmptyOrNull(message.interfaceName),
     );
   }
 
@@ -67,7 +71,7 @@ class NetworkInfo {
   /// Strongly-typed network transport classification.
   final NetworkConnectionType connectionType;
 
-  /// Canonical connection type code (`wifi`, `ethernet`, `cellular`, `none`, or `unknown`).
+  /// Canonical connection type code (`wifi`, `ethernet`, `cellular`, `vpn`, `loopback`, `none`, or `unknown`).
   final String networkType;
 
   /// Hardware MAC address in lowercase colon-hex format when available on desktop, or `null` on mobile.
@@ -78,7 +82,9 @@ class NetworkInfo {
 
   /// Whether the device currently has an active network connection.
   bool get isConnected =>
-      connectionType != NetworkConnectionType.none && networkType != 'none';
+      connectionType != NetworkConnectionType.none &&
+      networkType != 'none' &&
+      (connectionType != NetworkConnectionType.unknown || ipAddress != null);
 
   /// Whether the active transport is wireless (`wifi` or `cellular`).
   bool get isWireless =>
@@ -86,29 +92,37 @@ class NetworkInfo {
       connectionType == NetworkConnectionType.cellular;
 
   /// Returns a copy of this [NetworkInfo] with selectively overridden fields.
+  ///
+  /// Pass any `clear*` flag as `true` to explicitly reset a nullable field to `null`.
   NetworkInfo copyWith({
     String? ipAddress,
+    bool clearIpAddress = false,
     NetworkConnectionType? connectionType,
     String? networkType,
     String? macAddress,
+    bool clearMacAddress = false,
     String? interfaceName,
+    bool clearInterfaceName = false,
   }) {
+    final nextConnectionType = connectionType ?? this.connectionType;
+    final nextNetworkType =
+        networkType ??
+        (connectionType != null ? connectionType.code : this.networkType);
     return NetworkInfo(
-      ipAddress: ipAddress ?? this.ipAddress,
-      connectionType: connectionType ?? this.connectionType,
-      networkType: networkType ?? this.networkType,
-      macAddress: macAddress ?? this.macAddress,
-      interfaceName: interfaceName ?? this.interfaceName,
+      ipAddress: clearIpAddress ? null : (ipAddress ?? this.ipAddress),
+      connectionType: nextConnectionType,
+      networkType: nextNetworkType,
+      macAddress: clearMacAddress ? null : (macAddress ?? this.macAddress),
+      interfaceName:
+          clearInterfaceName ? null : (interfaceName ?? this.interfaceName),
     );
   }
 
-  /// Converts this [NetworkInfo] into a Pigeon [PigeonNetworkInfo] message.
-  PigeonNetworkInfo toPigeon() {
-    return PigeonNetworkInfo(
+  /// Converts this [NetworkInfo] into a Pigeon [WireNetworkInfo] message.
+  WireNetworkInfo toPigeon() {
+    return WireNetworkInfo(
       ipAddress: ipAddress,
-      connectionType: PigeonNetworkConnectionType.values.byName(
-        connectionType.name,
-      ),
+      connectionType: connectionType.toPigeon(),
       networkType: networkType,
       macAddress: macAddress,
       interfaceName: interfaceName,
@@ -148,10 +162,4 @@ class NetworkInfo {
       'NetworkInfo(ipAddress: $ipAddress, connectionType: ${connectionType.code}, '
       'networkType: $networkType, macAddress: $macAddress, '
       'interfaceName: $interfaceName)';
-
-  static String? _nonEmptyOrNull(String? value) {
-    if (value == null) return null;
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? null : trimmed;
-  }
 }

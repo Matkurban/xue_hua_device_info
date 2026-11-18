@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../messages.g.dart';
 import 'device_enums.dart';
+import 'model_utils.dart';
 
 /// Immutable snapshot of battery charge level, charging state, and health status.
 @immutable
@@ -23,22 +24,20 @@ class BatteryInfo {
        healthStatus = healthStatus ?? BatteryHealthStatus.unknown,
        hasBattery = hasBattery ?? (level != null || isCharging != null);
 
-  /// Creates a [BatteryInfo] domain model from a Pigeon [PigeonBatteryInfo] message.
-  factory BatteryInfo.fromPigeon(PigeonBatteryInfo message) {
+  /// Creates a [BatteryInfo] domain model from a Pigeon [WireBatteryInfo] message.
+  factory BatteryInfo.fromPigeon(WireBatteryInfo message) {
     final normalizedLevel = message.level != null &&
             message.level! >= 0.0 &&
             message.level! <= 100.0
         ? message.level
         : null;
-    final rawHealth = message.health?.trim();
-    final cleanHealth =
-        (rawHealth == null || rawHealth.isEmpty) ? null : rawHealth;
+    final cleanHealth = nonEmptyOrNull(message.health);
     final resolvedHealthStatus =
-        message.healthStatus != PigeonBatteryHealthStatus.unknown
+        message.healthStatus != WireBatteryHealthStatus.unknown
         ? BatteryHealthStatus.fromPigeon(message.healthStatus)
         : BatteryHealthStatus.fromLabel(cleanHealth);
     final resolvedChargingState =
-        message.chargingState != PigeonBatteryChargingState.unknown
+        message.chargingState != WireBatteryChargingState.unknown
         ? BatteryChargingState.fromPigeon(message.chargingState)
         : BatteryChargingState.fromCode(null, isCharging: message.isCharging);
 
@@ -55,7 +54,8 @@ class BatteryInfo {
   /// Charge level in percent (`0.0`–`100.0`), or `null` when unavailable.
   final double? level;
 
-  /// Whether the battery is currently charging (or full on external power), or `null` when unavailable.
+  /// Whether the battery is actively charging (platform semantics may vary when full),
+  /// or `null` when unavailable.
   final bool? isCharging;
 
   /// Strongly-typed charging state classification.
@@ -79,33 +79,36 @@ class BatteryInfo {
       level == null ? 'N/A' : '${level!.toStringAsFixed(1)}%';
 
   /// Returns a copy of this [BatteryInfo] with selectively overridden fields.
+  ///
+  /// Pass any `clear*` flag as `true` to explicitly reset a nullable field to `null`.
   BatteryInfo copyWith({
     double? level,
+    bool clearLevel = false,
     bool? isCharging,
+    bool clearIsCharging = false,
     BatteryChargingState? chargingState,
     BatteryHealthStatus? healthStatus,
     String? health,
+    bool clearHealth = false,
     bool? hasBattery,
   }) {
     return BatteryInfo(
-      level: level ?? this.level,
-      isCharging: isCharging ?? this.isCharging,
+      level: clearLevel ? null : (level ?? this.level),
+      isCharging: clearIsCharging ? null : (isCharging ?? this.isCharging),
       chargingState: chargingState ?? this.chargingState,
       healthStatus: healthStatus ?? this.healthStatus,
-      health: health ?? this.health,
+      health: clearHealth ? null : (health ?? this.health),
       hasBattery: hasBattery ?? this.hasBattery,
     );
   }
 
-  /// Converts this [BatteryInfo] into a Pigeon [PigeonBatteryInfo] message.
-  PigeonBatteryInfo toPigeon() {
-    return PigeonBatteryInfo(
+  /// Converts this [BatteryInfo] into a Pigeon [WireBatteryInfo] message.
+  WireBatteryInfo toPigeon() {
+    return WireBatteryInfo(
       level: level,
       isCharging: isCharging,
-      chargingState: PigeonBatteryChargingState.values.byName(
-        chargingState.name,
-      ),
-      healthStatus: PigeonBatteryHealthStatus.values.byName(healthStatus.name),
+      chargingState: chargingState.toPigeon(),
+      healthStatus: healthStatus.toPigeon(),
       health: health,
       hasBattery: hasBattery,
     );

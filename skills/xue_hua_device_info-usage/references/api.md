@@ -14,7 +14,7 @@ That library exports `XueHuaDeviceInfo`, the five modular domain models (`Device
 
 ## `XueHuaDeviceInfo`
 
-Facade for the five independent native snapshots powered by **Pigeon (`^30.0.4`)** (`XueHuaDeviceInfoHostApi`). File: `lib/xue_hua_device_info.dart`.
+Facade for the five independent native snapshots powered by **Pigeon (`^30.0.4`)** (`XueHuaDeviceInfoHostApi`). Uses Native Interop (`createWithNativeInteropApi()`, JNI on Android and Swift FFI on iOS/macOS) and typed `BasicMessageChannel` on Windows/Linux. File: `lib/xue_hua_device_info.dart`.
 
 ### Static Methods
 
@@ -23,7 +23,7 @@ Facade for the five independent native snapshots powered by **Pigeon (`^30.0.4`)
 - `static Future<NetworkInfo> getNetworkInfo()`
 - `static Future<StorageInfo> getStorageInfo()`
 - `static Future<DisplayInfo> getDisplayInfo()`
-- `@visibleForTesting static void setHostApiForTesting(XueHuaDeviceInfoHostApi? api)`
+- `@visibleForTesting static void setHostApiForTesting(XueHuaDeviceInfoHostApi? api)` (subclass `XueHuaDeviceInfoHostApi` returning `WireDeviceInfo`, `WireBatteryInfo`, `WireNetworkInfo`, `WireStorageInfo`, and `WireDisplayInfo`)
 
 ---
 

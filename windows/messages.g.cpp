@@ -10,172 +10,457 @@
 #include <flutter/encodable_value.h>
 #include <flutter/standard_message_codec.h>
 
+#include <cmath>
+#include <limits>
 #include <map>
 #include <optional>
+#include <sstream>
 #include <string>
 
 namespace xue_hua_device_info {
-using flutter::BasicMessageChannel;
-using flutter::CustomEncodableValue;
-using flutter::EncodableList;
-using flutter::EncodableMap;
-using flutter::EncodableValue;
+using ::flutter::BasicMessageChannel;
+using ::flutter::CustomEncodableValue;
+using ::flutter::EncodableList;
+using ::flutter::EncodableMap;
+using ::flutter::EncodableValue;
 
-FlutterError CreateConnectionError(const std::string& channel_name) {
+FlutterError CreateConnectionError(const std::string channel_name) {
   return FlutterError(
       "channel-error",
       "Unable to establish connection on channel: '" + channel_name + "'.",
       EncodableValue(""));
 }
 
-// PigeonDeviceInfo
+namespace {
+template<typename T>
+bool PigeonInternalDeepEquals(const T& a, const T& b);
 
-PigeonDeviceInfo::PigeonDeviceInfo() {}
+bool PigeonInternalDeepEquals(const double& a, const double& b);
 
-PigeonDeviceInfo::PigeonDeviceInfo(const std::string* device_id,
-                                   const std::string* manufacturer,
-                                   const std::string* model,
-                                   const std::string* serial,
-                                   const std::string* name,
-                                   const std::string* operating_system,
-                                   const std::string* os_version,
-                                   const std::string* architecture)
-    : device_id_(device_id ? std::optional<std::string>(*device_id)
-                           : std::nullopt),
-      manufacturer_(manufacturer ? std::optional<std::string>(*manufacturer)
-                                 : std::nullopt),
-      model_(model ? std::optional<std::string>(*model) : std::nullopt),
-      serial_(serial ? std::optional<std::string>(*serial) : std::nullopt),
-      name_(name ? std::optional<std::string>(*name) : std::nullopt),
-      operating_system_(operating_system
-                            ? std::optional<std::string>(*operating_system)
-                            : std::nullopt),
-      os_version_(os_version ? std::optional<std::string>(*os_version)
-                             : std::nullopt),
-      architecture_(architecture ? std::optional<std::string>(*architecture)
-                                 : std::nullopt) {}
+template<typename T>
+bool PigeonInternalDeepEquals(const std::vector<T>& a, const std::vector<T>& b);
 
-const std::string* PigeonDeviceInfo::device_id() const {
+template<typename K, typename V>
+bool PigeonInternalDeepEquals(const std::map<K, V>& a, const std::map<K, V>& b);
+
+template<typename T>
+bool PigeonInternalDeepEquals(const std::optional<T>& a, const std::optional<T>& b);
+
+template<typename T>
+bool PigeonInternalDeepEquals(const std::unique_ptr<T>& a, const std::unique_ptr<T>& b);
+
+bool PigeonInternalDeepEquals(const ::flutter::EncodableValue& a, const ::flutter::EncodableValue& b);
+
+template<typename T>
+bool PigeonInternalDeepEquals(const T& a, const T& b) {
+  return a == b;
+}
+
+template<typename T>
+bool PigeonInternalDeepEquals(const std::vector<T>& a, const std::vector<T>& b) {
+  if (a.size() != b.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < a.size(); ++i) {
+    if (!PigeonInternalDeepEquals(a[i], b[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+template <typename K, typename V>
+bool PigeonInternalDeepEquals(const std::map<K, V>& a, const std::map<K, V>& b) {
+  if (a.size() != b.size()) {
+    return false;
+  }
+  for (const auto& kv : a) {
+    bool found = false;
+    for (const auto& b_kv : b) {
+      if (PigeonInternalDeepEquals(kv.first, b_kv.first)) {
+        if (PigeonInternalDeepEquals(kv.second, b_kv.second)) {
+          found = true;
+          break;
+        } else {
+          return false;
+        }
+      }
+    }
+    if (!found) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool PigeonInternalDeepEquals(const double& a, const double& b) {
+  // Normalize -0.0 to 0.0 and handle NaN equality.
+  return (a == b) || (std::isnan(a) && std::isnan(b));
+}
+
+template<typename T>
+bool PigeonInternalDeepEquals(const std::optional<T>& a, const std::optional<T>& b) {
+  if (!a && !b) {
+    return true;
+  }
+  if (!a || !b) {
+    return false;
+  }
+  return PigeonInternalDeepEquals(*a, *b);
+}
+
+template<typename T>
+bool PigeonInternalDeepEquals(const std::unique_ptr<T>& a, const std::unique_ptr<T>& b) {
+  if (a.get() == b.get()) {
+    return true;
+  }
+  if (!a || !b) {
+    return false;
+  }
+  return PigeonInternalDeepEquals(*a, *b);
+}
+
+bool PigeonInternalDeepEquals(const ::flutter::EncodableValue& a, const ::flutter::EncodableValue& b) {
+  if (a.index() != b.index()) {
+    return false;
+  }
+  if (const double* da = std::get_if<double>(&a)) {
+    return PigeonInternalDeepEquals(*da, std::get<double>(b));
+  } else if (const ::flutter::EncodableList* la = std::get_if<::flutter::EncodableList>(&a)) {
+    return PigeonInternalDeepEquals(*la, std::get<::flutter::EncodableList>(b));
+  } else if (const ::flutter::EncodableMap* ma = std::get_if<::flutter::EncodableMap>(&a)) {
+    return PigeonInternalDeepEquals(*ma, std::get<::flutter::EncodableMap>(b));
+  }
+  return a == b;
+}
+
+template <typename T>
+size_t PigeonInternalDeepHash(const T& v);
+
+size_t PigeonInternalDeepHash(const double& v);
+
+template <typename T>
+size_t PigeonInternalDeepHash(const std::vector<T>& v);
+
+template <typename K, typename V>
+size_t PigeonInternalDeepHash(const std::map<K, V>& v);
+
+template <typename T>
+size_t PigeonInternalDeepHash(const std::optional<T>& v);
+
+template <typename T>
+size_t PigeonInternalDeepHash(const std::unique_ptr<T>& v);
+
+size_t PigeonInternalDeepHash(const ::flutter::EncodableValue& v);
+
+template <typename T>
+size_t PigeonInternalDeepHash(const T& v) {
+  return std::hash<T>()(v);
+}
+
+template <typename T>
+size_t PigeonInternalDeepHash(const std::vector<T>& v) {
+  size_t result = 1;
+  for (const auto& item : v) {
+    result = result * 31 + PigeonInternalDeepHash(item);
+  }
+  return result;
+}
+
+template <typename K, typename V>
+size_t PigeonInternalDeepHash(const std::map<K, V>& v) {
+  size_t result = 0;
+  for (const auto& kv : v) {
+    result += ((PigeonInternalDeepHash(kv.first) * 31) ^ PigeonInternalDeepHash(kv.second));
+  }
+  return result;
+}
+
+size_t PigeonInternalDeepHash(const double& v) {
+  if (std::isnan(v)) {
+    // Normalize NaN to a consistent hash.
+    return std::hash<double>()(std::numeric_limits<double>::quiet_NaN());
+  }
+  if (v == 0.0) {
+    // Normalize -0.0 to 0.0 so they have the same hash code.
+    return std::hash<double>()(0.0);
+  }
+  return std::hash<double>()(v);
+}
+
+template <typename T>
+size_t PigeonInternalDeepHash(const std::optional<T>& v) {
+  return v ? PigeonInternalDeepHash(*v) : 0;
+}
+
+template <typename T>
+size_t PigeonInternalDeepHash(const std::unique_ptr<T>& v) {
+  return v ? PigeonInternalDeepHash(*v) : 0;
+}
+
+size_t PigeonInternalDeepHash(const ::flutter::EncodableValue& v) {
+  size_t result = v.index();
+  if (const double* dv = std::get_if<double>(&v)) {
+    result = result * 31 + PigeonInternalDeepHash(*dv);
+  } else if (const ::flutter::EncodableList* lv =
+                 std::get_if<::flutter::EncodableList>(&v)) {
+    result = result * 31 + PigeonInternalDeepHash(*lv);
+  } else if (const ::flutter::EncodableMap* mv =
+                 std::get_if<::flutter::EncodableMap>(&v)) {
+    result = result * 31 + PigeonInternalDeepHash(*mv);
+  } else {
+    std::visit(
+        [&result](const auto& val) {
+          using T = std::decay_t<decltype(val)>;
+          if constexpr (!std::is_same_v<T, double> &&
+                        !std::is_same_v<T, ::flutter::EncodableList> &&
+                        !std::is_same_v<T, ::flutter::EncodableMap> &&
+                        !std::is_same_v<T, std::monostate> &&
+                        !std::is_same_v<T, ::flutter::CustomEncodableValue>) {
+            result = result * 31 + PigeonInternalDeepHash(val);
+          }
+        },
+        v);
+  }
+  return result;
+}
+
+template <typename T>
+std::string PigeonInternalToString(const T& v);
+
+std::string PigeonInternalToString(const bool& v);
+
+template <typename T>
+std::string PigeonInternalToString(const std::vector<T>& v);
+
+template <typename K, typename V>
+std::string PigeonInternalToString(const std::map<K, V>& v);
+
+template <typename T>
+std::string PigeonInternalToString(const std::optional<T>& v);
+
+template <typename T>
+std::string PigeonInternalToString(const std::unique_ptr<T>& v);
+
+std::string PigeonInternalToString(const ::flutter::EncodableValue& v);
+
+template <typename T>
+std::string PigeonInternalToString(const T& v) {
+  std::stringstream ss;
+  if constexpr (std::is_enum_v<T>) {
+    ss << static_cast<int>(v);
+  } else {
+    ss << v;
+  }
+  return ss.str();
+}
+
+std::string PigeonInternalToString(const bool& v) {
+  return v ? "true" : "false";
+}
+
+template <typename T>
+std::string PigeonInternalToString(const std::vector<T>& v) {
+  std::stringstream ss;
+  ss << "[";
+  for (size_t i = 0; i < v.size(); ++i) {
+    if (i > 0) {
+      ss << ", ";
+    }
+    ss << PigeonInternalToString(v[i]);
+  }
+  ss << "]";
+  return ss.str();
+}
+
+template <typename K, typename V>
+std::string PigeonInternalToString(const std::map<K, V>& v) {
+  std::stringstream ss;
+  ss << "{";
+  bool first = true;
+  for (const auto& kv : v) {
+    if (!first) {
+      ss << ", ";
+    }
+    first = false;
+    ss << PigeonInternalToString(kv.first) << ": " << PigeonInternalToString(kv.second);
+  }
+  ss << "}";
+  return ss.str();
+}
+
+template <typename T>
+std::string PigeonInternalToString(const std::optional<T>& v) {
+  return v ? PigeonInternalToString(*v) : "null";
+}
+
+template <typename T>
+std::string PigeonInternalToString(const std::unique_ptr<T>& v) {
+  return v ? PigeonInternalToString(*v) : "null";
+}
+
+std::string PigeonInternalToString(const ::flutter::EncodableValue& v) {
+  return std::visit(
+      [](const auto& val) {
+        using T = std::decay_t<decltype(val)>;
+        if constexpr (std::is_same_v<T, std::monostate>) {
+          return std::string("null");
+        } else if constexpr (std::is_same_v<T, bool>) {
+          return val ? std::string("true") : std::string("false");
+        } else if constexpr (std::is_same_v<T, std::string>) {
+          return "\"" + val + "\"";
+        } else if constexpr (std::is_same_v<T, ::flutter::CustomEncodableValue>) {
+          return std::string("[custom]");
+        } else {
+          return PigeonInternalToString(val);
+        }
+      },
+      v);
+}
+
+}  // namespace
+// WireDeviceInfo
+
+WireDeviceInfo::WireDeviceInfo() {}
+
+WireDeviceInfo::WireDeviceInfo(
+  const std::string* device_id,
+  const std::string* manufacturer,
+  const std::string* model,
+  const std::string* serial,
+  const std::string* name,
+  const std::string* operating_system,
+  const std::string* os_version,
+  const std::string* architecture)
+ : device_id_(device_id ? std::optional<std::string>(*device_id) : std::nullopt),
+    manufacturer_(manufacturer ? std::optional<std::string>(*manufacturer) : std::nullopt),
+    model_(model ? std::optional<std::string>(*model) : std::nullopt),
+    serial_(serial ? std::optional<std::string>(*serial) : std::nullopt),
+    name_(name ? std::optional<std::string>(*name) : std::nullopt),
+    operating_system_(operating_system ? std::optional<std::string>(*operating_system) : std::nullopt),
+    os_version_(os_version ? std::optional<std::string>(*os_version) : std::nullopt),
+    architecture_(architecture ? std::optional<std::string>(*architecture) : std::nullopt) {}
+
+const std::string* WireDeviceInfo::device_id() const {
   return device_id_ ? &(*device_id_) : nullptr;
 }
 
-void PigeonDeviceInfo::set_device_id(const std::string_view* value_arg) {
-  device_id_ =
-      value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
+void WireDeviceInfo::set_device_id(const std::string_view* value_arg) {
+  device_id_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonDeviceInfo::set_device_id(std::string_view value_arg) {
+void WireDeviceInfo::set_device_id(std::string_view value_arg) {
   device_id_ = value_arg;
 }
 
-const std::string* PigeonDeviceInfo::manufacturer() const {
+
+const std::string* WireDeviceInfo::manufacturer() const {
   return manufacturer_ ? &(*manufacturer_) : nullptr;
 }
 
-void PigeonDeviceInfo::set_manufacturer(const std::string_view* value_arg) {
-  manufacturer_ =
-      value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
+void WireDeviceInfo::set_manufacturer(const std::string_view* value_arg) {
+  manufacturer_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonDeviceInfo::set_manufacturer(std::string_view value_arg) {
+void WireDeviceInfo::set_manufacturer(std::string_view value_arg) {
   manufacturer_ = value_arg;
 }
 
-const std::string* PigeonDeviceInfo::model() const {
+
+const std::string* WireDeviceInfo::model() const {
   return model_ ? &(*model_) : nullptr;
 }
 
-void PigeonDeviceInfo::set_model(const std::string_view* value_arg) {
+void WireDeviceInfo::set_model(const std::string_view* value_arg) {
   model_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonDeviceInfo::set_model(std::string_view value_arg) {
+void WireDeviceInfo::set_model(std::string_view value_arg) {
   model_ = value_arg;
 }
 
-const std::string* PigeonDeviceInfo::serial() const {
+
+const std::string* WireDeviceInfo::serial() const {
   return serial_ ? &(*serial_) : nullptr;
 }
 
-void PigeonDeviceInfo::set_serial(const std::string_view* value_arg) {
+void WireDeviceInfo::set_serial(const std::string_view* value_arg) {
   serial_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonDeviceInfo::set_serial(std::string_view value_arg) {
+void WireDeviceInfo::set_serial(std::string_view value_arg) {
   serial_ = value_arg;
 }
 
-const std::string* PigeonDeviceInfo::name() const {
+
+const std::string* WireDeviceInfo::name() const {
   return name_ ? &(*name_) : nullptr;
 }
 
-void PigeonDeviceInfo::set_name(const std::string_view* value_arg) {
+void WireDeviceInfo::set_name(const std::string_view* value_arg) {
   name_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonDeviceInfo::set_name(std::string_view value_arg) {
+void WireDeviceInfo::set_name(std::string_view value_arg) {
   name_ = value_arg;
 }
 
-const std::string* PigeonDeviceInfo::operating_system() const {
+
+const std::string* WireDeviceInfo::operating_system() const {
   return operating_system_ ? &(*operating_system_) : nullptr;
 }
 
-void PigeonDeviceInfo::set_operating_system(const std::string_view* value_arg) {
-  operating_system_ =
-      value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
+void WireDeviceInfo::set_operating_system(const std::string_view* value_arg) {
+  operating_system_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonDeviceInfo::set_operating_system(std::string_view value_arg) {
+void WireDeviceInfo::set_operating_system(std::string_view value_arg) {
   operating_system_ = value_arg;
 }
 
-const std::string* PigeonDeviceInfo::os_version() const {
+
+const std::string* WireDeviceInfo::os_version() const {
   return os_version_ ? &(*os_version_) : nullptr;
 }
 
-void PigeonDeviceInfo::set_os_version(const std::string_view* value_arg) {
-  os_version_ =
-      value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
+void WireDeviceInfo::set_os_version(const std::string_view* value_arg) {
+  os_version_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonDeviceInfo::set_os_version(std::string_view value_arg) {
+void WireDeviceInfo::set_os_version(std::string_view value_arg) {
   os_version_ = value_arg;
 }
 
-const std::string* PigeonDeviceInfo::architecture() const {
+
+const std::string* WireDeviceInfo::architecture() const {
   return architecture_ ? &(*architecture_) : nullptr;
 }
 
-void PigeonDeviceInfo::set_architecture(const std::string_view* value_arg) {
-  architecture_ =
-      value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
+void WireDeviceInfo::set_architecture(const std::string_view* value_arg) {
+  architecture_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonDeviceInfo::set_architecture(std::string_view value_arg) {
+void WireDeviceInfo::set_architecture(std::string_view value_arg) {
   architecture_ = value_arg;
 }
 
-EncodableList PigeonDeviceInfo::ToEncodableList() const {
+
+EncodableList WireDeviceInfo::ToEncodableList() const {
   EncodableList list;
   list.reserve(8);
   list.push_back(device_id_ ? EncodableValue(*device_id_) : EncodableValue());
-  list.push_back(manufacturer_ ? EncodableValue(*manufacturer_)
-                               : EncodableValue());
+  list.push_back(manufacturer_ ? EncodableValue(*manufacturer_) : EncodableValue());
   list.push_back(model_ ? EncodableValue(*model_) : EncodableValue());
   list.push_back(serial_ ? EncodableValue(*serial_) : EncodableValue());
   list.push_back(name_ ? EncodableValue(*name_) : EncodableValue());
-  list.push_back(operating_system_ ? EncodableValue(*operating_system_)
-                                   : EncodableValue());
+  list.push_back(operating_system_ ? EncodableValue(*operating_system_) : EncodableValue());
   list.push_back(os_version_ ? EncodableValue(*os_version_) : EncodableValue());
-  list.push_back(architecture_ ? EncodableValue(*architecture_)
-                               : EncodableValue());
+  list.push_back(architecture_ ? EncodableValue(*architecture_) : EncodableValue());
   return list;
 }
 
-PigeonDeviceInfo PigeonDeviceInfo::FromEncodableList(
-    const EncodableList& list) {
-  PigeonDeviceInfo decoded;
+WireDeviceInfo WireDeviceInfo::FromEncodableList(const EncodableList& list) {
+  WireDeviceInfo decoded;
   auto& encodable_device_id = list[0];
   if (!encodable_device_id.IsNull()) {
     decoded.set_device_id(std::get<std::string>(encodable_device_id));
@@ -198,8 +483,7 @@ PigeonDeviceInfo PigeonDeviceInfo::FromEncodableList(
   }
   auto& encodable_operating_system = list[5];
   if (!encodable_operating_system.IsNull()) {
-    decoded.set_operating_system(
-        std::get<std::string>(encodable_operating_system));
+    decoded.set_operating_system(std::get<std::string>(encodable_operating_system));
   }
   auto& encodable_os_version = list[6];
   if (!encodable_os_version.IsNull()) {
@@ -212,92 +496,190 @@ PigeonDeviceInfo PigeonDeviceInfo::FromEncodableList(
   return decoded;
 }
 
-// PigeonBatteryInfo
+bool WireDeviceInfo::operator==(const WireDeviceInfo& other) const {
+  return PigeonInternalDeepEquals(device_id_, other.device_id_) && PigeonInternalDeepEquals(manufacturer_, other.manufacturer_) && PigeonInternalDeepEquals(model_, other.model_) && PigeonInternalDeepEquals(serial_, other.serial_) && PigeonInternalDeepEquals(name_, other.name_) && PigeonInternalDeepEquals(operating_system_, other.operating_system_) && PigeonInternalDeepEquals(os_version_, other.os_version_) && PigeonInternalDeepEquals(architecture_, other.architecture_);
+}
 
-PigeonBatteryInfo::PigeonBatteryInfo(
-    const PigeonBatteryChargingState& charging_state,
-    const PigeonBatteryHealthStatus& health_status, bool has_battery)
-    : charging_state_(charging_state),
-      health_status_(health_status),
-      has_battery_(has_battery) {}
+bool WireDeviceInfo::operator!=(const WireDeviceInfo& other) const {
+  return !(*this == other);
+}
 
-PigeonBatteryInfo::PigeonBatteryInfo(
-    const double* level, const bool* is_charging,
-    const PigeonBatteryChargingState& charging_state,
-    const PigeonBatteryHealthStatus& health_status, const std::string* health,
-    bool has_battery)
-    : level_(level ? std::optional<double>(*level) : std::nullopt),
-      is_charging_(is_charging ? std::optional<bool>(*is_charging)
-                               : std::nullopt),
-      charging_state_(charging_state),
-      health_status_(health_status),
-      health_(health ? std::optional<std::string>(*health) : std::nullopt),
-      has_battery_(has_battery) {}
+size_t WireDeviceInfo::Hash() const {
+  size_t result = 1;
+  result = result * 31 + PigeonInternalDeepHash(device_id_);
+  result = result * 31 + PigeonInternalDeepHash(manufacturer_);
+  result = result * 31 + PigeonInternalDeepHash(model_);
+  result = result * 31 + PigeonInternalDeepHash(serial_);
+  result = result * 31 + PigeonInternalDeepHash(name_);
+  result = result * 31 + PigeonInternalDeepHash(operating_system_);
+  result = result * 31 + PigeonInternalDeepHash(os_version_);
+  result = result * 31 + PigeonInternalDeepHash(architecture_);
+  return result;
+}
 
-const double* PigeonBatteryInfo::level() const {
+std::ostream& operator<<(
+  std::ostream& os,
+  const WireDeviceInfo& obj) {
+  os << "WireDeviceInfo(";
+  os << "device_id: ";
+  if (obj.device_id_) {
+    os << PigeonInternalToString(*obj.device_id_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", manufacturer: ";
+  if (obj.manufacturer_) {
+    os << PigeonInternalToString(*obj.manufacturer_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", model: ";
+  if (obj.model_) {
+    os << PigeonInternalToString(*obj.model_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", serial: ";
+  if (obj.serial_) {
+    os << PigeonInternalToString(*obj.serial_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", name: ";
+  if (obj.name_) {
+    os << PigeonInternalToString(*obj.name_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", operating_system: ";
+  if (obj.operating_system_) {
+    os << PigeonInternalToString(*obj.operating_system_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", os_version: ";
+  if (obj.os_version_) {
+    os << PigeonInternalToString(*obj.os_version_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", architecture: ";
+  if (obj.architecture_) {
+    os << PigeonInternalToString(*obj.architecture_);
+  }
+  else {
+    os << "null";
+  }
+  os << ")";
+  return os;
+}
+
+size_t PigeonInternalDeepHash(const WireDeviceInfo& v) {
+  return v.Hash();
+}
+
+// WireBatteryInfo
+
+WireBatteryInfo::WireBatteryInfo(
+  const WireBatteryChargingState& charging_state,
+  const WireBatteryHealthStatus& health_status,
+  bool has_battery)
+ : charging_state_(charging_state),
+    health_status_(health_status),
+    has_battery_(has_battery) {}
+
+WireBatteryInfo::WireBatteryInfo(
+  const double* level,
+  const bool* is_charging,
+  const WireBatteryChargingState& charging_state,
+  const WireBatteryHealthStatus& health_status,
+  const std::string* health,
+  bool has_battery)
+ : level_(level ? std::optional<double>(*level) : std::nullopt),
+    is_charging_(is_charging ? std::optional<bool>(*is_charging) : std::nullopt),
+    charging_state_(charging_state),
+    health_status_(health_status),
+    health_(health ? std::optional<std::string>(*health) : std::nullopt),
+    has_battery_(has_battery) {}
+
+const double* WireBatteryInfo::level() const {
   return level_ ? &(*level_) : nullptr;
 }
 
-void PigeonBatteryInfo::set_level(const double* value_arg) {
+void WireBatteryInfo::set_level(const double* value_arg) {
   level_ = value_arg ? std::optional<double>(*value_arg) : std::nullopt;
 }
 
-void PigeonBatteryInfo::set_level(double value_arg) { level_ = value_arg; }
+void WireBatteryInfo::set_level(double value_arg) {
+  level_ = value_arg;
+}
 
-const bool* PigeonBatteryInfo::is_charging() const {
+
+const bool* WireBatteryInfo::is_charging() const {
   return is_charging_ ? &(*is_charging_) : nullptr;
 }
 
-void PigeonBatteryInfo::set_is_charging(const bool* value_arg) {
+void WireBatteryInfo::set_is_charging(const bool* value_arg) {
   is_charging_ = value_arg ? std::optional<bool>(*value_arg) : std::nullopt;
 }
 
-void PigeonBatteryInfo::set_is_charging(bool value_arg) {
+void WireBatteryInfo::set_is_charging(bool value_arg) {
   is_charging_ = value_arg;
 }
 
-const PigeonBatteryChargingState& PigeonBatteryInfo::charging_state() const {
+
+const WireBatteryChargingState& WireBatteryInfo::charging_state() const {
   return charging_state_;
 }
 
-void PigeonBatteryInfo::set_charging_state(
-    const PigeonBatteryChargingState& value_arg) {
+void WireBatteryInfo::set_charging_state(const WireBatteryChargingState& value_arg) {
   charging_state_ = value_arg;
 }
 
-const PigeonBatteryHealthStatus& PigeonBatteryInfo::health_status() const {
+
+const WireBatteryHealthStatus& WireBatteryInfo::health_status() const {
   return health_status_;
 }
 
-void PigeonBatteryInfo::set_health_status(
-    const PigeonBatteryHealthStatus& value_arg) {
+void WireBatteryInfo::set_health_status(const WireBatteryHealthStatus& value_arg) {
   health_status_ = value_arg;
 }
 
-const std::string* PigeonBatteryInfo::health() const {
+
+const std::string* WireBatteryInfo::health() const {
   return health_ ? &(*health_) : nullptr;
 }
 
-void PigeonBatteryInfo::set_health(const std::string_view* value_arg) {
+void WireBatteryInfo::set_health(const std::string_view* value_arg) {
   health_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonBatteryInfo::set_health(std::string_view value_arg) {
+void WireBatteryInfo::set_health(std::string_view value_arg) {
   health_ = value_arg;
 }
 
-bool PigeonBatteryInfo::has_battery() const { return has_battery_; }
 
-void PigeonBatteryInfo::set_has_battery(bool value_arg) {
+bool WireBatteryInfo::has_battery() const {
+  return has_battery_;
+}
+
+void WireBatteryInfo::set_has_battery(bool value_arg) {
   has_battery_ = value_arg;
 }
 
-EncodableList PigeonBatteryInfo::ToEncodableList() const {
+
+EncodableList WireBatteryInfo::ToEncodableList() const {
   EncodableList list;
   list.reserve(6);
   list.push_back(level_ ? EncodableValue(*level_) : EncodableValue());
-  list.push_back(is_charging_ ? EncodableValue(*is_charging_)
-                              : EncodableValue());
+  list.push_back(is_charging_ ? EncodableValue(*is_charging_) : EncodableValue());
   list.push_back(CustomEncodableValue(charging_state_));
   list.push_back(CustomEncodableValue(health_status_));
   list.push_back(health_ ? EncodableValue(*health_) : EncodableValue());
@@ -305,14 +687,11 @@ EncodableList PigeonBatteryInfo::ToEncodableList() const {
   return list;
 }
 
-PigeonBatteryInfo PigeonBatteryInfo::FromEncodableList(
-    const EncodableList& list) {
-  PigeonBatteryInfo decoded(
-      std::any_cast<const PigeonBatteryChargingState&>(
-          std::get<CustomEncodableValue>(list[2])),
-      std::any_cast<const PigeonBatteryHealthStatus&>(
-          std::get<CustomEncodableValue>(list[3])),
-      std::get<bool>(list[5]));
+WireBatteryInfo WireBatteryInfo::FromEncodableList(const EncodableList& list) {
+  WireBatteryInfo decoded(
+    std::any_cast<const WireBatteryChargingState&>(std::get<CustomEncodableValue>(list[2])),
+    std::any_cast<const WireBatteryHealthStatus&>(std::get<CustomEncodableValue>(list[3])),
+    std::get<bool>(list[5]));
   auto& encodable_level = list[0];
   if (!encodable_level.IsNull()) {
     decoded.set_level(std::get<double>(encodable_level));
@@ -328,103 +707,156 @@ PigeonBatteryInfo PigeonBatteryInfo::FromEncodableList(
   return decoded;
 }
 
-// PigeonNetworkInfo
+bool WireBatteryInfo::operator==(const WireBatteryInfo& other) const {
+  return PigeonInternalDeepEquals(level_, other.level_) && PigeonInternalDeepEquals(is_charging_, other.is_charging_) && PigeonInternalDeepEquals(charging_state_, other.charging_state_) && PigeonInternalDeepEquals(health_status_, other.health_status_) && PigeonInternalDeepEquals(health_, other.health_) && PigeonInternalDeepEquals(has_battery_, other.has_battery_);
+}
 
-PigeonNetworkInfo::PigeonNetworkInfo(
-    const PigeonNetworkConnectionType& connection_type,
-    const std::string& network_type)
-    : connection_type_(connection_type), network_type_(network_type) {}
+bool WireBatteryInfo::operator!=(const WireBatteryInfo& other) const {
+  return !(*this == other);
+}
 
-PigeonNetworkInfo::PigeonNetworkInfo(
-    const std::string* ip_address,
-    const PigeonNetworkConnectionType& connection_type,
-    const std::string& network_type, const std::string* mac_address,
-    const std::string* interface_name)
-    : ip_address_(ip_address ? std::optional<std::string>(*ip_address)
-                             : std::nullopt),
-      connection_type_(connection_type),
-      network_type_(network_type),
-      mac_address_(mac_address ? std::optional<std::string>(*mac_address)
-                               : std::nullopt),
-      interface_name_(interface_name
-                          ? std::optional<std::string>(*interface_name)
-                          : std::nullopt) {}
+size_t WireBatteryInfo::Hash() const {
+  size_t result = 1;
+  result = result * 31 + PigeonInternalDeepHash(level_);
+  result = result * 31 + PigeonInternalDeepHash(is_charging_);
+  result = result * 31 + PigeonInternalDeepHash(charging_state_);
+  result = result * 31 + PigeonInternalDeepHash(health_status_);
+  result = result * 31 + PigeonInternalDeepHash(health_);
+  result = result * 31 + PigeonInternalDeepHash(has_battery_);
+  return result;
+}
 
-const std::string* PigeonNetworkInfo::ip_address() const {
+std::ostream& operator<<(
+  std::ostream& os,
+  const WireBatteryInfo& obj) {
+  os << "WireBatteryInfo(";
+  os << "level: ";
+  if (obj.level_) {
+    os << PigeonInternalToString(*obj.level_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", is_charging: ";
+  if (obj.is_charging_) {
+    os << PigeonInternalToString(*obj.is_charging_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", charging_state: ";
+  os << PigeonInternalToString(obj.charging_state_);
+  os << ", health_status: ";
+  os << PigeonInternalToString(obj.health_status_);
+  os << ", health: ";
+  if (obj.health_) {
+    os << PigeonInternalToString(*obj.health_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", has_battery: ";
+  os << PigeonInternalToString(obj.has_battery_);
+  os << ")";
+  return os;
+}
+
+size_t PigeonInternalDeepHash(const WireBatteryInfo& v) {
+  return v.Hash();
+}
+
+// WireNetworkInfo
+
+WireNetworkInfo::WireNetworkInfo(
+  const WireNetworkConnectionType& connection_type,
+  const std::string& network_type)
+ : connection_type_(connection_type),
+    network_type_(network_type) {}
+
+WireNetworkInfo::WireNetworkInfo(
+  const std::string* ip_address,
+  const WireNetworkConnectionType& connection_type,
+  const std::string& network_type,
+  const std::string* mac_address,
+  const std::string* interface_name)
+ : ip_address_(ip_address ? std::optional<std::string>(*ip_address) : std::nullopt),
+    connection_type_(connection_type),
+    network_type_(network_type),
+    mac_address_(mac_address ? std::optional<std::string>(*mac_address) : std::nullopt),
+    interface_name_(interface_name ? std::optional<std::string>(*interface_name) : std::nullopt) {}
+
+const std::string* WireNetworkInfo::ip_address() const {
   return ip_address_ ? &(*ip_address_) : nullptr;
 }
 
-void PigeonNetworkInfo::set_ip_address(const std::string_view* value_arg) {
-  ip_address_ =
-      value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
+void WireNetworkInfo::set_ip_address(const std::string_view* value_arg) {
+  ip_address_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonNetworkInfo::set_ip_address(std::string_view value_arg) {
+void WireNetworkInfo::set_ip_address(std::string_view value_arg) {
   ip_address_ = value_arg;
 }
 
-const PigeonNetworkConnectionType& PigeonNetworkInfo::connection_type() const {
+
+const WireNetworkConnectionType& WireNetworkInfo::connection_type() const {
   return connection_type_;
 }
 
-void PigeonNetworkInfo::set_connection_type(
-    const PigeonNetworkConnectionType& value_arg) {
+void WireNetworkInfo::set_connection_type(const WireNetworkConnectionType& value_arg) {
   connection_type_ = value_arg;
 }
 
-const std::string& PigeonNetworkInfo::network_type() const {
+
+const std::string& WireNetworkInfo::network_type() const {
   return network_type_;
 }
 
-void PigeonNetworkInfo::set_network_type(std::string_view value_arg) {
+void WireNetworkInfo::set_network_type(std::string_view value_arg) {
   network_type_ = value_arg;
 }
 
-const std::string* PigeonNetworkInfo::mac_address() const {
+
+const std::string* WireNetworkInfo::mac_address() const {
   return mac_address_ ? &(*mac_address_) : nullptr;
 }
 
-void PigeonNetworkInfo::set_mac_address(const std::string_view* value_arg) {
-  mac_address_ =
-      value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
+void WireNetworkInfo::set_mac_address(const std::string_view* value_arg) {
+  mac_address_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonNetworkInfo::set_mac_address(std::string_view value_arg) {
+void WireNetworkInfo::set_mac_address(std::string_view value_arg) {
   mac_address_ = value_arg;
 }
 
-const std::string* PigeonNetworkInfo::interface_name() const {
+
+const std::string* WireNetworkInfo::interface_name() const {
   return interface_name_ ? &(*interface_name_) : nullptr;
 }
 
-void PigeonNetworkInfo::set_interface_name(const std::string_view* value_arg) {
-  interface_name_ =
-      value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
+void WireNetworkInfo::set_interface_name(const std::string_view* value_arg) {
+  interface_name_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonNetworkInfo::set_interface_name(std::string_view value_arg) {
+void WireNetworkInfo::set_interface_name(std::string_view value_arg) {
   interface_name_ = value_arg;
 }
 
-EncodableList PigeonNetworkInfo::ToEncodableList() const {
+
+EncodableList WireNetworkInfo::ToEncodableList() const {
   EncodableList list;
   list.reserve(5);
   list.push_back(ip_address_ ? EncodableValue(*ip_address_) : EncodableValue());
   list.push_back(CustomEncodableValue(connection_type_));
   list.push_back(EncodableValue(network_type_));
-  list.push_back(mac_address_ ? EncodableValue(*mac_address_)
-                              : EncodableValue());
-  list.push_back(interface_name_ ? EncodableValue(*interface_name_)
-                                 : EncodableValue());
+  list.push_back(mac_address_ ? EncodableValue(*mac_address_) : EncodableValue());
+  list.push_back(interface_name_ ? EncodableValue(*interface_name_) : EncodableValue());
   return list;
 }
 
-PigeonNetworkInfo PigeonNetworkInfo::FromEncodableList(
-    const EncodableList& list) {
-  PigeonNetworkInfo decoded(
-      std::any_cast<const PigeonNetworkConnectionType&>(
-          std::get<CustomEncodableValue>(list[1])),
-      std::get<std::string>(list[2]));
+WireNetworkInfo WireNetworkInfo::FromEncodableList(const EncodableList& list) {
+  WireNetworkInfo decoded(
+    std::any_cast<const WireNetworkConnectionType&>(std::get<CustomEncodableValue>(list[1])),
+    std::get<std::string>(list[2]));
   auto& encodable_ip_address = list[0];
   if (!encodable_ip_address.IsNull()) {
     decoded.set_ip_address(std::get<std::string>(encodable_ip_address));
@@ -440,73 +872,136 @@ PigeonNetworkInfo PigeonNetworkInfo::FromEncodableList(
   return decoded;
 }
 
-// PigeonStorageInfo
+bool WireNetworkInfo::operator==(const WireNetworkInfo& other) const {
+  return PigeonInternalDeepEquals(ip_address_, other.ip_address_) && PigeonInternalDeepEquals(connection_type_, other.connection_type_) && PigeonInternalDeepEquals(network_type_, other.network_type_) && PigeonInternalDeepEquals(mac_address_, other.mac_address_) && PigeonInternalDeepEquals(interface_name_, other.interface_name_);
+}
 
-PigeonStorageInfo::PigeonStorageInfo(int64_t total_bytes, int64_t free_bytes,
-                                     const PigeonStorageMediumType& medium_type)
-    : total_bytes_(total_bytes),
-      free_bytes_(free_bytes),
-      medium_type_(medium_type) {}
+bool WireNetworkInfo::operator!=(const WireNetworkInfo& other) const {
+  return !(*this == other);
+}
 
-PigeonStorageInfo::PigeonStorageInfo(int64_t total_bytes, int64_t free_bytes,
-                                     const PigeonStorageMediumType& medium_type,
-                                     const std::string* storage_type)
-    : total_bytes_(total_bytes),
-      free_bytes_(free_bytes),
-      medium_type_(medium_type),
-      storage_type_(storage_type ? std::optional<std::string>(*storage_type)
-                                 : std::nullopt) {}
+size_t WireNetworkInfo::Hash() const {
+  size_t result = 1;
+  result = result * 31 + PigeonInternalDeepHash(ip_address_);
+  result = result * 31 + PigeonInternalDeepHash(connection_type_);
+  result = result * 31 + PigeonInternalDeepHash(network_type_);
+  result = result * 31 + PigeonInternalDeepHash(mac_address_);
+  result = result * 31 + PigeonInternalDeepHash(interface_name_);
+  return result;
+}
 
-int64_t PigeonStorageInfo::total_bytes() const { return total_bytes_; }
+std::ostream& operator<<(
+  std::ostream& os,
+  const WireNetworkInfo& obj) {
+  os << "WireNetworkInfo(";
+  os << "ip_address: ";
+  if (obj.ip_address_) {
+    os << PigeonInternalToString(*obj.ip_address_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", connection_type: ";
+  os << PigeonInternalToString(obj.connection_type_);
+  os << ", network_type: ";
+  os << PigeonInternalToString(obj.network_type_);
+  os << ", mac_address: ";
+  if (obj.mac_address_) {
+    os << PigeonInternalToString(*obj.mac_address_);
+  }
+  else {
+    os << "null";
+  }
+  os << ", interface_name: ";
+  if (obj.interface_name_) {
+    os << PigeonInternalToString(*obj.interface_name_);
+  }
+  else {
+    os << "null";
+  }
+  os << ")";
+  return os;
+}
 
-void PigeonStorageInfo::set_total_bytes(int64_t value_arg) {
+size_t PigeonInternalDeepHash(const WireNetworkInfo& v) {
+  return v.Hash();
+}
+
+// WireStorageInfo
+
+WireStorageInfo::WireStorageInfo(
+  int64_t total_bytes,
+  int64_t free_bytes,
+  const WireStorageMediumType& medium_type)
+ : total_bytes_(total_bytes),
+    free_bytes_(free_bytes),
+    medium_type_(medium_type) {}
+
+WireStorageInfo::WireStorageInfo(
+  int64_t total_bytes,
+  int64_t free_bytes,
+  const WireStorageMediumType& medium_type,
+  const std::string* storage_type)
+ : total_bytes_(total_bytes),
+    free_bytes_(free_bytes),
+    medium_type_(medium_type),
+    storage_type_(storage_type ? std::optional<std::string>(*storage_type) : std::nullopt) {}
+
+int64_t WireStorageInfo::total_bytes() const {
+  return total_bytes_;
+}
+
+void WireStorageInfo::set_total_bytes(int64_t value_arg) {
   total_bytes_ = value_arg;
 }
 
-int64_t PigeonStorageInfo::free_bytes() const { return free_bytes_; }
 
-void PigeonStorageInfo::set_free_bytes(int64_t value_arg) {
+int64_t WireStorageInfo::free_bytes() const {
+  return free_bytes_;
+}
+
+void WireStorageInfo::set_free_bytes(int64_t value_arg) {
   free_bytes_ = value_arg;
 }
 
-const PigeonStorageMediumType& PigeonStorageInfo::medium_type() const {
+
+const WireStorageMediumType& WireStorageInfo::medium_type() const {
   return medium_type_;
 }
 
-void PigeonStorageInfo::set_medium_type(
-    const PigeonStorageMediumType& value_arg) {
+void WireStorageInfo::set_medium_type(const WireStorageMediumType& value_arg) {
   medium_type_ = value_arg;
 }
 
-const std::string* PigeonStorageInfo::storage_type() const {
+
+const std::string* WireStorageInfo::storage_type() const {
   return storage_type_ ? &(*storage_type_) : nullptr;
 }
 
-void PigeonStorageInfo::set_storage_type(const std::string_view* value_arg) {
-  storage_type_ =
-      value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
+void WireStorageInfo::set_storage_type(const std::string_view* value_arg) {
+  storage_type_ = value_arg ? std::optional<std::string>(*value_arg) : std::nullopt;
 }
 
-void PigeonStorageInfo::set_storage_type(std::string_view value_arg) {
+void WireStorageInfo::set_storage_type(std::string_view value_arg) {
   storage_type_ = value_arg;
 }
 
-EncodableList PigeonStorageInfo::ToEncodableList() const {
+
+EncodableList WireStorageInfo::ToEncodableList() const {
   EncodableList list;
   list.reserve(4);
   list.push_back(EncodableValue(total_bytes_));
   list.push_back(EncodableValue(free_bytes_));
   list.push_back(CustomEncodableValue(medium_type_));
-  list.push_back(storage_type_ ? EncodableValue(*storage_type_)
-                               : EncodableValue());
+  list.push_back(storage_type_ ? EncodableValue(*storage_type_) : EncodableValue());
   return list;
 }
 
-PigeonStorageInfo PigeonStorageInfo::FromEncodableList(
-    const EncodableList& list) {
-  PigeonStorageInfo decoded(list[0].LongValue(), list[1].LongValue(),
-                            std::any_cast<const PigeonStorageMediumType&>(
-                                std::get<CustomEncodableValue>(list[2])));
+WireStorageInfo WireStorageInfo::FromEncodableList(const EncodableList& list) {
+  WireStorageInfo decoded(
+    std::get<int64_t>(list[0]),
+    std::get<int64_t>(list[1]),
+    std::any_cast<const WireStorageMediumType&>(std::get<CustomEncodableValue>(list[2])));
   auto& encodable_storage_type = list[3];
   if (!encodable_storage_type.IsNull()) {
     decoded.set_storage_type(std::get<std::string>(encodable_storage_type));
@@ -514,63 +1009,123 @@ PigeonStorageInfo PigeonStorageInfo::FromEncodableList(
   return decoded;
 }
 
-// PigeonDisplayInfo
+bool WireStorageInfo::operator==(const WireStorageInfo& other) const {
+  return PigeonInternalDeepEquals(total_bytes_, other.total_bytes_) && PigeonInternalDeepEquals(free_bytes_, other.free_bytes_) && PigeonInternalDeepEquals(medium_type_, other.medium_type_) && PigeonInternalDeepEquals(storage_type_, other.storage_type_);
+}
 
-PigeonDisplayInfo::PigeonDisplayInfo(int64_t width, int64_t height,
-                                     double scale_factor)
-    : width_(width), height_(height), scale_factor_(scale_factor) {}
+bool WireStorageInfo::operator!=(const WireStorageInfo& other) const {
+  return !(*this == other);
+}
 
-PigeonDisplayInfo::PigeonDisplayInfo(int64_t width, int64_t height,
-                                     double scale_factor,
-                                     const double* refresh_rate)
-    : width_(width),
-      height_(height),
-      scale_factor_(scale_factor),
-      refresh_rate_(refresh_rate ? std::optional<double>(*refresh_rate)
-                                 : std::nullopt) {}
+size_t WireStorageInfo::Hash() const {
+  size_t result = 1;
+  result = result * 31 + PigeonInternalDeepHash(total_bytes_);
+  result = result * 31 + PigeonInternalDeepHash(free_bytes_);
+  result = result * 31 + PigeonInternalDeepHash(medium_type_);
+  result = result * 31 + PigeonInternalDeepHash(storage_type_);
+  return result;
+}
 
-int64_t PigeonDisplayInfo::width() const { return width_; }
+std::ostream& operator<<(
+  std::ostream& os,
+  const WireStorageInfo& obj) {
+  os << "WireStorageInfo(";
+  os << "total_bytes: ";
+  os << PigeonInternalToString(obj.total_bytes_);
+  os << ", free_bytes: ";
+  os << PigeonInternalToString(obj.free_bytes_);
+  os << ", medium_type: ";
+  os << PigeonInternalToString(obj.medium_type_);
+  os << ", storage_type: ";
+  if (obj.storage_type_) {
+    os << PigeonInternalToString(*obj.storage_type_);
+  }
+  else {
+    os << "null";
+  }
+  os << ")";
+  return os;
+}
 
-void PigeonDisplayInfo::set_width(int64_t value_arg) { width_ = value_arg; }
+size_t PigeonInternalDeepHash(const WireStorageInfo& v) {
+  return v.Hash();
+}
 
-int64_t PigeonDisplayInfo::height() const { return height_; }
+// WireDisplayInfo
 
-void PigeonDisplayInfo::set_height(int64_t value_arg) { height_ = value_arg; }
+WireDisplayInfo::WireDisplayInfo(
+  int64_t width,
+  int64_t height,
+  double scale_factor)
+ : width_(width),
+    height_(height),
+    scale_factor_(scale_factor) {}
 
-double PigeonDisplayInfo::scale_factor() const { return scale_factor_; }
+WireDisplayInfo::WireDisplayInfo(
+  int64_t width,
+  int64_t height,
+  double scale_factor,
+  const double* refresh_rate)
+ : width_(width),
+    height_(height),
+    scale_factor_(scale_factor),
+    refresh_rate_(refresh_rate ? std::optional<double>(*refresh_rate) : std::nullopt) {}
 
-void PigeonDisplayInfo::set_scale_factor(double value_arg) {
+int64_t WireDisplayInfo::width() const {
+  return width_;
+}
+
+void WireDisplayInfo::set_width(int64_t value_arg) {
+  width_ = value_arg;
+}
+
+
+int64_t WireDisplayInfo::height() const {
+  return height_;
+}
+
+void WireDisplayInfo::set_height(int64_t value_arg) {
+  height_ = value_arg;
+}
+
+
+double WireDisplayInfo::scale_factor() const {
+  return scale_factor_;
+}
+
+void WireDisplayInfo::set_scale_factor(double value_arg) {
   scale_factor_ = value_arg;
 }
 
-const double* PigeonDisplayInfo::refresh_rate() const {
+
+const double* WireDisplayInfo::refresh_rate() const {
   return refresh_rate_ ? &(*refresh_rate_) : nullptr;
 }
 
-void PigeonDisplayInfo::set_refresh_rate(const double* value_arg) {
-  refresh_rate_ =
-      value_arg ? std::optional<double>(*value_arg) : std::nullopt;
+void WireDisplayInfo::set_refresh_rate(const double* value_arg) {
+  refresh_rate_ = value_arg ? std::optional<double>(*value_arg) : std::nullopt;
 }
 
-void PigeonDisplayInfo::set_refresh_rate(double value_arg) {
+void WireDisplayInfo::set_refresh_rate(double value_arg) {
   refresh_rate_ = value_arg;
 }
 
-EncodableList PigeonDisplayInfo::ToEncodableList() const {
+
+EncodableList WireDisplayInfo::ToEncodableList() const {
   EncodableList list;
   list.reserve(4);
   list.push_back(EncodableValue(width_));
   list.push_back(EncodableValue(height_));
   list.push_back(EncodableValue(scale_factor_));
-  list.push_back(refresh_rate_ ? EncodableValue(*refresh_rate_)
-                               : EncodableValue());
+  list.push_back(refresh_rate_ ? EncodableValue(*refresh_rate_) : EncodableValue());
   return list;
 }
 
-PigeonDisplayInfo PigeonDisplayInfo::FromEncodableList(
-    const EncodableList& list) {
-  PigeonDisplayInfo decoded(list[0].LongValue(), list[1].LongValue(),
-                            std::get<double>(list[2]));
+WireDisplayInfo WireDisplayInfo::FromEncodableList(const EncodableList& list) {
+  WireDisplayInfo decoded(
+    std::get<int64_t>(list[0]),
+    std::get<int64_t>(list[1]),
+    std::get<double>(list[2]));
   auto& encodable_refresh_rate = list[3];
   if (!encodable_refresh_rate.IsNull()) {
     decoded.set_refresh_rate(std::get<double>(encodable_refresh_rate));
@@ -578,322 +1133,286 @@ PigeonDisplayInfo PigeonDisplayInfo::FromEncodableList(
   return decoded;
 }
 
+bool WireDisplayInfo::operator==(const WireDisplayInfo& other) const {
+  return PigeonInternalDeepEquals(width_, other.width_) && PigeonInternalDeepEquals(height_, other.height_) && PigeonInternalDeepEquals(scale_factor_, other.scale_factor_) && PigeonInternalDeepEquals(refresh_rate_, other.refresh_rate_);
+}
+
+bool WireDisplayInfo::operator!=(const WireDisplayInfo& other) const {
+  return !(*this == other);
+}
+
+size_t WireDisplayInfo::Hash() const {
+  size_t result = 1;
+  result = result * 31 + PigeonInternalDeepHash(width_);
+  result = result * 31 + PigeonInternalDeepHash(height_);
+  result = result * 31 + PigeonInternalDeepHash(scale_factor_);
+  result = result * 31 + PigeonInternalDeepHash(refresh_rate_);
+  return result;
+}
+
+std::ostream& operator<<(
+  std::ostream& os,
+  const WireDisplayInfo& obj) {
+  os << "WireDisplayInfo(";
+  os << "width: ";
+  os << PigeonInternalToString(obj.width_);
+  os << ", height: ";
+  os << PigeonInternalToString(obj.height_);
+  os << ", scale_factor: ";
+  os << PigeonInternalToString(obj.scale_factor_);
+  os << ", refresh_rate: ";
+  if (obj.refresh_rate_) {
+    os << PigeonInternalToString(*obj.refresh_rate_);
+  }
+  else {
+    os << "null";
+  }
+  os << ")";
+  return os;
+}
+
+size_t PigeonInternalDeepHash(const WireDisplayInfo& v) {
+  return v.Hash();
+}
+
+
 PigeonInternalCodecSerializer::PigeonInternalCodecSerializer() {}
 
 EncodableValue PigeonInternalCodecSerializer::ReadValueOfType(
-    uint8_t type, flutter::ByteStreamReader* stream) const {
+  uint8_t type,
+  ::flutter::ByteStreamReader* stream) const {
   switch (type) {
     case 129: {
-      const auto& encodable_enum_arg = ReadValue(stream);
-      const int64_t enum_arg_value =
-          encodable_enum_arg.IsNull() ? 0 : encodable_enum_arg.LongValue();
-      return encodable_enum_arg.IsNull()
-                 ? EncodableValue()
-                 : CustomEncodableValue(
-                       static_cast<PigeonBatteryChargingState>(enum_arg_value));
-    }
+        const auto& encodable_enum_arg = ReadValue(stream);
+        const int64_t enum_arg_value = encodable_enum_arg.IsNull() ? 0 : encodable_enum_arg.LongValue();
+        return encodable_enum_arg.IsNull() ? EncodableValue() : CustomEncodableValue(static_cast<WireBatteryChargingState>(enum_arg_value));
+      }
     case 130: {
-      const auto& encodable_enum_arg = ReadValue(stream);
-      const int64_t enum_arg_value =
-          encodable_enum_arg.IsNull() ? 0 : encodable_enum_arg.LongValue();
-      return encodable_enum_arg.IsNull()
-                 ? EncodableValue()
-                 : CustomEncodableValue(
-                       static_cast<PigeonBatteryHealthStatus>(enum_arg_value));
-    }
+        const auto& encodable_enum_arg = ReadValue(stream);
+        const int64_t enum_arg_value = encodable_enum_arg.IsNull() ? 0 : encodable_enum_arg.LongValue();
+        return encodable_enum_arg.IsNull() ? EncodableValue() : CustomEncodableValue(static_cast<WireBatteryHealthStatus>(enum_arg_value));
+      }
     case 131: {
-      const auto& encodable_enum_arg = ReadValue(stream);
-      const int64_t enum_arg_value =
-          encodable_enum_arg.IsNull() ? 0 : encodable_enum_arg.LongValue();
-      return encodable_enum_arg.IsNull()
-                 ? EncodableValue()
-                 : CustomEncodableValue(static_cast<PigeonNetworkConnectionType>(
-                       enum_arg_value));
-    }
+        const auto& encodable_enum_arg = ReadValue(stream);
+        const int64_t enum_arg_value = encodable_enum_arg.IsNull() ? 0 : encodable_enum_arg.LongValue();
+        return encodable_enum_arg.IsNull() ? EncodableValue() : CustomEncodableValue(static_cast<WireNetworkConnectionType>(enum_arg_value));
+      }
     case 132: {
-      const auto& encodable_enum_arg = ReadValue(stream);
-      const int64_t enum_arg_value =
-          encodable_enum_arg.IsNull() ? 0 : encodable_enum_arg.LongValue();
-      return encodable_enum_arg.IsNull()
-                 ? EncodableValue()
-                 : CustomEncodableValue(
-                       static_cast<PigeonStorageMediumType>(enum_arg_value));
-    }
+        const auto& encodable_enum_arg = ReadValue(stream);
+        const int64_t enum_arg_value = encodable_enum_arg.IsNull() ? 0 : encodable_enum_arg.LongValue();
+        return encodable_enum_arg.IsNull() ? EncodableValue() : CustomEncodableValue(static_cast<WireStorageMediumType>(enum_arg_value));
+      }
     case 133: {
-      return CustomEncodableValue(PigeonDeviceInfo::FromEncodableList(
-          std::get<EncodableList>(ReadValue(stream))));
-    }
+        return CustomEncodableValue(WireDeviceInfo::FromEncodableList(std::get<EncodableList>(ReadValue(stream))));
+      }
     case 134: {
-      return CustomEncodableValue(PigeonBatteryInfo::FromEncodableList(
-          std::get<EncodableList>(ReadValue(stream))));
-    }
+        return CustomEncodableValue(WireBatteryInfo::FromEncodableList(std::get<EncodableList>(ReadValue(stream))));
+      }
     case 135: {
-      return CustomEncodableValue(PigeonNetworkInfo::FromEncodableList(
-          std::get<EncodableList>(ReadValue(stream))));
-    }
+        return CustomEncodableValue(WireNetworkInfo::FromEncodableList(std::get<EncodableList>(ReadValue(stream))));
+      }
     case 136: {
-      return CustomEncodableValue(PigeonStorageInfo::FromEncodableList(
-          std::get<EncodableList>(ReadValue(stream))));
-    }
+        return CustomEncodableValue(WireStorageInfo::FromEncodableList(std::get<EncodableList>(ReadValue(stream))));
+      }
     case 137: {
-      return CustomEncodableValue(PigeonDisplayInfo::FromEncodableList(
-          std::get<EncodableList>(ReadValue(stream))));
-    }
+        return CustomEncodableValue(WireDisplayInfo::FromEncodableList(std::get<EncodableList>(ReadValue(stream))));
+      }
     default:
-      return flutter::StandardCodecSerializer::ReadValueOfType(type, stream);
-  }
+      return ::flutter::StandardCodecSerializer::ReadValueOfType(type, stream);
+    }
 }
 
 void PigeonInternalCodecSerializer::WriteValue(
-    const EncodableValue& value, flutter::ByteStreamWriter* stream) const {
-  if (const CustomEncodableValue* custom_value =
-          std::get_if<CustomEncodableValue>(&value)) {
-    if (custom_value->type() == typeid(PigeonBatteryChargingState)) {
+  const EncodableValue& value,
+  ::flutter::ByteStreamWriter* stream) const {
+  if (const CustomEncodableValue* custom_value = std::get_if<CustomEncodableValue>(&value)) {
+    if (custom_value->type() == typeid(WireBatteryChargingState)) {
       stream->WriteByte(129);
-      WriteValue(EncodableValue(static_cast<int>(
-                     std::any_cast<PigeonBatteryChargingState>(*custom_value))),
-                 stream);
+      WriteValue(EncodableValue(static_cast<int>(std::any_cast<WireBatteryChargingState>(*custom_value))), stream);
       return;
     }
-    if (custom_value->type() == typeid(PigeonBatteryHealthStatus)) {
+    if (custom_value->type() == typeid(WireBatteryHealthStatus)) {
       stream->WriteByte(130);
-      WriteValue(EncodableValue(static_cast<int>(
-                     std::any_cast<PigeonBatteryHealthStatus>(*custom_value))),
-                 stream);
+      WriteValue(EncodableValue(static_cast<int>(std::any_cast<WireBatteryHealthStatus>(*custom_value))), stream);
       return;
     }
-    if (custom_value->type() == typeid(PigeonNetworkConnectionType)) {
+    if (custom_value->type() == typeid(WireNetworkConnectionType)) {
       stream->WriteByte(131);
-      WriteValue(
-          EncodableValue(static_cast<int>(
-              std::any_cast<PigeonNetworkConnectionType>(*custom_value))),
-          stream);
+      WriteValue(EncodableValue(static_cast<int>(std::any_cast<WireNetworkConnectionType>(*custom_value))), stream);
       return;
     }
-    if (custom_value->type() == typeid(PigeonStorageMediumType)) {
+    if (custom_value->type() == typeid(WireStorageMediumType)) {
       stream->WriteByte(132);
-      WriteValue(EncodableValue(static_cast<int>(
-                     std::any_cast<PigeonStorageMediumType>(*custom_value))),
-                 stream);
+      WriteValue(EncodableValue(static_cast<int>(std::any_cast<WireStorageMediumType>(*custom_value))), stream);
       return;
     }
-    if (custom_value->type() == typeid(PigeonDeviceInfo)) {
+    if (custom_value->type() == typeid(WireDeviceInfo)) {
       stream->WriteByte(133);
-      WriteValue(
-          EncodableValue(
-              std::any_cast<PigeonDeviceInfo>(*custom_value).ToEncodableList()),
-          stream);
+      WriteValue(EncodableValue(std::any_cast<WireDeviceInfo>(*custom_value).ToEncodableList()), stream);
       return;
     }
-    if (custom_value->type() == typeid(PigeonBatteryInfo)) {
+    if (custom_value->type() == typeid(WireBatteryInfo)) {
       stream->WriteByte(134);
-      WriteValue(
-          EncodableValue(std::any_cast<PigeonBatteryInfo>(*custom_value)
-                             .ToEncodableList()),
-          stream);
+      WriteValue(EncodableValue(std::any_cast<WireBatteryInfo>(*custom_value).ToEncodableList()), stream);
       return;
     }
-    if (custom_value->type() == typeid(PigeonNetworkInfo)) {
+    if (custom_value->type() == typeid(WireNetworkInfo)) {
       stream->WriteByte(135);
-      WriteValue(
-          EncodableValue(std::any_cast<PigeonNetworkInfo>(*custom_value)
-                             .ToEncodableList()),
-          stream);
+      WriteValue(EncodableValue(std::any_cast<WireNetworkInfo>(*custom_value).ToEncodableList()), stream);
       return;
     }
-    if (custom_value->type() == typeid(PigeonStorageInfo)) {
+    if (custom_value->type() == typeid(WireStorageInfo)) {
       stream->WriteByte(136);
-      WriteValue(
-          EncodableValue(std::any_cast<PigeonStorageInfo>(*custom_value)
-                             .ToEncodableList()),
-          stream);
+      WriteValue(EncodableValue(std::any_cast<WireStorageInfo>(*custom_value).ToEncodableList()), stream);
       return;
     }
-    if (custom_value->type() == typeid(PigeonDisplayInfo)) {
+    if (custom_value->type() == typeid(WireDisplayInfo)) {
       stream->WriteByte(137);
-      WriteValue(
-          EncodableValue(std::any_cast<PigeonDisplayInfo>(*custom_value)
-                             .ToEncodableList()),
-          stream);
+      WriteValue(EncodableValue(std::any_cast<WireDisplayInfo>(*custom_value).ToEncodableList()), stream);
       return;
     }
   }
-  flutter::StandardCodecSerializer::WriteValue(value, stream);
+  ::flutter::StandardCodecSerializer::WriteValue(value, stream);
 }
 
-// The codec used by XueHuaDeviceInfoHostApi.
-const flutter::StandardMessageCodec& XueHuaDeviceInfoHostApi::GetCodec() {
-  return flutter::StandardMessageCodec::GetInstance(
-      &PigeonInternalCodecSerializer::GetInstance());
+/// The codec used by XueHuaDeviceInfoHostApi.
+const ::flutter::StandardMessageCodec& XueHuaDeviceInfoHostApi::GetCodec() {
+  return ::flutter::StandardMessageCodec::GetInstance(&PigeonInternalCodecSerializer::GetInstance());
 }
 
-// Sets up an instance of `XueHuaDeviceInfoHostApi` to handle messages through
-// the `binary_messenger`.
-void XueHuaDeviceInfoHostApi::SetUp(flutter::BinaryMessenger* binary_messenger,
-                                    XueHuaDeviceInfoHostApi* api) {
+// Sets up an instance of `XueHuaDeviceInfoHostApi` to handle messages through the `binary_messenger`.
+void XueHuaDeviceInfoHostApi::SetUp(
+  ::flutter::BinaryMessenger* binary_messenger,
+  XueHuaDeviceInfoHostApi* api) {
   XueHuaDeviceInfoHostApi::SetUp(binary_messenger, api, "");
 }
 
 void XueHuaDeviceInfoHostApi::SetUp(
-    flutter::BinaryMessenger* binary_messenger, XueHuaDeviceInfoHostApi* api,
-    const std::string& message_channel_suffix) {
-  const std::string prepended_suffix =
-      message_channel_suffix.length() > 0
-          ? std::string(".") + message_channel_suffix
-          : "";
+  ::flutter::BinaryMessenger* binary_messenger,
+  XueHuaDeviceInfoHostApi* api,
+  const std::string& message_channel_suffix) {
+  const std::string prepended_suffix = message_channel_suffix.length() > 0 ? std::string(".") + message_channel_suffix : "";
   {
-    BasicMessageChannel<> channel(
-        binary_messenger,
-        "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getDeviceInfo" +
-            prepended_suffix,
-        &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getDeviceInfo" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
-      channel.SetMessageHandler(
-          [api](const EncodableValue&,
-                const flutter::MessageReply<EncodableValue>& reply) {
-            try {
-              ErrorOr<PigeonDeviceInfo> output = api->GetDeviceInfo();
-              if (output.has_error()) {
-                reply(WrapError(output.error()));
-                return;
-              }
-              EncodableList wrapped;
-              wrapped.push_back(
-                  CustomEncodableValue(std::move(output).TakeValue()));
-              reply(EncodableValue(std::move(wrapped)));
-            } catch (const std::exception& exception) {
-              reply(WrapError(exception.what()));
-            }
-          });
+      channel.SetMessageHandler([api](const EncodableValue& message, const ::flutter::MessageReply<EncodableValue>& reply) {
+        try {
+          ErrorOr<WireDeviceInfo> output = api->GetDeviceInfo();
+          if (output.has_error()) {
+            reply(WrapError(output.error()));
+            return;
+          }
+          EncodableList wrapped;
+          wrapped.push_back(CustomEncodableValue(std::move(output).TakeValue()));
+          reply(EncodableValue(std::move(wrapped)));
+        } catch (const std::exception& exception) {
+          reply(WrapError(exception.what()));
+        }
+      });
     } else {
       channel.SetMessageHandler(nullptr);
     }
   }
   {
-    BasicMessageChannel<> channel(
-        binary_messenger,
-        "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getBatteryInfo" +
-            prepended_suffix,
-        &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getBatteryInfo" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
-      channel.SetMessageHandler(
-          [api](const EncodableValue&,
-                const flutter::MessageReply<EncodableValue>& reply) {
-            try {
-              ErrorOr<PigeonBatteryInfo> output = api->GetBatteryInfo();
-              if (output.has_error()) {
-                reply(WrapError(output.error()));
-                return;
-              }
-              EncodableList wrapped;
-              wrapped.push_back(
-                  CustomEncodableValue(std::move(output).TakeValue()));
-              reply(EncodableValue(std::move(wrapped)));
-            } catch (const std::exception& exception) {
-              reply(WrapError(exception.what()));
-            }
-          });
+      channel.SetMessageHandler([api](const EncodableValue& message, const ::flutter::MessageReply<EncodableValue>& reply) {
+        try {
+          ErrorOr<WireBatteryInfo> output = api->GetBatteryInfo();
+          if (output.has_error()) {
+            reply(WrapError(output.error()));
+            return;
+          }
+          EncodableList wrapped;
+          wrapped.push_back(CustomEncodableValue(std::move(output).TakeValue()));
+          reply(EncodableValue(std::move(wrapped)));
+        } catch (const std::exception& exception) {
+          reply(WrapError(exception.what()));
+        }
+      });
     } else {
       channel.SetMessageHandler(nullptr);
     }
   }
   {
-    BasicMessageChannel<> channel(
-        binary_messenger,
-        "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getNetworkInfo" +
-            prepended_suffix,
-        &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getNetworkInfo" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
-      channel.SetMessageHandler(
-          [api](const EncodableValue&,
-                const flutter::MessageReply<EncodableValue>& reply) {
-            try {
-              ErrorOr<PigeonNetworkInfo> output = api->GetNetworkInfo();
-              if (output.has_error()) {
-                reply(WrapError(output.error()));
-                return;
-              }
-              EncodableList wrapped;
-              wrapped.push_back(
-                  CustomEncodableValue(std::move(output).TakeValue()));
-              reply(EncodableValue(std::move(wrapped)));
-            } catch (const std::exception& exception) {
-              reply(WrapError(exception.what()));
-            }
-          });
+      channel.SetMessageHandler([api](const EncodableValue& message, const ::flutter::MessageReply<EncodableValue>& reply) {
+        try {
+          ErrorOr<WireNetworkInfo> output = api->GetNetworkInfo();
+          if (output.has_error()) {
+            reply(WrapError(output.error()));
+            return;
+          }
+          EncodableList wrapped;
+          wrapped.push_back(CustomEncodableValue(std::move(output).TakeValue()));
+          reply(EncodableValue(std::move(wrapped)));
+        } catch (const std::exception& exception) {
+          reply(WrapError(exception.what()));
+        }
+      });
     } else {
       channel.SetMessageHandler(nullptr);
     }
   }
   {
-    BasicMessageChannel<> channel(
-        binary_messenger,
-        "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getStorageInfo" +
-            prepended_suffix,
-        &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getStorageInfo" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
-      channel.SetMessageHandler(
-          [api](const EncodableValue&,
-                const flutter::MessageReply<EncodableValue>& reply) {
-            try {
-              ErrorOr<PigeonStorageInfo> output = api->GetStorageInfo();
-              if (output.has_error()) {
-                reply(WrapError(output.error()));
-                return;
-              }
-              EncodableList wrapped;
-              wrapped.push_back(
-                  CustomEncodableValue(std::move(output).TakeValue()));
-              reply(EncodableValue(std::move(wrapped)));
-            } catch (const std::exception& exception) {
-              reply(WrapError(exception.what()));
-            }
-          });
+      channel.SetMessageHandler([api](const EncodableValue& message, const ::flutter::MessageReply<EncodableValue>& reply) {
+        try {
+          ErrorOr<WireStorageInfo> output = api->GetStorageInfo();
+          if (output.has_error()) {
+            reply(WrapError(output.error()));
+            return;
+          }
+          EncodableList wrapped;
+          wrapped.push_back(CustomEncodableValue(std::move(output).TakeValue()));
+          reply(EncodableValue(std::move(wrapped)));
+        } catch (const std::exception& exception) {
+          reply(WrapError(exception.what()));
+        }
+      });
     } else {
       channel.SetMessageHandler(nullptr);
     }
   }
   {
-    BasicMessageChannel<> channel(
-        binary_messenger,
-        "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getDisplayInfo" +
-            prepended_suffix,
-        &GetCodec());
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getDisplayInfo" + prepended_suffix, &GetCodec());
     if (api != nullptr) {
-      channel.SetMessageHandler(
-          [api](const EncodableValue&,
-                const flutter::MessageReply<EncodableValue>& reply) {
-            try {
-              ErrorOr<PigeonDisplayInfo> output = api->GetDisplayInfo();
-              if (output.has_error()) {
-                reply(WrapError(output.error()));
-                return;
-              }
-              EncodableList wrapped;
-              wrapped.push_back(
-                  CustomEncodableValue(std::move(output).TakeValue()));
-              reply(EncodableValue(std::move(wrapped)));
-            } catch (const std::exception& exception) {
-              reply(WrapError(exception.what()));
-            }
-          });
+      channel.SetMessageHandler([api](const EncodableValue& message, const ::flutter::MessageReply<EncodableValue>& reply) {
+        try {
+          ErrorOr<WireDisplayInfo> output = api->GetDisplayInfo();
+          if (output.has_error()) {
+            reply(WrapError(output.error()));
+            return;
+          }
+          EncodableList wrapped;
+          wrapped.push_back(CustomEncodableValue(std::move(output).TakeValue()));
+          reply(EncodableValue(std::move(wrapped)));
+        } catch (const std::exception& exception) {
+          reply(WrapError(exception.what()));
+        }
+      });
     } else {
       channel.SetMessageHandler(nullptr);
     }
   }
 }
 
-EncodableValue XueHuaDeviceInfoHostApi::WrapError(
-    std::string_view error_message) {
-  return EncodableValue(
-      EncodableList{EncodableValue(std::string(error_message)),
-                    EncodableValue("Error"), EncodableValue()});
+EncodableValue XueHuaDeviceInfoHostApi::WrapError(std::string_view error_message) {
+  return EncodableValue(EncodableList{
+    EncodableValue(std::string(error_message)),
+    EncodableValue("Error"),
+    EncodableValue()
+  });
 }
 
 EncodableValue XueHuaDeviceInfoHostApi::WrapError(const FlutterError& error) {
-  return EncodableValue(EncodableList{EncodableValue(error.code()),
-                                      EncodableValue(error.message()),
-                                      error.details()});
+  return EncodableValue(EncodableList{
+    EncodableValue(error.code()),
+    EncodableValue(error.message()),
+    error.details()
+  });
 }
 
 }  // namespace xue_hua_device_info

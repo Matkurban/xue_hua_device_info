@@ -155,25 +155,28 @@ class DeviceSectionCard<T> extends StatelessWidget {
                   );
                 }
 
-                if (err != null) {
-                  return Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.errorContainer,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: SelectableText(
-                      'Error: $err',
-                      key: Key('${sectionKeyPrefix}_error'),
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onErrorContainer,
-                      ),
-                    ),
-                  );
-                }
+                final Widget? errorBanner = err == null
+                    ? null
+                    : Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.errorContainer,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: SelectableText(
+                          'Error: $err',
+                          key: Key('${sectionKeyPrefix}_error'),
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onErrorContainer,
+                          ),
+                        ),
+                      );
 
                 if (current == null) {
+                  if (errorBanner != null) {
+                    return errorBanner;
+                  }
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Text(
@@ -193,6 +196,10 @@ class DeviceSectionCard<T> extends StatelessWidget {
                   key: Key('${sectionKeyPrefix}_content'),
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (errorBanner != null) ...[
+                      errorBanner,
+                      const SizedBox(height: 12),
+                    ],
                     if (progress != null) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),

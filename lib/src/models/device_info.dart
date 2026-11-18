@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../messages.g.dart';
+import 'model_utils.dart';
 
 /// Immutable snapshot of device identity, hardware descriptors, and OS environment.
 @immutable
@@ -16,17 +17,17 @@ class DeviceInfo {
     this.architecture,
   });
 
-  /// Creates a [DeviceInfo] domain model from a Pigeon [PigeonDeviceInfo] message.
-  factory DeviceInfo.fromPigeon(PigeonDeviceInfo message) {
+  /// Creates a [DeviceInfo] domain model from a Pigeon [WireDeviceInfo] message.
+  factory DeviceInfo.fromPigeon(WireDeviceInfo message) {
     return DeviceInfo(
-      deviceId: _nonEmptyOrNull(message.deviceId),
-      manufacturer: _nonEmptyOrNull(message.manufacturer),
-      model: _nonEmptyOrNull(message.model),
-      serial: _nonEmptyOrNull(message.serial),
-      name: _nonEmptyOrNull(message.name),
-      operatingSystem: _nonEmptyOrNull(message.operatingSystem),
-      osVersion: _nonEmptyOrNull(message.osVersion),
-      architecture: _nonEmptyOrNull(message.architecture),
+      deviceId: nonEmptyOrNull(message.deviceId),
+      manufacturer: nonEmptyOrNull(message.manufacturer),
+      model: nonEmptyOrNull(message.model),
+      serial: nonEmptyOrNull(message.serial),
+      name: nonEmptyOrNull(message.name),
+      operatingSystem: nonEmptyOrNull(message.operatingSystem),
+      osVersion: nonEmptyOrNull(message.osVersion),
+      architecture: nonEmptyOrNull(message.architecture),
     );
   }
 
@@ -72,31 +73,44 @@ class DeviceInfo {
   bool get hasSerial => serial != null && serial!.isNotEmpty;
 
   /// Returns a copy of this [DeviceInfo] with selectively overridden fields.
+  ///
+  /// Pass any `clear*` flag as `true` to explicitly reset a nullable field to `null`.
   DeviceInfo copyWith({
     String? deviceId,
+    bool clearDeviceId = false,
     String? manufacturer,
+    bool clearManufacturer = false,
     String? model,
+    bool clearModel = false,
     String? serial,
+    bool clearSerial = false,
     String? name,
+    bool clearName = false,
     String? operatingSystem,
+    bool clearOperatingSystem = false,
     String? osVersion,
+    bool clearOsVersion = false,
     String? architecture,
+    bool clearArchitecture = false,
   }) {
     return DeviceInfo(
-      deviceId: deviceId ?? this.deviceId,
-      manufacturer: manufacturer ?? this.manufacturer,
-      model: model ?? this.model,
-      serial: serial ?? this.serial,
-      name: name ?? this.name,
-      operatingSystem: operatingSystem ?? this.operatingSystem,
-      osVersion: osVersion ?? this.osVersion,
-      architecture: architecture ?? this.architecture,
+      deviceId: clearDeviceId ? null : (deviceId ?? this.deviceId),
+      manufacturer:
+          clearManufacturer ? null : (manufacturer ?? this.manufacturer),
+      model: clearModel ? null : (model ?? this.model),
+      serial: clearSerial ? null : (serial ?? this.serial),
+      name: clearName ? null : (name ?? this.name),
+      operatingSystem:
+          clearOperatingSystem ? null : (operatingSystem ?? this.operatingSystem),
+      osVersion: clearOsVersion ? null : (osVersion ?? this.osVersion),
+      architecture:
+          clearArchitecture ? null : (architecture ?? this.architecture),
     );
   }
 
-  /// Converts this [DeviceInfo] into a Pigeon [PigeonDeviceInfo] message.
-  PigeonDeviceInfo toPigeon() {
-    return PigeonDeviceInfo(
+  /// Converts this [DeviceInfo] into a Pigeon [WireDeviceInfo] message.
+  WireDeviceInfo toPigeon() {
+    return WireDeviceInfo(
       deviceId: deviceId,
       manufacturer: manufacturer,
       model: model,
@@ -151,10 +165,4 @@ class DeviceInfo {
       'model: $model, serial: $serial, name: $name, '
       'operatingSystem: $operatingSystem, osVersion: $osVersion, '
       'architecture: $architecture)';
-
-  static String? _nonEmptyOrNull(String? value) {
-    if (value == null) return null;
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? null : trimmed;
-  }
 }

@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'xue_hua_device_info'
-  s.version          = '2.0.0'
+  s.version          = '2.1.0'
   s.summary          = 'Flutter plugin for device info across platforms.'
   s.description      = <<-DESC
 Flutter plugin for device info: battery, network, storage, display, and system details.
@@ -13,7 +13,7 @@ Flutter plugin for device info: battery, network, storage, display, and system d
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'XueHua' => '3496354336@qq.com' }
   s.source           = { :path => '.' }
-  s.source_files = 'xue_hua_device_info/Sources/xue_hua_device_info/**/*'
+  s.source_files = 'xue_hua_device_info/Sources/**/*.{swift,m,h}'
   s.dependency 'FlutterMacOS'
   s.platform = :osx, '10.15'
   s.frameworks = 'IOKit', 'SystemConfiguration', 'CoreGraphics', 'DiskArbitration'

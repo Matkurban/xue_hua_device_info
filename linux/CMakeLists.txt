@@ -19,6 +19,12 @@ list(APPEND PLUGIN_SOURCES
   "device_info_helpers.cc"
 )
 
+set_source_files_properties(
+  "messages.g.cc"
+  PROPERTIES
+  COMPILE_OPTIONS "-Wno-unused-parameter"
+)
+
 # Define the plugin library target. Its name must not be changed (see comment
 # on PLUGIN_NAME above).
 add_library(${PLUGIN_NAME} SHARED
@@ -36,7 +42,7 @@ apply_standard_settings(${PLUGIN_NAME})
 set_target_properties(${PLUGIN_NAME} PROPERTIES
   CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(${PLUGIN_NAME} PRIVATE FLUTTER_PLUGIN_IMPL)
-target_compile_options(${PLUGIN_NAME} PRIVATE -Wall -Wextra)
+target_compile_options(${PLUGIN_NAME} PRIVATE -Wall -Wextra -Werror)
 
 # Source include directories and library dependencies. Add any plugin-specific
 # dependencies here.
@@ -76,7 +82,7 @@ add_executable(${TEST_RUNNER}
   ${PLUGIN_SOURCES}
 )
 apply_standard_settings(${TEST_RUNNER})
-target_compile_options(${TEST_RUNNER} PRIVATE -Wall -Wextra)
+target_compile_options(${TEST_RUNNER} PRIVATE -Wall -Wextra -Werror)
 target_include_directories(${TEST_RUNNER} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(${TEST_RUNNER} PRIVATE flutter)
 target_link_libraries(${TEST_RUNNER} PRIVATE PkgConfig::GTK)

@@ -52,10 +52,16 @@ class _DeviceInfoDashboardPageState extends State<DeviceInfoDashboardPage> {
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('XueHua Device Info (Pigeon 2.1.0)'),
+        title: const Text('XueHua Device Info v2.1.0'),
         actions: [
           SignalBuilder(
             builder: (context) {
@@ -227,6 +233,10 @@ class _DeviceInfoDashboardPageState extends State<DeviceInfoDashboardPage> {
                 label: '已用百分比 (usedPercentage)',
                 value: '${info.usedPercentage.toStringAsFixed(1)}%',
                 highlight: true,
+              ),
+              InfoMetricItem(
+                label: '已用比例 (usageRatio)',
+                value: info.usageRatio.toStringAsFixed(4),
               ),
               InfoMetricItem(
                 label: '介质类型枚举 (mediumType)',

@@ -4,22 +4,22 @@
 
 Flutter plugin for device information: identity, battery, network, storage, and display.
 
-Built with **Pigeon (`^30.0.4`)** strongly-typed native host APIs across Kotlin, Swift, C++, and GObject. Web is not supported.
+Built with **Pigeon (`^30.0.4`)** strongly-typed host APIs (Native Interop via JNI/Swift FFI on mobile/macOS, and typed channels via C++/GObject on Windows/Linux). Web is not supported.
 
 ---
 
 ## Supported Platforms
 
-| Platform | Support | Implementation                        |
-| -------- | ------- | ------------------------------------- |
-| Android  | Yes     | Kotlin + Pigeon HostApi               |
-| iOS      | Yes     | Swift + Pigeon HostApi (SPM/CocoaPods)|
-| macOS    | Yes     | Swift + Pigeon HostApi (SPM/CocoaPods)|
-| Windows  | Yes     | C++ + Pigeon HostApi                  |
-| Linux    | Yes     | C++/GObject + Pigeon HostApi          |
-| Web      | No      | Not supported                         |
+| Platform | Support | Implementation                                            |
+| -------- | ------- | --------------------------------------------------------- |
+| Android  | Yes     | Kotlin + Pigeon HostApi (JNI Native Interop)              |
+| iOS      | Yes     | Swift + Pigeon HostApi (FFI Native Interop, SPM/CocoaPods)|
+| macOS    | Yes     | Swift + Pigeon HostApi (FFI Native Interop, SPM/CocoaPods)|
+| Windows  | Yes     | C++ + Pigeon HostApi (Typed BasicMessageChannel)          |
+| Linux    | Yes     | C++/GObject + Pigeon HostApi (Typed BasicMessageChannel)  |
+| Web      | No      | Not supported                                             |
 
-**Requirements:** Dart `^3.13.0`, Flutter `>=3.47.0`
+**Requirements:** Dart `^3.12.0`, Flutter `>=3.44.0`
 
 ---
 
@@ -82,7 +82,7 @@ Future<void> main() async {
 | `level`          | `double?`              | Charge percentage (`0.0`–`100.0`), or `null`                     |
 | `levelRatio`     | `double?`              | Normalized charge ratio (`0.0`–`1.0`), or `null`                 |
 | `formattedLevel` | `String`               | Formatted string (e.g. `"85.0%"` or `"N/A"`)                     |
-| `isCharging`     | `bool?`                | Whether charging or full on external power                       |
+| `isCharging`     | `bool?`                | Whether actively charging (platform semantics vary when full)    |
 | `chargingState`  | `BatteryChargingState` | `charging`, `discharging`, `full`, `notCharging`, `unknown`      |
 | `healthStatus`   | `BatteryHealthStatus`  | `good`, `fair`, `poor`, `overheat`, `dead`, `overVoltage`, `cold`, `unknown` |
 | `health`         | `String?`              | Raw platform health string when available                        |
@@ -94,7 +94,7 @@ Future<void> main() async {
 | ---------------- | ----------------------- | ---------------------------------------------------------------- |
 | `ipAddress`      | `String?`               | Active IPv4 address (skips loopback, link-local, and fake-IP)    |
 | `connectionType` | `NetworkConnectionType` | `wifi`, `ethernet`, `cellular`, `vpn`, `loopback`, `none`, `unknown` |
-| `networkType`    | `String`                | Canonical transport string (`wifi`, `ethernet`, `cellular`, `none`, `unknown`) |
+| `networkType`    | `String`                | Canonical transport string (`wifi`, `ethernet`, `cellular`, `vpn`, `loopback`, `none`, `unknown`) |
 | `macAddress`     | `String?`               | Hardware MAC address on desktop; `null` on mobile                |
 | `interfaceName`  | `String?`               | Selected interface/adapter name (`en0`, `wlan0`, `eth0`, etc.)   |
 | `isConnected`    | `bool`                  | Computed connectivity status                                     |

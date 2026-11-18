@@ -2,14 +2,24 @@ import 'package:pigeon/pigeon.dart';
 
 @ConfigurePigeon(
   PigeonOptions(
+    appDirectory: 'example/',
     dartOut: 'lib/src/messages.g.dart',
     dartOptions: DartOptions(),
     kotlinOut:
         'android/src/main/kotlin/com/xuehua/xue_hua_device_info/Messages.g.kt',
-    kotlinOptions: KotlinOptions(package: 'com.xuehua.xue_hua_device_info'),
-    swiftOut:
-        'ios/xue_hua_device_info/Sources/xue_hua_device_info/Messages.g.swift',
-    swiftOptions: SwiftOptions(),
+    kotlinOptions: KotlinOptions(
+      package: 'com.xuehua.xue_hua_device_info',
+      useJni: true,
+    ),
+    swiftOut: <String>[
+      'ios/xue_hua_device_info/Sources/xue_hua_device_info/Messages.g.swift',
+      'macos/xue_hua_device_info/Sources/xue_hua_device_info/Messages.g.swift',
+    ],
+    swiftOptions: SwiftOptions(
+      useFfi: true,
+      ffiModuleName: 'xue_hua_device_info',
+      configDirectory: '.',
+    ),
     cppHeaderOut: 'windows/messages.g.h',
     cppSourceOut: 'windows/messages.g.cpp',
     cppOptions: CppOptions(namespace: 'xue_hua_device_info'),
@@ -20,7 +30,7 @@ import 'package:pigeon/pigeon.dart';
   ),
 )
 /// Charging state reported by the host power subsystem.
-enum PigeonBatteryChargingState {
+enum WireBatteryChargingState {
   charging,
   discharging,
   full,
@@ -29,7 +39,7 @@ enum PigeonBatteryChargingState {
 }
 
 /// Battery health classification reported by the host platform.
-enum PigeonBatteryHealthStatus {
+enum WireBatteryHealthStatus {
   good,
   fair,
   poor,
@@ -42,7 +52,7 @@ enum PigeonBatteryHealthStatus {
 }
 
 /// Active network transport classification.
-enum PigeonNetworkConnectionType {
+enum WireNetworkConnectionType {
   wifi,
   ethernet,
   cellular,
@@ -53,7 +63,7 @@ enum PigeonNetworkConnectionType {
 }
 
 /// Physical storage medium classification.
-enum PigeonStorageMediumType {
+enum WireStorageMediumType {
   ssd,
   hdd,
   internalStorage,
@@ -63,8 +73,8 @@ enum PigeonStorageMediumType {
 }
 
 /// Strongly-typed Pigeon payload for device identity and system descriptors.
-class PigeonDeviceInfo {
-  const PigeonDeviceInfo({
+class WireDeviceInfo {
+  const WireDeviceInfo({
     this.deviceId,
     this.manufacturer,
     this.model,
@@ -86,8 +96,8 @@ class PigeonDeviceInfo {
 }
 
 /// Strongly-typed Pigeon payload for battery status.
-class PigeonBatteryInfo {
-  const PigeonBatteryInfo({
+class WireBatteryInfo {
+  const WireBatteryInfo({
     this.level,
     this.isCharging,
     required this.chargingState,
@@ -98,15 +108,15 @@ class PigeonBatteryInfo {
 
   final double? level;
   final bool? isCharging;
-  final PigeonBatteryChargingState chargingState;
-  final PigeonBatteryHealthStatus healthStatus;
+  final WireBatteryChargingState chargingState;
+  final WireBatteryHealthStatus healthStatus;
   final String? health;
   final bool hasBattery;
 }
 
 /// Strongly-typed Pigeon payload for network connection details.
-class PigeonNetworkInfo {
-  const PigeonNetworkInfo({
+class WireNetworkInfo {
+  const WireNetworkInfo({
     this.ipAddress,
     required this.connectionType,
     required this.networkType,
@@ -115,15 +125,15 @@ class PigeonNetworkInfo {
   });
 
   final String? ipAddress;
-  final PigeonNetworkConnectionType connectionType;
+  final WireNetworkConnectionType connectionType;
   final String networkType;
   final String? macAddress;
   final String? interfaceName;
 }
 
 /// Strongly-typed Pigeon payload for primary storage capacity.
-class PigeonStorageInfo {
-  const PigeonStorageInfo({
+class WireStorageInfo {
+  const WireStorageInfo({
     required this.totalBytes,
     required this.freeBytes,
     required this.mediumType,
@@ -132,13 +142,13 @@ class PigeonStorageInfo {
 
   final int totalBytes;
   final int freeBytes;
-  final PigeonStorageMediumType mediumType;
+  final WireStorageMediumType mediumType;
   final String? storageType;
 }
 
 /// Strongly-typed Pigeon payload for primary display metrics.
-class PigeonDisplayInfo {
-  const PigeonDisplayInfo({
+class WireDisplayInfo {
+  const WireDisplayInfo({
     required this.width,
     required this.height,
     required this.scaleFactor,
@@ -154,13 +164,13 @@ class PigeonDisplayInfo {
 /// Host API implemented by Android, iOS, macOS, Windows, and Linux plugins.
 @HostApi()
 abstract class XueHuaDeviceInfoHostApi {
-  PigeonDeviceInfo getDeviceInfo();
+  WireDeviceInfo getDeviceInfo();
 
-  PigeonBatteryInfo getBatteryInfo();
+  WireBatteryInfo getBatteryInfo();
 
-  PigeonNetworkInfo getNetworkInfo();
+  WireNetworkInfo getNetworkInfo();
 
-  PigeonStorageInfo getStorageInfo();
+  WireStorageInfo getStorageInfo();
 
-  PigeonDisplayInfo getDisplayInfo();
+  WireDisplayInfo getDisplayInfo();
 }

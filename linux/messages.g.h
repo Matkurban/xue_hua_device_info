@@ -9,340 +9,799 @@
 G_BEGIN_DECLS
 
 /**
- * XueHuaDeviceInfoPigeonBatteryChargingState:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_CHARGING:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_DISCHARGING:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_FULL:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_NOT_CHARGING:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_UNKNOWN:
+ * XueHuaDeviceInfoWireBatteryChargingState:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_CHARGING:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_DISCHARGING:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_FULL:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_NOT_CHARGING:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_UNKNOWN:
  *
  * Charging state reported by the host power subsystem.
  */
 typedef enum {
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_CHARGING = 0,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_DISCHARGING = 1,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_FULL = 2,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_NOT_CHARGING = 3,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_UNKNOWN = 4
-} XueHuaDeviceInfoPigeonBatteryChargingState;
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_CHARGING = 0,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_DISCHARGING = 1,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_FULL = 2,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_NOT_CHARGING = 3,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_UNKNOWN = 4
+} XueHuaDeviceInfoWireBatteryChargingState;
 
 /**
- * XueHuaDeviceInfoPigeonBatteryHealthStatus:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_GOOD:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_FAIR:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_POOR:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_OVERHEAT:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_DEAD:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_OVER_VOLTAGE:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_UNSPECIFIED_FAILURE:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_COLD:
- * @XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_UNKNOWN:
+ * XueHuaDeviceInfoWireBatteryHealthStatus:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_GOOD:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_FAIR:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_POOR:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_OVERHEAT:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_DEAD:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_OVER_VOLTAGE:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_UNSPECIFIED_FAILURE:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_COLD:
+ * XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_UNKNOWN:
  *
  * Battery health classification reported by the host platform.
  */
 typedef enum {
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_GOOD = 0,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_FAIR = 1,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_POOR = 2,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_OVERHEAT = 3,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_DEAD = 4,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_OVER_VOLTAGE = 5,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_UNSPECIFIED_FAILURE = 6,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_COLD = 7,
-  XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_UNKNOWN = 8
-} XueHuaDeviceInfoPigeonBatteryHealthStatus;
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_GOOD = 0,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_FAIR = 1,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_POOR = 2,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_OVERHEAT = 3,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_DEAD = 4,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_OVER_VOLTAGE = 5,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_UNSPECIFIED_FAILURE = 6,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_COLD = 7,
+  XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_UNKNOWN = 8
+} XueHuaDeviceInfoWireBatteryHealthStatus;
 
 /**
- * XueHuaDeviceInfoPigeonNetworkConnectionType:
- * @XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_WIFI:
- * @XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_ETHERNET:
- * @XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_CELLULAR:
- * @XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_VPN:
- * @XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_LOOPBACK:
- * @XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_NONE:
- * @XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_UNKNOWN:
+ * XueHuaDeviceInfoWireNetworkConnectionType:
+ * XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_WIFI:
+ * XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_ETHERNET:
+ * XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_CELLULAR:
+ * XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_VPN:
+ * XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_LOOPBACK:
+ * XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_NONE:
+ * XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_UNKNOWN:
  *
  * Active network transport classification.
  */
 typedef enum {
-  XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_WIFI = 0,
-  XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_ETHERNET = 1,
-  XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_CELLULAR = 2,
-  XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_VPN = 3,
-  XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_LOOPBACK = 4,
-  XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_NONE = 5,
-  XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_UNKNOWN = 6
-} XueHuaDeviceInfoPigeonNetworkConnectionType;
+  XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_WIFI = 0,
+  XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_ETHERNET = 1,
+  XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_CELLULAR = 2,
+  XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_VPN = 3,
+  XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_LOOPBACK = 4,
+  XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_NONE = 5,
+  XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_UNKNOWN = 6
+} XueHuaDeviceInfoWireNetworkConnectionType;
 
 /**
- * XueHuaDeviceInfoPigeonStorageMediumType:
- * @XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_SSD:
- * @XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_HDD:
- * @XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_INTERNAL_STORAGE:
- * @XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_NVME:
- * @XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_VIRTUAL_DISK:
- * @XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_UNKNOWN:
+ * XueHuaDeviceInfoWireStorageMediumType:
+ * XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_SSD:
+ * XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_HDD:
+ * XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_INTERNAL_STORAGE:
+ * XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_NVME:
+ * XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_VIRTUAL_DISK:
+ * XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_UNKNOWN:
  *
  * Physical storage medium classification.
  */
 typedef enum {
-  XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_SSD = 0,
-  XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_HDD = 1,
-  XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_INTERNAL_STORAGE = 2,
-  XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_NVME = 3,
-  XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_VIRTUAL_DISK = 4,
-  XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_UNKNOWN = 5
-} XueHuaDeviceInfoPigeonStorageMediumType;
+  XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_SSD = 0,
+  XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_HDD = 1,
+  XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_INTERNAL_STORAGE = 2,
+  XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_NVME = 3,
+  XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_VIRTUAL_DISK = 4,
+  XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_UNKNOWN = 5
+} XueHuaDeviceInfoWireStorageMediumType;
 
 /**
- * XueHuaDeviceInfoPigeonDeviceInfo:
+ * XueHuaDeviceInfoWireDeviceInfo:
  *
  * Strongly-typed Pigeon payload for device identity and system descriptors.
  */
-G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoPigeonDeviceInfo,
-                     xue_hua_device_info_pigeon_device_info,
-                     XUE_HUA_DEVICE_INFO, PIGEON_DEVICE_INFO, GObject)
 
-XueHuaDeviceInfoPigeonDeviceInfo* xue_hua_device_info_pigeon_device_info_new(
-    const gchar* device_id, const gchar* manufacturer, const gchar* model,
-    const gchar* serial, const gchar* name, const gchar* operating_system,
-    const gchar* os_version, const gchar* architecture);
-
-const gchar* xue_hua_device_info_pigeon_device_info_get_device_id(
-    XueHuaDeviceInfoPigeonDeviceInfo* object);
-const gchar* xue_hua_device_info_pigeon_device_info_get_manufacturer(
-    XueHuaDeviceInfoPigeonDeviceInfo* object);
-const gchar* xue_hua_device_info_pigeon_device_info_get_model(
-    XueHuaDeviceInfoPigeonDeviceInfo* object);
-const gchar* xue_hua_device_info_pigeon_device_info_get_serial(
-    XueHuaDeviceInfoPigeonDeviceInfo* object);
-const gchar* xue_hua_device_info_pigeon_device_info_get_name(
-    XueHuaDeviceInfoPigeonDeviceInfo* object);
-const gchar* xue_hua_device_info_pigeon_device_info_get_operating_system(
-    XueHuaDeviceInfoPigeonDeviceInfo* object);
-const gchar* xue_hua_device_info_pigeon_device_info_get_os_version(
-    XueHuaDeviceInfoPigeonDeviceInfo* object);
-const gchar* xue_hua_device_info_pigeon_device_info_get_architecture(
-    XueHuaDeviceInfoPigeonDeviceInfo* object);
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoWireDeviceInfo, xue_hua_device_info_wire_device_info, XUE_HUA_DEVICE_INFO, WIRE_DEVICE_INFO, GObject)
 
 /**
- * XueHuaDeviceInfoPigeonBatteryInfo:
+ * xue_hua_device_info_wire_device_info_new:
+ * device_id: field in this object.
+ * manufacturer: field in this object.
+ * model: field in this object.
+ * serial: field in this object.
+ * name: field in this object.
+ * operating_system: field in this object.
+ * os_version: field in this object.
+ * architecture: field in this object.
+ *
+ * Creates a new #WireDeviceInfo object.
+ *
+ * Returns: a new #XueHuaDeviceInfoWireDeviceInfo
+ */
+XueHuaDeviceInfoWireDeviceInfo* xue_hua_device_info_wire_device_info_new(const gchar* device_id, const gchar* manufacturer, const gchar* model, const gchar* serial, const gchar* name, const gchar* operating_system, const gchar* os_version, const gchar* architecture);
+
+/**
+ * xue_hua_device_info_wire_device_info_get_device_id
+ * @object: a #XueHuaDeviceInfoWireDeviceInfo.
+ *
+ * Gets the value of the deviceId field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_device_info_get_device_id(XueHuaDeviceInfoWireDeviceInfo* object);
+
+/**
+ * xue_hua_device_info_wire_device_info_get_manufacturer
+ * @object: a #XueHuaDeviceInfoWireDeviceInfo.
+ *
+ * Gets the value of the manufacturer field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_device_info_get_manufacturer(XueHuaDeviceInfoWireDeviceInfo* object);
+
+/**
+ * xue_hua_device_info_wire_device_info_get_model
+ * @object: a #XueHuaDeviceInfoWireDeviceInfo.
+ *
+ * Gets the value of the model field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_device_info_get_model(XueHuaDeviceInfoWireDeviceInfo* object);
+
+/**
+ * xue_hua_device_info_wire_device_info_get_serial
+ * @object: a #XueHuaDeviceInfoWireDeviceInfo.
+ *
+ * Gets the value of the serial field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_device_info_get_serial(XueHuaDeviceInfoWireDeviceInfo* object);
+
+/**
+ * xue_hua_device_info_wire_device_info_get_name
+ * @object: a #XueHuaDeviceInfoWireDeviceInfo.
+ *
+ * Gets the value of the name field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_device_info_get_name(XueHuaDeviceInfoWireDeviceInfo* object);
+
+/**
+ * xue_hua_device_info_wire_device_info_get_operating_system
+ * @object: a #XueHuaDeviceInfoWireDeviceInfo.
+ *
+ * Gets the value of the operatingSystem field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_device_info_get_operating_system(XueHuaDeviceInfoWireDeviceInfo* object);
+
+/**
+ * xue_hua_device_info_wire_device_info_get_os_version
+ * @object: a #XueHuaDeviceInfoWireDeviceInfo.
+ *
+ * Gets the value of the osVersion field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_device_info_get_os_version(XueHuaDeviceInfoWireDeviceInfo* object);
+
+/**
+ * xue_hua_device_info_wire_device_info_get_architecture
+ * @object: a #XueHuaDeviceInfoWireDeviceInfo.
+ *
+ * Gets the value of the architecture field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_device_info_get_architecture(XueHuaDeviceInfoWireDeviceInfo* object);
+
+/**
+ * xue_hua_device_info_wire_device_info_equals:
+ * @a: a #XueHuaDeviceInfoWireDeviceInfo.
+ * @b: another #XueHuaDeviceInfoWireDeviceInfo.
+ *
+ * Checks if two #XueHuaDeviceInfoWireDeviceInfo objects are equal.
+ *
+ * Returns: TRUE if @a and @b are equal.
+ */
+gboolean xue_hua_device_info_wire_device_info_equals(XueHuaDeviceInfoWireDeviceInfo* a, XueHuaDeviceInfoWireDeviceInfo* b);
+
+/**
+ * xue_hua_device_info_wire_device_info_hash:
+ * @object: a #XueHuaDeviceInfoWireDeviceInfo.
+ *
+ * Calculates a hash code for a #XueHuaDeviceInfoWireDeviceInfo object.
+ *
+ * Returns: the hash code.
+ */
+guint xue_hua_device_info_wire_device_info_hash(XueHuaDeviceInfoWireDeviceInfo* object);
+
+/**
+ * xue_hua_device_info_wire_device_info_to_string:
+ * @object: a #XueHuaDeviceInfoWireDeviceInfo.
+ *
+ * Returns a string representation of a #XueHuaDeviceInfoWireDeviceInfo object.
+ *
+ * Returns: (transfer full): a new string, free with g_free().
+ */
+gchar* xue_hua_device_info_wire_device_info_to_string(XueHuaDeviceInfoWireDeviceInfo* object);
+
+/**
+ * XueHuaDeviceInfoWireBatteryInfo:
  *
  * Strongly-typed Pigeon payload for battery status.
  */
-G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoPigeonBatteryInfo,
-                     xue_hua_device_info_pigeon_battery_info,
-                     XUE_HUA_DEVICE_INFO, PIGEON_BATTERY_INFO, GObject)
 
-XueHuaDeviceInfoPigeonBatteryInfo* xue_hua_device_info_pigeon_battery_info_new(
-    const gdouble* level, const gboolean* is_charging,
-    XueHuaDeviceInfoPigeonBatteryChargingState charging_state,
-    XueHuaDeviceInfoPigeonBatteryHealthStatus health_status,
-    const gchar* health, gboolean has_battery);
-
-const gdouble* xue_hua_device_info_pigeon_battery_info_get_level(
-    XueHuaDeviceInfoPigeonBatteryInfo* object);
-const gboolean* xue_hua_device_info_pigeon_battery_info_get_is_charging(
-    XueHuaDeviceInfoPigeonBatteryInfo* object);
-XueHuaDeviceInfoPigeonBatteryChargingState
-xue_hua_device_info_pigeon_battery_info_get_charging_state(
-    XueHuaDeviceInfoPigeonBatteryInfo* object);
-XueHuaDeviceInfoPigeonBatteryHealthStatus
-xue_hua_device_info_pigeon_battery_info_get_health_status(
-    XueHuaDeviceInfoPigeonBatteryInfo* object);
-const gchar* xue_hua_device_info_pigeon_battery_info_get_health(
-    XueHuaDeviceInfoPigeonBatteryInfo* object);
-gboolean xue_hua_device_info_pigeon_battery_info_get_has_battery(
-    XueHuaDeviceInfoPigeonBatteryInfo* object);
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoWireBatteryInfo, xue_hua_device_info_wire_battery_info, XUE_HUA_DEVICE_INFO, WIRE_BATTERY_INFO, GObject)
 
 /**
- * XueHuaDeviceInfoPigeonNetworkInfo:
+ * xue_hua_device_info_wire_battery_info_new:
+ * level: field in this object.
+ * is_charging: field in this object.
+ * charging_state: field in this object.
+ * health_status: field in this object.
+ * health: field in this object.
+ * has_battery: field in this object.
+ *
+ * Creates a new #WireBatteryInfo object.
+ *
+ * Returns: a new #XueHuaDeviceInfoWireBatteryInfo
+ */
+XueHuaDeviceInfoWireBatteryInfo* xue_hua_device_info_wire_battery_info_new(double* level, gboolean* is_charging, XueHuaDeviceInfoWireBatteryChargingState charging_state, XueHuaDeviceInfoWireBatteryHealthStatus health_status, const gchar* health, gboolean has_battery);
+
+/**
+ * xue_hua_device_info_wire_battery_info_get_level
+ * @object: a #XueHuaDeviceInfoWireBatteryInfo.
+ *
+ * Gets the value of the level field of @object.
+ *
+ * Returns: the field value.
+ */
+double* xue_hua_device_info_wire_battery_info_get_level(XueHuaDeviceInfoWireBatteryInfo* object);
+
+/**
+ * xue_hua_device_info_wire_battery_info_get_is_charging
+ * @object: a #XueHuaDeviceInfoWireBatteryInfo.
+ *
+ * Gets the value of the isCharging field of @object.
+ *
+ * Returns: the field value.
+ */
+gboolean* xue_hua_device_info_wire_battery_info_get_is_charging(XueHuaDeviceInfoWireBatteryInfo* object);
+
+/**
+ * xue_hua_device_info_wire_battery_info_get_charging_state
+ * @object: a #XueHuaDeviceInfoWireBatteryInfo.
+ *
+ * Gets the value of the chargingState field of @object.
+ *
+ * Returns: the field value.
+ */
+XueHuaDeviceInfoWireBatteryChargingState xue_hua_device_info_wire_battery_info_get_charging_state(XueHuaDeviceInfoWireBatteryInfo* object);
+
+/**
+ * xue_hua_device_info_wire_battery_info_get_health_status
+ * @object: a #XueHuaDeviceInfoWireBatteryInfo.
+ *
+ * Gets the value of the healthStatus field of @object.
+ *
+ * Returns: the field value.
+ */
+XueHuaDeviceInfoWireBatteryHealthStatus xue_hua_device_info_wire_battery_info_get_health_status(XueHuaDeviceInfoWireBatteryInfo* object);
+
+/**
+ * xue_hua_device_info_wire_battery_info_get_health
+ * @object: a #XueHuaDeviceInfoWireBatteryInfo.
+ *
+ * Gets the value of the health field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_battery_info_get_health(XueHuaDeviceInfoWireBatteryInfo* object);
+
+/**
+ * xue_hua_device_info_wire_battery_info_get_has_battery
+ * @object: a #XueHuaDeviceInfoWireBatteryInfo.
+ *
+ * Gets the value of the hasBattery field of @object.
+ *
+ * Returns: the field value.
+ */
+gboolean xue_hua_device_info_wire_battery_info_get_has_battery(XueHuaDeviceInfoWireBatteryInfo* object);
+
+/**
+ * xue_hua_device_info_wire_battery_info_equals:
+ * @a: a #XueHuaDeviceInfoWireBatteryInfo.
+ * @b: another #XueHuaDeviceInfoWireBatteryInfo.
+ *
+ * Checks if two #XueHuaDeviceInfoWireBatteryInfo objects are equal.
+ *
+ * Returns: TRUE if @a and @b are equal.
+ */
+gboolean xue_hua_device_info_wire_battery_info_equals(XueHuaDeviceInfoWireBatteryInfo* a, XueHuaDeviceInfoWireBatteryInfo* b);
+
+/**
+ * xue_hua_device_info_wire_battery_info_hash:
+ * @object: a #XueHuaDeviceInfoWireBatteryInfo.
+ *
+ * Calculates a hash code for a #XueHuaDeviceInfoWireBatteryInfo object.
+ *
+ * Returns: the hash code.
+ */
+guint xue_hua_device_info_wire_battery_info_hash(XueHuaDeviceInfoWireBatteryInfo* object);
+
+/**
+ * xue_hua_device_info_wire_battery_info_to_string:
+ * @object: a #XueHuaDeviceInfoWireBatteryInfo.
+ *
+ * Returns a string representation of a #XueHuaDeviceInfoWireBatteryInfo object.
+ *
+ * Returns: (transfer full): a new string, free with g_free().
+ */
+gchar* xue_hua_device_info_wire_battery_info_to_string(XueHuaDeviceInfoWireBatteryInfo* object);
+
+/**
+ * XueHuaDeviceInfoWireNetworkInfo:
  *
  * Strongly-typed Pigeon payload for network connection details.
  */
-G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoPigeonNetworkInfo,
-                     xue_hua_device_info_pigeon_network_info,
-                     XUE_HUA_DEVICE_INFO, PIGEON_NETWORK_INFO, GObject)
 
-XueHuaDeviceInfoPigeonNetworkInfo* xue_hua_device_info_pigeon_network_info_new(
-    const gchar* ip_address,
-    XueHuaDeviceInfoPigeonNetworkConnectionType connection_type,
-    const gchar* network_type, const gchar* mac_address,
-    const gchar* interface_name);
-
-const gchar* xue_hua_device_info_pigeon_network_info_get_ip_address(
-    XueHuaDeviceInfoPigeonNetworkInfo* object);
-XueHuaDeviceInfoPigeonNetworkConnectionType
-xue_hua_device_info_pigeon_network_info_get_connection_type(
-    XueHuaDeviceInfoPigeonNetworkInfo* object);
-const gchar* xue_hua_device_info_pigeon_network_info_get_network_type(
-    XueHuaDeviceInfoPigeonNetworkInfo* object);
-const gchar* xue_hua_device_info_pigeon_network_info_get_mac_address(
-    XueHuaDeviceInfoPigeonNetworkInfo* object);
-const gchar* xue_hua_device_info_pigeon_network_info_get_interface_name(
-    XueHuaDeviceInfoPigeonNetworkInfo* object);
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoWireNetworkInfo, xue_hua_device_info_wire_network_info, XUE_HUA_DEVICE_INFO, WIRE_NETWORK_INFO, GObject)
 
 /**
- * XueHuaDeviceInfoPigeonStorageInfo:
+ * xue_hua_device_info_wire_network_info_new:
+ * ip_address: field in this object.
+ * connection_type: field in this object.
+ * network_type: field in this object.
+ * mac_address: field in this object.
+ * interface_name: field in this object.
+ *
+ * Creates a new #WireNetworkInfo object.
+ *
+ * Returns: a new #XueHuaDeviceInfoWireNetworkInfo
+ */
+XueHuaDeviceInfoWireNetworkInfo* xue_hua_device_info_wire_network_info_new(const gchar* ip_address, XueHuaDeviceInfoWireNetworkConnectionType connection_type, const gchar* network_type, const gchar* mac_address, const gchar* interface_name);
+
+/**
+ * xue_hua_device_info_wire_network_info_get_ip_address
+ * @object: a #XueHuaDeviceInfoWireNetworkInfo.
+ *
+ * Gets the value of the ipAddress field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_network_info_get_ip_address(XueHuaDeviceInfoWireNetworkInfo* object);
+
+/**
+ * xue_hua_device_info_wire_network_info_get_connection_type
+ * @object: a #XueHuaDeviceInfoWireNetworkInfo.
+ *
+ * Gets the value of the connectionType field of @object.
+ *
+ * Returns: the field value.
+ */
+XueHuaDeviceInfoWireNetworkConnectionType xue_hua_device_info_wire_network_info_get_connection_type(XueHuaDeviceInfoWireNetworkInfo* object);
+
+/**
+ * xue_hua_device_info_wire_network_info_get_network_type
+ * @object: a #XueHuaDeviceInfoWireNetworkInfo.
+ *
+ * Gets the value of the networkType field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_network_info_get_network_type(XueHuaDeviceInfoWireNetworkInfo* object);
+
+/**
+ * xue_hua_device_info_wire_network_info_get_mac_address
+ * @object: a #XueHuaDeviceInfoWireNetworkInfo.
+ *
+ * Gets the value of the macAddress field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_network_info_get_mac_address(XueHuaDeviceInfoWireNetworkInfo* object);
+
+/**
+ * xue_hua_device_info_wire_network_info_get_interface_name
+ * @object: a #XueHuaDeviceInfoWireNetworkInfo.
+ *
+ * Gets the value of the interfaceName field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_network_info_get_interface_name(XueHuaDeviceInfoWireNetworkInfo* object);
+
+/**
+ * xue_hua_device_info_wire_network_info_equals:
+ * @a: a #XueHuaDeviceInfoWireNetworkInfo.
+ * @b: another #XueHuaDeviceInfoWireNetworkInfo.
+ *
+ * Checks if two #XueHuaDeviceInfoWireNetworkInfo objects are equal.
+ *
+ * Returns: TRUE if @a and @b are equal.
+ */
+gboolean xue_hua_device_info_wire_network_info_equals(XueHuaDeviceInfoWireNetworkInfo* a, XueHuaDeviceInfoWireNetworkInfo* b);
+
+/**
+ * xue_hua_device_info_wire_network_info_hash:
+ * @object: a #XueHuaDeviceInfoWireNetworkInfo.
+ *
+ * Calculates a hash code for a #XueHuaDeviceInfoWireNetworkInfo object.
+ *
+ * Returns: the hash code.
+ */
+guint xue_hua_device_info_wire_network_info_hash(XueHuaDeviceInfoWireNetworkInfo* object);
+
+/**
+ * xue_hua_device_info_wire_network_info_to_string:
+ * @object: a #XueHuaDeviceInfoWireNetworkInfo.
+ *
+ * Returns a string representation of a #XueHuaDeviceInfoWireNetworkInfo object.
+ *
+ * Returns: (transfer full): a new string, free with g_free().
+ */
+gchar* xue_hua_device_info_wire_network_info_to_string(XueHuaDeviceInfoWireNetworkInfo* object);
+
+/**
+ * XueHuaDeviceInfoWireStorageInfo:
  *
  * Strongly-typed Pigeon payload for primary storage capacity.
  */
-G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoPigeonStorageInfo,
-                     xue_hua_device_info_pigeon_storage_info,
-                     XUE_HUA_DEVICE_INFO, PIGEON_STORAGE_INFO, GObject)
 
-XueHuaDeviceInfoPigeonStorageInfo* xue_hua_device_info_pigeon_storage_info_new(
-    gint64 total_bytes, gint64 free_bytes,
-    XueHuaDeviceInfoPigeonStorageMediumType medium_type,
-    const gchar* storage_type);
-
-gint64 xue_hua_device_info_pigeon_storage_info_get_total_bytes(
-    XueHuaDeviceInfoPigeonStorageInfo* object);
-gint64 xue_hua_device_info_pigeon_storage_info_get_free_bytes(
-    XueHuaDeviceInfoPigeonStorageInfo* object);
-XueHuaDeviceInfoPigeonStorageMediumType
-xue_hua_device_info_pigeon_storage_info_get_medium_type(
-    XueHuaDeviceInfoPigeonStorageInfo* object);
-const gchar* xue_hua_device_info_pigeon_storage_info_get_storage_type(
-    XueHuaDeviceInfoPigeonStorageInfo* object);
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoWireStorageInfo, xue_hua_device_info_wire_storage_info, XUE_HUA_DEVICE_INFO, WIRE_STORAGE_INFO, GObject)
 
 /**
- * XueHuaDeviceInfoPigeonDisplayInfo:
+ * xue_hua_device_info_wire_storage_info_new:
+ * total_bytes: field in this object.
+ * free_bytes: field in this object.
+ * medium_type: field in this object.
+ * storage_type: field in this object.
+ *
+ * Creates a new #WireStorageInfo object.
+ *
+ * Returns: a new #XueHuaDeviceInfoWireStorageInfo
+ */
+XueHuaDeviceInfoWireStorageInfo* xue_hua_device_info_wire_storage_info_new(int64_t total_bytes, int64_t free_bytes, XueHuaDeviceInfoWireStorageMediumType medium_type, const gchar* storage_type);
+
+/**
+ * xue_hua_device_info_wire_storage_info_get_total_bytes
+ * @object: a #XueHuaDeviceInfoWireStorageInfo.
+ *
+ * Gets the value of the totalBytes field of @object.
+ *
+ * Returns: the field value.
+ */
+int64_t xue_hua_device_info_wire_storage_info_get_total_bytes(XueHuaDeviceInfoWireStorageInfo* object);
+
+/**
+ * xue_hua_device_info_wire_storage_info_get_free_bytes
+ * @object: a #XueHuaDeviceInfoWireStorageInfo.
+ *
+ * Gets the value of the freeBytes field of @object.
+ *
+ * Returns: the field value.
+ */
+int64_t xue_hua_device_info_wire_storage_info_get_free_bytes(XueHuaDeviceInfoWireStorageInfo* object);
+
+/**
+ * xue_hua_device_info_wire_storage_info_get_medium_type
+ * @object: a #XueHuaDeviceInfoWireStorageInfo.
+ *
+ * Gets the value of the mediumType field of @object.
+ *
+ * Returns: the field value.
+ */
+XueHuaDeviceInfoWireStorageMediumType xue_hua_device_info_wire_storage_info_get_medium_type(XueHuaDeviceInfoWireStorageInfo* object);
+
+/**
+ * xue_hua_device_info_wire_storage_info_get_storage_type
+ * @object: a #XueHuaDeviceInfoWireStorageInfo.
+ *
+ * Gets the value of the storageType field of @object.
+ *
+ * Returns: the field value.
+ */
+const gchar* xue_hua_device_info_wire_storage_info_get_storage_type(XueHuaDeviceInfoWireStorageInfo* object);
+
+/**
+ * xue_hua_device_info_wire_storage_info_equals:
+ * @a: a #XueHuaDeviceInfoWireStorageInfo.
+ * @b: another #XueHuaDeviceInfoWireStorageInfo.
+ *
+ * Checks if two #XueHuaDeviceInfoWireStorageInfo objects are equal.
+ *
+ * Returns: TRUE if @a and @b are equal.
+ */
+gboolean xue_hua_device_info_wire_storage_info_equals(XueHuaDeviceInfoWireStorageInfo* a, XueHuaDeviceInfoWireStorageInfo* b);
+
+/**
+ * xue_hua_device_info_wire_storage_info_hash:
+ * @object: a #XueHuaDeviceInfoWireStorageInfo.
+ *
+ * Calculates a hash code for a #XueHuaDeviceInfoWireStorageInfo object.
+ *
+ * Returns: the hash code.
+ */
+guint xue_hua_device_info_wire_storage_info_hash(XueHuaDeviceInfoWireStorageInfo* object);
+
+/**
+ * xue_hua_device_info_wire_storage_info_to_string:
+ * @object: a #XueHuaDeviceInfoWireStorageInfo.
+ *
+ * Returns a string representation of a #XueHuaDeviceInfoWireStorageInfo object.
+ *
+ * Returns: (transfer full): a new string, free with g_free().
+ */
+gchar* xue_hua_device_info_wire_storage_info_to_string(XueHuaDeviceInfoWireStorageInfo* object);
+
+/**
+ * XueHuaDeviceInfoWireDisplayInfo:
  *
  * Strongly-typed Pigeon payload for primary display metrics.
  */
-G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoPigeonDisplayInfo,
-                     xue_hua_device_info_pigeon_display_info,
-                     XUE_HUA_DEVICE_INFO, PIGEON_DISPLAY_INFO, GObject)
 
-XueHuaDeviceInfoPigeonDisplayInfo* xue_hua_device_info_pigeon_display_info_new(
-    gint64 width, gint64 height, gdouble scale_factor,
-    const gdouble* refresh_rate);
-
-gint64 xue_hua_device_info_pigeon_display_info_get_width(
-    XueHuaDeviceInfoPigeonDisplayInfo* object);
-gint64 xue_hua_device_info_pigeon_display_info_get_height(
-    XueHuaDeviceInfoPigeonDisplayInfo* object);
-gdouble xue_hua_device_info_pigeon_display_info_get_scale_factor(
-    XueHuaDeviceInfoPigeonDisplayInfo* object);
-const gdouble* xue_hua_device_info_pigeon_display_info_get_refresh_rate(
-    XueHuaDeviceInfoPigeonDisplayInfo* object);
-
-G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoMessageCodec,
-                     xue_hua_device_info_message_codec, XUE_HUA_DEVICE_INFO,
-                     MESSAGE_CODEC, FlStandardMessageCodec)
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoWireDisplayInfo, xue_hua_device_info_wire_display_info, XUE_HUA_DEVICE_INFO, WIRE_DISPLAY_INFO, GObject)
 
 /**
- * XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse:
+ * xue_hua_device_info_wire_display_info_new:
+ * width: field in this object.
+ * height: field in this object.
+ * scale_factor: field in this object.
+ * refresh_rate: field in this object.
+ *
+ * Creates a new #WireDisplayInfo object.
+ *
+ * Returns: a new #XueHuaDeviceInfoWireDisplayInfo
  */
-G_DECLARE_FINAL_TYPE(
-    XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse,
-    xue_hua_device_info_xue_hua_device_info_host_api_get_device_info_response,
-    XUE_HUA_DEVICE_INFO, XUE_HUA_DEVICE_INFO_HOST_API_GET_DEVICE_INFO_RESPONSE,
-    GObject)
-
-XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse*
-xue_hua_device_info_xue_hua_device_info_host_api_get_device_info_response_new(
-    XueHuaDeviceInfoPigeonDeviceInfo* return_value);
-
-XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse*
-xue_hua_device_info_xue_hua_device_info_host_api_get_device_info_response_new_error(
-    const gchar* code, const gchar* message, FlValue* details);
+XueHuaDeviceInfoWireDisplayInfo* xue_hua_device_info_wire_display_info_new(int64_t width, int64_t height, double scale_factor, double* refresh_rate);
 
 /**
- * XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse:
+ * xue_hua_device_info_wire_display_info_get_width
+ * @object: a #XueHuaDeviceInfoWireDisplayInfo.
+ *
+ * Gets the value of the width field of @object.
+ *
+ * Returns: the field value.
  */
-G_DECLARE_FINAL_TYPE(
-    XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse,
-    xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response,
-    XUE_HUA_DEVICE_INFO, XUE_HUA_DEVICE_INFO_HOST_API_GET_BATTERY_INFO_RESPONSE,
-    GObject)
-
-XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse*
-xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response_new(
-    XueHuaDeviceInfoPigeonBatteryInfo* return_value);
-
-XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse*
-xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response_new_error(
-    const gchar* code, const gchar* message, FlValue* details);
+int64_t xue_hua_device_info_wire_display_info_get_width(XueHuaDeviceInfoWireDisplayInfo* object);
 
 /**
- * XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse:
+ * xue_hua_device_info_wire_display_info_get_height
+ * @object: a #XueHuaDeviceInfoWireDisplayInfo.
+ *
+ * Gets the value of the height field of @object.
+ *
+ * Returns: the field value.
  */
-G_DECLARE_FINAL_TYPE(
-    XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse,
-    xue_hua_device_info_xue_hua_device_info_host_api_get_network_info_response,
-    XUE_HUA_DEVICE_INFO, XUE_HUA_DEVICE_INFO_HOST_API_GET_NETWORK_INFO_RESPONSE,
-    GObject)
-
-XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse*
-xue_hua_device_info_xue_hua_device_info_host_api_get_network_info_response_new(
-    XueHuaDeviceInfoPigeonNetworkInfo* return_value);
-
-XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse*
-xue_hua_device_info_xue_hua_device_info_host_api_get_network_info_response_new_error(
-    const gchar* code, const gchar* message, FlValue* details);
+int64_t xue_hua_device_info_wire_display_info_get_height(XueHuaDeviceInfoWireDisplayInfo* object);
 
 /**
- * XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse:
+ * xue_hua_device_info_wire_display_info_get_scale_factor
+ * @object: a #XueHuaDeviceInfoWireDisplayInfo.
+ *
+ * Gets the value of the scaleFactor field of @object.
+ *
+ * Returns: the field value.
  */
-G_DECLARE_FINAL_TYPE(
-    XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse,
-    xue_hua_device_info_xue_hua_device_info_host_api_get_storage_info_response,
-    XUE_HUA_DEVICE_INFO, XUE_HUA_DEVICE_INFO_HOST_API_GET_STORAGE_INFO_RESPONSE,
-    GObject)
-
-XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse*
-xue_hua_device_info_xue_hua_device_info_host_api_get_storage_info_response_new(
-    XueHuaDeviceInfoPigeonStorageInfo* return_value);
-
-XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse*
-xue_hua_device_info_xue_hua_device_info_host_api_get_storage_info_response_new_error(
-    const gchar* code, const gchar* message, FlValue* details);
+double xue_hua_device_info_wire_display_info_get_scale_factor(XueHuaDeviceInfoWireDisplayInfo* object);
 
 /**
- * XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse:
+ * xue_hua_device_info_wire_display_info_get_refresh_rate
+ * @object: a #XueHuaDeviceInfoWireDisplayInfo.
+ *
+ * Gets the value of the refreshRate field of @object.
+ *
+ * Returns: the field value.
  */
-G_DECLARE_FINAL_TYPE(
-    XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse,
-    xue_hua_device_info_xue_hua_device_info_host_api_get_display_info_response,
-    XUE_HUA_DEVICE_INFO, XUE_HUA_DEVICE_INFO_HOST_API_GET_DISPLAY_INFO_RESPONSE,
-    GObject)
+double* xue_hua_device_info_wire_display_info_get_refresh_rate(XueHuaDeviceInfoWireDisplayInfo* object);
 
-XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse*
-xue_hua_device_info_xue_hua_device_info_host_api_get_display_info_response_new(
-    XueHuaDeviceInfoPigeonDisplayInfo* return_value);
+/**
+ * xue_hua_device_info_wire_display_info_equals:
+ * @a: a #XueHuaDeviceInfoWireDisplayInfo.
+ * @b: another #XueHuaDeviceInfoWireDisplayInfo.
+ *
+ * Checks if two #XueHuaDeviceInfoWireDisplayInfo objects are equal.
+ *
+ * Returns: TRUE if @a and @b are equal.
+ */
+gboolean xue_hua_device_info_wire_display_info_equals(XueHuaDeviceInfoWireDisplayInfo* a, XueHuaDeviceInfoWireDisplayInfo* b);
 
-XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse*
-xue_hua_device_info_xue_hua_device_info_host_api_get_display_info_response_new_error(
-    const gchar* code, const gchar* message, FlValue* details);
+/**
+ * xue_hua_device_info_wire_display_info_hash:
+ * @object: a #XueHuaDeviceInfoWireDisplayInfo.
+ *
+ * Calculates a hash code for a #XueHuaDeviceInfoWireDisplayInfo object.
+ *
+ * Returns: the hash code.
+ */
+guint xue_hua_device_info_wire_display_info_hash(XueHuaDeviceInfoWireDisplayInfo* object);
+
+/**
+ * xue_hua_device_info_wire_display_info_to_string:
+ * @object: a #XueHuaDeviceInfoWireDisplayInfo.
+ *
+ * Returns a string representation of a #XueHuaDeviceInfoWireDisplayInfo object.
+ *
+ * Returns: (transfer full): a new string, free with g_free().
+ */
+gchar* xue_hua_device_info_wire_display_info_to_string(XueHuaDeviceInfoWireDisplayInfo* object);
+
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoMessageCodec, xue_hua_device_info_message_codec, XUE_HUA_DEVICE_INFO, MESSAGE_CODEC, FlStandardMessageCodec)
+
+/**
+ * Custom type ID constants:
+ *
+ * Constants used to identify custom types in the codec.
+ * They are used in the codec to encode and decode custom types.
+ * They may be used in custom object creation functions to identify the type.
+ */
+extern const int xue_hua_device_info_wire_battery_charging_state_type_id;
+extern const int xue_hua_device_info_wire_battery_health_status_type_id;
+extern const int xue_hua_device_info_wire_network_connection_type_type_id;
+extern const int xue_hua_device_info_wire_storage_medium_type_type_id;
+extern const int xue_hua_device_info_wire_device_info_type_id;
+extern const int xue_hua_device_info_wire_battery_info_type_id;
+extern const int xue_hua_device_info_wire_network_info_type_id;
+extern const int xue_hua_device_info_wire_storage_info_type_id;
+extern const int xue_hua_device_info_wire_display_info_type_id;
+
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoXueHuaDeviceInfoHostApi, xue_hua_device_info_xue_hua_device_info_host_api, XUE_HUA_DEVICE_INFO, XUE_HUA_DEVICE_INFO_HOST_API, GObject)
+
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse, xue_hua_device_info_xue_hua_device_info_host_api_get_device_info_response, XUE_HUA_DEVICE_INFO, XUE_HUA_DEVICE_INFO_HOST_API_GET_DEVICE_INFO_RESPONSE, GObject)
+
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_get_device_info_response_new:
+ *
+ * Creates a new response to XueHuaDeviceInfoHostApi.getDeviceInfo.
+ *
+ * Returns: a new #XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse
+ */
+XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse* xue_hua_device_info_xue_hua_device_info_host_api_get_device_info_response_new(XueHuaDeviceInfoWireDeviceInfo* return_value);
+
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_get_device_info_response_new_error:
+ * @code: error code.
+ * @message: error message.
+ * @details: (allow-none): error details or %NULL.
+ *
+ * Creates a new error response to XueHuaDeviceInfoHostApi.getDeviceInfo.
+ *
+ * Returns: a new #XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse
+ */
+XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse* xue_hua_device_info_xue_hua_device_info_host_api_get_device_info_response_new_error(const gchar* code, const gchar* message, FlValue* details);
+
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse, xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response, XUE_HUA_DEVICE_INFO, XUE_HUA_DEVICE_INFO_HOST_API_GET_BATTERY_INFO_RESPONSE, GObject)
+
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response_new:
+ *
+ * Creates a new response to XueHuaDeviceInfoHostApi.getBatteryInfo.
+ *
+ * Returns: a new #XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse
+ */
+XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse* xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response_new(XueHuaDeviceInfoWireBatteryInfo* return_value);
+
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response_new_error:
+ * @code: error code.
+ * @message: error message.
+ * @details: (allow-none): error details or %NULL.
+ *
+ * Creates a new error response to XueHuaDeviceInfoHostApi.getBatteryInfo.
+ *
+ * Returns: a new #XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse
+ */
+XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse* xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response_new_error(const gchar* code, const gchar* message, FlValue* details);
+
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse, xue_hua_device_info_xue_hua_device_info_host_api_get_network_info_response, XUE_HUA_DEVICE_INFO, XUE_HUA_DEVICE_INFO_HOST_API_GET_NETWORK_INFO_RESPONSE, GObject)
+
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_get_network_info_response_new:
+ *
+ * Creates a new response to XueHuaDeviceInfoHostApi.getNetworkInfo.
+ *
+ * Returns: a new #XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse
+ */
+XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse* xue_hua_device_info_xue_hua_device_info_host_api_get_network_info_response_new(XueHuaDeviceInfoWireNetworkInfo* return_value);
+
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_get_network_info_response_new_error:
+ * @code: error code.
+ * @message: error message.
+ * @details: (allow-none): error details or %NULL.
+ *
+ * Creates a new error response to XueHuaDeviceInfoHostApi.getNetworkInfo.
+ *
+ * Returns: a new #XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse
+ */
+XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse* xue_hua_device_info_xue_hua_device_info_host_api_get_network_info_response_new_error(const gchar* code, const gchar* message, FlValue* details);
+
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse, xue_hua_device_info_xue_hua_device_info_host_api_get_storage_info_response, XUE_HUA_DEVICE_INFO, XUE_HUA_DEVICE_INFO_HOST_API_GET_STORAGE_INFO_RESPONSE, GObject)
+
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_get_storage_info_response_new:
+ *
+ * Creates a new response to XueHuaDeviceInfoHostApi.getStorageInfo.
+ *
+ * Returns: a new #XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse
+ */
+XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse* xue_hua_device_info_xue_hua_device_info_host_api_get_storage_info_response_new(XueHuaDeviceInfoWireStorageInfo* return_value);
+
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_get_storage_info_response_new_error:
+ * @code: error code.
+ * @message: error message.
+ * @details: (allow-none): error details or %NULL.
+ *
+ * Creates a new error response to XueHuaDeviceInfoHostApi.getStorageInfo.
+ *
+ * Returns: a new #XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse
+ */
+XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse* xue_hua_device_info_xue_hua_device_info_host_api_get_storage_info_response_new_error(const gchar* code, const gchar* message, FlValue* details);
+
+G_DECLARE_FINAL_TYPE(XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse, xue_hua_device_info_xue_hua_device_info_host_api_get_display_info_response, XUE_HUA_DEVICE_INFO, XUE_HUA_DEVICE_INFO_HOST_API_GET_DISPLAY_INFO_RESPONSE, GObject)
+
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_get_display_info_response_new:
+ *
+ * Creates a new response to XueHuaDeviceInfoHostApi.getDisplayInfo.
+ *
+ * Returns: a new #XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse
+ */
+XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse* xue_hua_device_info_xue_hua_device_info_host_api_get_display_info_response_new(XueHuaDeviceInfoWireDisplayInfo* return_value);
+
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_get_display_info_response_new_error:
+ * @code: error code.
+ * @message: error message.
+ * @details: (allow-none): error details or %NULL.
+ *
+ * Creates a new error response to XueHuaDeviceInfoHostApi.getDisplayInfo.
+ *
+ * Returns: a new #XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse
+ */
+XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse* xue_hua_device_info_xue_hua_device_info_host_api_get_display_info_response_new_error(const gchar* code, const gchar* message, FlValue* details);
 
 /**
  * XueHuaDeviceInfoXueHuaDeviceInfoHostApiVTable:
  *
- * Table of functions exposed by XueHuaDeviceInfoHostApi to be implemented by
- * the API provider.
+ * Table of functions exposed by XueHuaDeviceInfoHostApi to be implemented by the API provider.
  */
 typedef struct {
-  XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse* (
-      *get_device_info)(gpointer user_data);
-  XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse* (
-      *get_battery_info)(gpointer user_data);
-  XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse* (
-      *get_network_info)(gpointer user_data);
-  XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse* (
-      *get_storage_info)(gpointer user_data);
-  XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse* (
-      *get_display_info)(gpointer user_data);
+  XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse* (*get_device_info)(gpointer user_data);
+  XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse* (*get_battery_info)(gpointer user_data);
+  XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse* (*get_network_info)(gpointer user_data);
+  XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse* (*get_storage_info)(gpointer user_data);
+  XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse* (*get_display_info)(gpointer user_data);
 } XueHuaDeviceInfoXueHuaDeviceInfoHostApiVTable;
 
-void xue_hua_device_info_xue_hua_device_info_host_api_set_method_handlers(
-    FlBinaryMessenger* messenger, const gchar* suffix,
-    const XueHuaDeviceInfoXueHuaDeviceInfoHostApiVTable* vtable,
-    gpointer user_data, GDestroyNotify user_data_free_func);
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_set_method_handlers:
+ *
+ * @messenger: an #FlBinaryMessenger.
+ * @suffix: (allow-none): a suffix to add to the API or %NULL for none.
+ * @vtable: implementations of the methods in this API.
+ * @user_data: (closure): user data to pass to the functions in @vtable.
+ * @user_data_free_func: (allow-none): a function which gets called to free @user_data, or %NULL.
+ *
+ * Connects the method handlers in the XueHuaDeviceInfoHostApi API.
+ */
+void xue_hua_device_info_xue_hua_device_info_host_api_set_method_handlers(FlBinaryMessenger* messenger, const gchar* suffix, const XueHuaDeviceInfoXueHuaDeviceInfoHostApiVTable* vtable, gpointer user_data, GDestroyNotify user_data_free_func);
 
-void xue_hua_device_info_xue_hua_device_info_host_api_clear_method_handlers(
-    FlBinaryMessenger* messenger, const gchar* suffix);
+/**
+ * xue_hua_device_info_xue_hua_device_info_host_api_clear_method_handlers:
+ *
+ * @messenger: an #FlBinaryMessenger.
+ * @suffix: (allow-none): a suffix to add to the API or %NULL for none.
+ *
+ * Clears the method handlers in the XueHuaDeviceInfoHostApi API.
+ */
+void xue_hua_device_info_xue_hua_device_info_host_api_clear_method_handlers(FlBinaryMessenger* messenger, const gchar* suffix);
 
 G_END_DECLS
 

@@ -22,16 +22,25 @@ enum BatteryChargingState {
   /// Canonical string code for serialization and display.
   final String code;
 
-  /// Converts a Pigeon-generated [PigeonBatteryChargingState] into a domain [BatteryChargingState].
-  static BatteryChargingState fromPigeon(PigeonBatteryChargingState state) {
+  /// Converts a Pigeon-generated [WireBatteryChargingState] into a domain [BatteryChargingState].
+  static BatteryChargingState fromPigeon(WireBatteryChargingState state) {
     return switch (state) {
-      PigeonBatteryChargingState.charging => BatteryChargingState.charging,
-      PigeonBatteryChargingState.discharging =>
-        BatteryChargingState.discharging,
-      PigeonBatteryChargingState.full => BatteryChargingState.full,
-      PigeonBatteryChargingState.notCharging =>
-        BatteryChargingState.notCharging,
-      PigeonBatteryChargingState.unknown => BatteryChargingState.unknown,
+      WireBatteryChargingState.charging => BatteryChargingState.charging,
+      WireBatteryChargingState.discharging => BatteryChargingState.discharging,
+      WireBatteryChargingState.full => BatteryChargingState.full,
+      WireBatteryChargingState.notCharging => BatteryChargingState.notCharging,
+      WireBatteryChargingState.unknown => BatteryChargingState.unknown,
+    };
+  }
+
+  /// Converts this domain [BatteryChargingState] into a Pigeon [WireBatteryChargingState].
+  WireBatteryChargingState toPigeon() {
+    return switch (this) {
+      BatteryChargingState.charging => WireBatteryChargingState.charging,
+      BatteryChargingState.discharging => WireBatteryChargingState.discharging,
+      BatteryChargingState.full => WireBatteryChargingState.full,
+      BatteryChargingState.notCharging => WireBatteryChargingState.notCharging,
+      BatteryChargingState.unknown => WireBatteryChargingState.unknown,
     };
   }
 
@@ -93,19 +102,35 @@ enum BatteryHealthStatus {
   /// Canonical string code.
   final String code;
 
-  /// Converts a Pigeon-generated [PigeonBatteryHealthStatus] into a domain [BatteryHealthStatus].
-  static BatteryHealthStatus fromPigeon(PigeonBatteryHealthStatus status) {
+  /// Converts a Pigeon-generated [WireBatteryHealthStatus] into a domain [BatteryHealthStatus].
+  static BatteryHealthStatus fromPigeon(WireBatteryHealthStatus status) {
     return switch (status) {
-      PigeonBatteryHealthStatus.good => BatteryHealthStatus.good,
-      PigeonBatteryHealthStatus.fair => BatteryHealthStatus.fair,
-      PigeonBatteryHealthStatus.poor => BatteryHealthStatus.poor,
-      PigeonBatteryHealthStatus.overheat => BatteryHealthStatus.overheat,
-      PigeonBatteryHealthStatus.dead => BatteryHealthStatus.dead,
-      PigeonBatteryHealthStatus.overVoltage => BatteryHealthStatus.overVoltage,
-      PigeonBatteryHealthStatus.unspecifiedFailure =>
+      WireBatteryHealthStatus.good => BatteryHealthStatus.good,
+      WireBatteryHealthStatus.fair => BatteryHealthStatus.fair,
+      WireBatteryHealthStatus.poor => BatteryHealthStatus.poor,
+      WireBatteryHealthStatus.overheat => BatteryHealthStatus.overheat,
+      WireBatteryHealthStatus.dead => BatteryHealthStatus.dead,
+      WireBatteryHealthStatus.overVoltage => BatteryHealthStatus.overVoltage,
+      WireBatteryHealthStatus.unspecifiedFailure =>
         BatteryHealthStatus.unspecifiedFailure,
-      PigeonBatteryHealthStatus.cold => BatteryHealthStatus.cold,
-      PigeonBatteryHealthStatus.unknown => BatteryHealthStatus.unknown,
+      WireBatteryHealthStatus.cold => BatteryHealthStatus.cold,
+      WireBatteryHealthStatus.unknown => BatteryHealthStatus.unknown,
+    };
+  }
+
+  /// Converts this domain [BatteryHealthStatus] into a Pigeon [WireBatteryHealthStatus].
+  WireBatteryHealthStatus toPigeon() {
+    return switch (this) {
+      BatteryHealthStatus.good => WireBatteryHealthStatus.good,
+      BatteryHealthStatus.fair => WireBatteryHealthStatus.fair,
+      BatteryHealthStatus.poor => WireBatteryHealthStatus.poor,
+      BatteryHealthStatus.overheat => WireBatteryHealthStatus.overheat,
+      BatteryHealthStatus.dead => WireBatteryHealthStatus.dead,
+      BatteryHealthStatus.overVoltage => WireBatteryHealthStatus.overVoltage,
+      BatteryHealthStatus.unspecifiedFailure =>
+        WireBatteryHealthStatus.unspecifiedFailure,
+      BatteryHealthStatus.cold => WireBatteryHealthStatus.cold,
+      BatteryHealthStatus.unknown => WireBatteryHealthStatus.unknown,
     };
   }
 
@@ -169,16 +194,29 @@ enum NetworkConnectionType {
   /// Canonical wire/display string (`wifi`, `ethernet`, `cellular`, `none`, `unknown`).
   final String code;
 
-  /// Converts a Pigeon-generated [PigeonNetworkConnectionType] into [NetworkConnectionType].
-  static NetworkConnectionType fromPigeon(PigeonNetworkConnectionType type) {
+  /// Converts a Pigeon-generated [WireNetworkConnectionType] into [NetworkConnectionType].
+  static NetworkConnectionType fromPigeon(WireNetworkConnectionType type) {
     return switch (type) {
-      PigeonNetworkConnectionType.wifi => NetworkConnectionType.wifi,
-      PigeonNetworkConnectionType.ethernet => NetworkConnectionType.ethernet,
-      PigeonNetworkConnectionType.cellular => NetworkConnectionType.cellular,
-      PigeonNetworkConnectionType.vpn => NetworkConnectionType.vpn,
-      PigeonNetworkConnectionType.loopback => NetworkConnectionType.loopback,
-      PigeonNetworkConnectionType.none => NetworkConnectionType.none,
-      PigeonNetworkConnectionType.unknown => NetworkConnectionType.unknown,
+      WireNetworkConnectionType.wifi => NetworkConnectionType.wifi,
+      WireNetworkConnectionType.ethernet => NetworkConnectionType.ethernet,
+      WireNetworkConnectionType.cellular => NetworkConnectionType.cellular,
+      WireNetworkConnectionType.vpn => NetworkConnectionType.vpn,
+      WireNetworkConnectionType.loopback => NetworkConnectionType.loopback,
+      WireNetworkConnectionType.none => NetworkConnectionType.none,
+      WireNetworkConnectionType.unknown => NetworkConnectionType.unknown,
+    };
+  }
+
+  /// Converts this domain [NetworkConnectionType] into a Pigeon [WireNetworkConnectionType].
+  WireNetworkConnectionType toPigeon() {
+    return switch (this) {
+      NetworkConnectionType.wifi => WireNetworkConnectionType.wifi,
+      NetworkConnectionType.ethernet => WireNetworkConnectionType.ethernet,
+      NetworkConnectionType.cellular => WireNetworkConnectionType.cellular,
+      NetworkConnectionType.vpn => WireNetworkConnectionType.vpn,
+      NetworkConnectionType.loopback => WireNetworkConnectionType.loopback,
+      NetworkConnectionType.none => WireNetworkConnectionType.none,
+      NetworkConnectionType.unknown => WireNetworkConnectionType.unknown,
     };
   }
 
@@ -228,15 +266,27 @@ enum StorageMediumType {
   /// Canonical string code.
   final String code;
 
-  /// Converts a Pigeon-generated [PigeonStorageMediumType] into [StorageMediumType].
-  static StorageMediumType fromPigeon(PigeonStorageMediumType type) {
+  /// Converts a Pigeon-generated [WireStorageMediumType] into [StorageMediumType].
+  static StorageMediumType fromPigeon(WireStorageMediumType type) {
     return switch (type) {
-      PigeonStorageMediumType.ssd => StorageMediumType.ssd,
-      PigeonStorageMediumType.hdd => StorageMediumType.hdd,
-      PigeonStorageMediumType.internalStorage => StorageMediumType.internal,
-      PigeonStorageMediumType.nvme => StorageMediumType.nvme,
-      PigeonStorageMediumType.virtualDisk => StorageMediumType.virtual,
-      PigeonStorageMediumType.unknown => StorageMediumType.unknown,
+      WireStorageMediumType.ssd => StorageMediumType.ssd,
+      WireStorageMediumType.hdd => StorageMediumType.hdd,
+      WireStorageMediumType.internalStorage => StorageMediumType.internal,
+      WireStorageMediumType.nvme => StorageMediumType.nvme,
+      WireStorageMediumType.virtualDisk => StorageMediumType.virtual,
+      WireStorageMediumType.unknown => StorageMediumType.unknown,
+    };
+  }
+
+  /// Converts this domain [StorageMediumType] into a Pigeon [WireStorageMediumType].
+  WireStorageMediumType toPigeon() {
+    return switch (this) {
+      StorageMediumType.ssd => WireStorageMediumType.ssd,
+      StorageMediumType.hdd => WireStorageMediumType.hdd,
+      StorageMediumType.internal => WireStorageMediumType.internalStorage,
+      StorageMediumType.nvme => WireStorageMediumType.nvme,
+      StorageMediumType.virtual => WireStorageMediumType.virtualDisk,
+      StorageMediumType.unknown => WireStorageMediumType.unknown,
     };
   }
 

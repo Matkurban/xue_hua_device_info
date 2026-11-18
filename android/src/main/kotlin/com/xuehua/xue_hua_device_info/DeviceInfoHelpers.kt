@@ -14,6 +14,7 @@ internal object DeviceInfoHelpers {
      */
     fun mapBatteryHealth(healthCode: Int): String =
         when (healthCode) {
+            // BatteryManager.BATTERY_HEALTH_* constants (keep numeric to stay Context-free).
             2 -> "good" // BATTERY_HEALTH_GOOD
             3 -> "overheat" // BATTERY_HEALTH_OVERHEAT
             4 -> "dead" // BATTERY_HEALTH_DEAD
@@ -23,26 +24,38 @@ internal object DeviceInfoHelpers {
             else -> "unknown" // includes BATTERY_HEALTH_UNKNOWN (1) and missing (-1)
         }
 
-    /** Maps [android.os.BatteryManager] EXTRA_HEALTH codes to [PigeonBatteryHealthStatus]. */
-    fun mapBatteryHealthStatus(healthCode: Int): PigeonBatteryHealthStatus =
+    /** Maps [android.os.BatteryManager] EXTRA_HEALTH codes to [WireBatteryHealthStatus]. */
+    fun mapBatteryHealthStatus(healthCode: Int): WireBatteryHealthStatus =
         when (healthCode) {
-            2 -> PigeonBatteryHealthStatus.GOOD
-            3 -> PigeonBatteryHealthStatus.OVERHEAT
-            4 -> PigeonBatteryHealthStatus.DEAD
-            5 -> PigeonBatteryHealthStatus.OVER_VOLTAGE
-            6 -> PigeonBatteryHealthStatus.UNSPECIFIED_FAILURE
-            7 -> PigeonBatteryHealthStatus.COLD
-            else -> PigeonBatteryHealthStatus.UNKNOWN
+            2 -> WireBatteryHealthStatus.GOOD
+            3 -> WireBatteryHealthStatus.OVERHEAT
+            4 -> WireBatteryHealthStatus.DEAD
+            5 -> WireBatteryHealthStatus.OVER_VOLTAGE
+            6 -> WireBatteryHealthStatus.UNSPECIFIED_FAILURE
+            7 -> WireBatteryHealthStatus.COLD
+            else -> WireBatteryHealthStatus.UNKNOWN
         }
 
-    /** Maps [android.os.BatteryManager] EXTRA_STATUS codes to [PigeonBatteryChargingState]. */
-    fun mapChargingState(statusCode: Int): PigeonBatteryChargingState =
+    /** Maps [android.os.BatteryManager] EXTRA_STATUS codes to [WireBatteryChargingState]. */
+    fun mapChargingState(statusCode: Int): WireBatteryChargingState =
         when (statusCode) {
-            2 -> PigeonBatteryChargingState.CHARGING // BATTERY_STATUS_CHARGING
-            3 -> PigeonBatteryChargingState.DISCHARGING // BATTERY_STATUS_DISCHARGING
-            4 -> PigeonBatteryChargingState.NOT_CHARGING // BATTERY_STATUS_NOT_CHARGING
-            5 -> PigeonBatteryChargingState.FULL // BATTERY_STATUS_FULL
-            else -> PigeonBatteryChargingState.UNKNOWN
+            2 -> WireBatteryChargingState.CHARGING // BATTERY_STATUS_CHARGING
+            3 -> WireBatteryChargingState.DISCHARGING // BATTERY_STATUS_DISCHARGING
+            4 -> WireBatteryChargingState.NOT_CHARGING // BATTERY_STATUS_NOT_CHARGING
+            5 -> WireBatteryChargingState.FULL // BATTERY_STATUS_FULL
+            else -> WireBatteryChargingState.UNKNOWN
+        }
+
+    /** Maps [WireNetworkConnectionType] to its canonical wire string code. */
+    fun mapNetworkType(connectionType: WireNetworkConnectionType): String =
+        when (connectionType) {
+            WireNetworkConnectionType.WIFI -> "wifi"
+            WireNetworkConnectionType.ETHERNET -> "ethernet"
+            WireNetworkConnectionType.CELLULAR -> "cellular"
+            WireNetworkConnectionType.VPN -> "vpn"
+            WireNetworkConnectionType.LOOPBACK -> "loopback"
+            WireNetworkConnectionType.NONE -> "none"
+            WireNetworkConnectionType.UNKNOWN -> "unknown"
         }
 
     /**

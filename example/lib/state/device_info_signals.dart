@@ -22,13 +22,18 @@ class SectionSignalState<T> {
   /// Number of times this section has been fetched independently.
   final Signal<int> fetchCount = signal<int>(0);
 
+  bool _disposed = false;
+
   /// Independently fetches only this section's data from the native host.
   Future<void> fetch() async {
-    if (isLoading.peek()) return;
-    isLoading.value = true;
-    error.value = null;
+    if (_disposed || isLoading.peek()) return;
+    batch(() {
+      isLoading.value = true;
+      error.value = null;
+    });
     try {
       final result = await _loader();
+      if (_disposed) return;
       batch(() {
         data.value = result;
         lastUpdated.value = DateTime.now();
@@ -36,11 +41,22 @@ class SectionSignalState<T> {
         isLoading.value = false;
       });
     } catch (e) {
+      if (_disposed) return;
       batch(() {
         error.value = '$e';
         isLoading.value = false;
       });
     }
+  }
+
+  /// Releases all reactive signals owned by this section state.
+  void dispose() {
+    _disposed = true;
+    data.dispose();
+    isLoading.dispose();
+    error.dispose();
+    lastUpdated.dispose();
+    fetchCount.dispose();
   }
 }
 
@@ -100,13 +116,32 @@ class DeviceInfoDashboardController {
   /// Fetches only the display metrics section.
   Future<void> fetchDisplayOnly() => displaySection.fetch();
 
+  bool _disposed = false;
+
   /// Sequentially triggers each section's independent fetch without coupling them
   /// into a single monolithic payload.
   Future<void> fetchAllSequentially() async {
+    if (_disposed) return;
     await fetchDeviceOnly();
+    if (_disposed) return;
     await fetchBatteryOnly();
+    if (_disposed) return;
     await fetchNetworkOnly();
+    if (_disposed) return;
     await fetchStorageOnly();
+    if (_disposed) return;
     await fetchDisplayOnly();
+  }
+
+  /// Releases all section and computed signals managed by this controller.
+  void dispose() {
+    _disposed = true;
+    loadedSectionCount.dispose();
+    isAnySectionLoading.dispose();
+    deviceSection.dispose();
+    batterySection.dispose();
+    networkSection.dispose();
+    storageSection.dispose();
+    displaySection.dispose();
   }
 }

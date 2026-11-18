@@ -137,8 +137,9 @@ BatteryReading ReadBattery(const std::string& root) {
     BatteryReading reading;
     reading.found = true;
     reading.level = parsed;
-    const std::string status = ReadTrimmedFile(dir + "status");
-    reading.is_charging = status == "Charging" || status == "Full";
+    reading.status = ReadTrimmedFile(dir + "status");
+    reading.is_charging =
+        reading.status == "Charging" || reading.status == "Full";
     reading.health = ReadTrimmedFile(dir + "health");
     if (reading.health == "Unknown") {
       reading.health.clear();

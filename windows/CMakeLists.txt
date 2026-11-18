@@ -26,6 +26,12 @@ list(APPEND PLUGIN_SOURCES
   "device_info_helpers.h"
 )
 
+if(MSVC)
+  set_source_files_properties("messages.g.cpp" PROPERTIES COMPILE_OPTIONS "/wd4100")
+else()
+  set_source_files_properties("messages.g.cpp" PROPERTIES COMPILE_OPTIONS "-Wno-unused-parameter")
+endif()
+
 # Define the plugin library target. Its name must not be changed (see comment
 # on PLUGIN_NAME above).
 add_library(${PLUGIN_NAME} SHARED
@@ -47,7 +53,11 @@ set_target_properties(${PLUGIN_NAME} PROPERTIES
 target_compile_definitions(${PLUGIN_NAME} PRIVATE
   FLUTTER_PLUGIN_IMPL
   WIN32_LEAN_AND_MEAN)
-target_compile_options(${PLUGIN_NAME} PRIVATE /W4 /utf-8)
+if(MSVC)
+  target_compile_options(${PLUGIN_NAME} PRIVATE /W4 /utf-8)
+else()
+  target_compile_options(${PLUGIN_NAME} PRIVATE -Wall -Wextra -Werror)
+endif()
 
 # Source include directories and library dependencies. Add any plugin-specific
 # dependencies here.
@@ -86,7 +96,11 @@ add_executable(${TEST_RUNNER}
 )
 apply_standard_settings(${TEST_RUNNER})
 target_compile_definitions(${TEST_RUNNER} PRIVATE WIN32_LEAN_AND_MEAN)
-target_compile_options(${TEST_RUNNER} PRIVATE /W4 /utf-8)
+if(MSVC)
+  target_compile_options(${TEST_RUNNER} PRIVATE /W4 /utf-8)
+else()
+  target_compile_options(${TEST_RUNNER} PRIVATE -Wall -Wextra -Werror)
+endif()
 target_include_directories(${TEST_RUNNER} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(${TEST_RUNNER} PRIVATE flutter_wrapper_plugin)
 target_link_libraries(${TEST_RUNNER} PRIVATE iphlpapi ws2_32)

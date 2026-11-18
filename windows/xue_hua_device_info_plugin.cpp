@@ -219,7 +219,7 @@ XueHuaDeviceInfoPlugin::XueHuaDeviceInfoPlugin() = default;
 
 XueHuaDeviceInfoPlugin::~XueHuaDeviceInfoPlugin() = default;
 
-ErrorOr<PigeonDeviceInfo> XueHuaDeviceInfoPlugin::GetDeviceInfo() {
+ErrorOr<WireDeviceInfo> XueHuaDeviceInfoPlugin::GetDeviceInfo() {
   const auto manufacturer = SanitizeHardwareString(WideToUtf8(ReadRegistryString(
       HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\BIOS",
       L"SystemManufacturer")));
@@ -242,7 +242,7 @@ ErrorOr<PigeonDeviceInfo> XueHuaDeviceInfoPlugin::GetDeviceInfo() {
   const std::string os_ver = ResolveWindowsOsVersion();
   const std::string arch = ResolveWindowsArchitecture();
 
-  PigeonDeviceInfo info;
+  WireDeviceInfo info;
   if (!uuid.empty()) info.set_device_id(uuid);
   if (!manufacturer.empty()) info.set_manufacturer(manufacturer);
   if (!model.empty()) info.set_model(model);
@@ -254,24 +254,36 @@ ErrorOr<PigeonDeviceInfo> XueHuaDeviceInfoPlugin::GetDeviceInfo() {
   return info;
 }
 
-ErrorOr<PigeonBatteryInfo> XueHuaDeviceInfoPlugin::GetBatteryInfo() {
+ErrorOr<WireBatteryInfo> XueHuaDeviceInfoPlugin::GetBatteryInfo() {
   SYSTEM_POWER_STATUS status = {};
   if (!GetSystemPowerStatus(&status) || status.BatteryFlag == 128) {
-    return PigeonBatteryInfo(PigeonBatteryChargingState::kUnknown,
-                             PigeonBatteryHealthStatus::kUnknown, false);
+    return WireBatteryInfo(WireBatteryChargingState::kUnknown,
+                           WireBatteryHealthStatus::kUnknown, false);
+  }
+
+  // BatteryFlag == 255 indicates unknown status; bit 8 is set in 255, so treat
+  // it explicitly instead of inferring charging state from `(BatteryFlag & 8)`.
+  if (status.BatteryFlag == 255) {
+    const bool has_battery = status.BatteryLifePercent != 255;
+    WireBatteryInfo info(WireBatteryChargingState::kUnknown,
+                         WireBatteryHealthStatus::kUnknown, has_battery);
+    if (has_battery) {
+      info.set_level(static_cast<double>(status.BatteryLifePercent));
+    }
+    return info;
   }
 
   const bool is_charging = (status.BatteryFlag & 8) != 0;
-  PigeonBatteryChargingState charging_state =
-      is_charging ? PigeonBatteryChargingState::kCharging
-                  : PigeonBatteryChargingState::kDischarging;
-  if (!is_charging && status.BatteryLifePercent == 100 &&
-      status.ACLineStatus == 1) {
-    charging_state = PigeonBatteryChargingState::kFull;
+  WireBatteryChargingState charging_state =
+      is_charging ? WireBatteryChargingState::kCharging
+                  : WireBatteryChargingState::kDischarging;
+  if (!is_charging && status.ACLineStatus == 1) {
+    charging_state = status.BatteryLifePercent == 100
+                         ? WireBatteryChargingState::kFull
+                         : WireBatteryChargingState::kNotCharging;
   }
 
-  PigeonBatteryInfo info(charging_state, PigeonBatteryHealthStatus::kUnknown,
-                         true);
+  WireBatteryInfo info(charging_state, WireBatteryHealthStatus::kUnknown, true);
   if (status.BatteryLifePercent != 255) {
     info.set_level(static_cast<double>(status.BatteryLifePercent));
   }
@@ -279,26 +291,28 @@ ErrorOr<PigeonBatteryInfo> XueHuaDeviceInfoPlugin::GetBatteryInfo() {
   return info;
 }
 
-ErrorOr<PigeonNetworkInfo> XueHuaDeviceInfoPlugin::GetNetworkInfo() {
+ErrorOr<WireNetworkInfo> XueHuaDeviceInfoPlugin::GetNetworkInfo() {
   const auto selection =
       SelectNetwork(CollectNetworkCandidates(), BestIpv4InterfaceIndex());
   if (!selection.found) {
     const auto conn_type = selection.type == "none"
-                               ? PigeonNetworkConnectionType::kNone
-                               : PigeonNetworkConnectionType::kUnknown;
-    return PigeonNetworkInfo(conn_type, selection.type);
+                               ? WireNetworkConnectionType::kNone
+                               : WireNetworkConnectionType::kUnknown;
+    return WireNetworkInfo(conn_type, selection.type);
   }
 
-  PigeonNetworkConnectionType conn_type = PigeonNetworkConnectionType::kUnknown;
+  WireNetworkConnectionType conn_type = WireNetworkConnectionType::kUnknown;
   if (selection.type == "wifi") {
-    conn_type = PigeonNetworkConnectionType::kWifi;
+    conn_type = WireNetworkConnectionType::kWifi;
   } else if (selection.type == "ethernet") {
-    conn_type = PigeonNetworkConnectionType::kEthernet;
+    conn_type = WireNetworkConnectionType::kEthernet;
   } else if (selection.type == "cellular") {
-    conn_type = PigeonNetworkConnectionType::kCellular;
+    conn_type = WireNetworkConnectionType::kCellular;
+  } else if (selection.type == "vpn") {
+    conn_type = WireNetworkConnectionType::kVpn;
   }
 
-  PigeonNetworkInfo info(conn_type, selection.type);
+  WireNetworkInfo info(conn_type, selection.type);
   if (!selection.ipv4.empty()) info.set_ip_address(selection.ipv4);
   if (!selection.mac.empty()) info.set_mac_address(selection.mac);
   if (!selection.interface_name.empty()) {
@@ -307,32 +321,31 @@ ErrorOr<PigeonNetworkInfo> XueHuaDeviceInfoPlugin::GetNetworkInfo() {
   return info;
 }
 
-ErrorOr<PigeonStorageInfo> XueHuaDeviceInfoPlugin::GetStorageInfo() {
+ErrorOr<WireStorageInfo> XueHuaDeviceInfoPlugin::GetStorageInfo() {
   const std::wstring root = WindowsVolumeRoot();
 
   ULARGE_INTEGER free_bytes = {};
   ULARGE_INTEGER total_bytes = {};
   if (!GetDiskFreeSpaceExW(root.c_str(), &free_bytes, &total_bytes, nullptr)) {
-    return PigeonStorageInfo(0, 0, PigeonStorageMediumType::kUnknown);
+    return WireStorageInfo(0, 0, WireStorageMediumType::kUnknown);
   }
   const std::string storage_type = ResolveStorageTypeForVolume(root);
-  PigeonStorageMediumType medium_type = PigeonStorageMediumType::kUnknown;
+  WireStorageMediumType medium_type = WireStorageMediumType::kUnknown;
   if (storage_type == "ssd") {
-    medium_type = PigeonStorageMediumType::kSsd;
+    medium_type = WireStorageMediumType::kSsd;
   } else if (storage_type == "hdd") {
-    medium_type = PigeonStorageMediumType::kHdd;
+    medium_type = WireStorageMediumType::kHdd;
   }
 
-  PigeonStorageInfo info(static_cast<int64_t>(total_bytes.QuadPart),
-                         static_cast<int64_t>(free_bytes.QuadPart),
-                         medium_type);
+  WireStorageInfo info(static_cast<int64_t>(total_bytes.QuadPart),
+                       static_cast<int64_t>(free_bytes.QuadPart), medium_type);
   if (!storage_type.empty()) {
     info.set_storage_type(storage_type);
   }
   return info;
 }
 
-ErrorOr<PigeonDisplayInfo> XueHuaDeviceInfoPlugin::GetDisplayInfo() {
+ErrorOr<WireDisplayInfo> XueHuaDeviceInfoPlugin::GetDisplayInfo() {
   const int64_t width = static_cast<int64_t>(GetSystemMetrics(SM_CXSCREEN));
   const int64_t height = static_cast<int64_t>(GetSystemMetrics(SM_CYSCREEN));
   double scale = 1.0;
@@ -343,7 +356,7 @@ ErrorOr<PigeonDisplayInfo> XueHuaDeviceInfoPlugin::GetDisplayInfo() {
     ReleaseDC(nullptr, hdc);
   }
 
-  PigeonDisplayInfo info(width, height, scale);
+  WireDisplayInfo info(width, height, scale);
   DEVMODEW mode = {};
   mode.dmSize = sizeof(mode);
   if (EnumDisplaySettingsW(nullptr, ENUM_CURRENT_SETTINGS, &mode) &&

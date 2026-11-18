@@ -3,43 +3,41 @@
 
 #ifndef PIGEON_MESSAGES_G_H_
 #define PIGEON_MESSAGES_G_H_
-
 #include <flutter/basic_message_channel.h>
 #include <flutter/binary_messenger.h>
 #include <flutter/encodable_value.h>
 #include <flutter/standard_message_codec.h>
 
-#include <cstdint>
 #include <map>
-#include <memory>
 #include <optional>
+#include <ostream>
 #include <string>
 
 namespace xue_hua_device_info {
+
 
 // Generated class from Pigeon.
 
 class FlutterError {
  public:
-  explicit FlutterError(const std::string& code) : code_(code) {}
+  explicit FlutterError(const std::string& code)
+    : code_(code) {}
   explicit FlutterError(const std::string& code, const std::string& message)
-      : code_(code), message_(message) {}
-  explicit FlutterError(const std::string& code, const std::string& message,
-                        const flutter::EncodableValue& details)
-      : code_(code), message_(message), details_(details) {}
+    : code_(code), message_(message) {}
+  explicit FlutterError(const std::string& code, const std::string& message, const ::flutter::EncodableValue& details)
+    : code_(code), message_(message), details_(details) {}
 
   const std::string& code() const { return code_; }
   const std::string& message() const { return message_; }
-  const flutter::EncodableValue& details() const { return details_; }
+  const ::flutter::EncodableValue& details() const { return details_; }
 
  private:
   std::string code_;
   std::string message_;
-  flutter::EncodableValue details_;
+  ::flutter::EncodableValue details_;
 };
 
-template <class T>
-class ErrorOr {
+template<class T> class ErrorOr {
  public:
   ErrorOr(const T& rhs) : v_(rhs) {}
   ErrorOr(const T&& rhs) : v_(std::move(rhs)) {}
@@ -47,8 +45,8 @@ class ErrorOr {
   ErrorOr(const FlutterError&& rhs) : v_(std::move(rhs)) {}
 
   bool has_error() const { return std::holds_alternative<FlutterError>(v_); }
-  const T& value() const { return std::get<T>(v_); }
-  const FlutterError& error() const { return std::get<FlutterError>(v_); }
+  const T& value() const { return std::get<T>(v_); };
+  const FlutterError& error() const { return std::get<FlutterError>(v_); };
 
  private:
   friend class XueHuaDeviceInfoHostApi;
@@ -58,8 +56,9 @@ class ErrorOr {
   std::variant<T, FlutterError> v_;
 };
 
+
 // Charging state reported by the host power subsystem.
-enum class PigeonBatteryChargingState {
+enum class WireBatteryChargingState {
   kCharging = 0,
   kDischarging = 1,
   kFull = 2,
@@ -68,7 +67,7 @@ enum class PigeonBatteryChargingState {
 };
 
 // Battery health classification reported by the host platform.
-enum class PigeonBatteryHealthStatus {
+enum class WireBatteryHealthStatus {
   kGood = 0,
   kFair = 1,
   kPoor = 2,
@@ -81,7 +80,7 @@ enum class PigeonBatteryHealthStatus {
 };
 
 // Active network transport classification.
-enum class PigeonNetworkConnectionType {
+enum class WireNetworkConnectionType {
   kWifi = 0,
   kEthernet = 1,
   kCellular = 2,
@@ -92,7 +91,7 @@ enum class PigeonNetworkConnectionType {
 };
 
 // Physical storage medium classification.
-enum class PigeonStorageMediumType {
+enum class WireStorageMediumType {
   kSsd = 0,
   kHdd = 1,
   kInternalStorage = 2,
@@ -101,23 +100,25 @@ enum class PigeonStorageMediumType {
   kUnknown = 5
 };
 
+
 // Strongly-typed Pigeon payload for device identity and system descriptors.
 //
 // Generated class from Pigeon that represents data sent in messages.
-class PigeonDeviceInfo {
+class WireDeviceInfo {
  public:
   // Constructs an object setting all non-nullable fields.
-  PigeonDeviceInfo();
+  WireDeviceInfo();
 
   // Constructs an object setting all fields.
-  explicit PigeonDeviceInfo(const std::string* device_id,
-                            const std::string* manufacturer,
-                            const std::string* model,
-                            const std::string* serial,
-                            const std::string* name,
-                            const std::string* operating_system,
-                            const std::string* os_version,
-                            const std::string* architecture);
+  explicit WireDeviceInfo(
+    const std::string* device_id,
+    const std::string* manufacturer,
+    const std::string* model,
+    const std::string* serial,
+    const std::string* name,
+    const std::string* operating_system,
+    const std::string* os_version,
+    const std::string* architecture);
 
   const std::string* device_id() const;
   void set_device_id(const std::string_view* value_arg);
@@ -151,9 +152,15 @@ class PigeonDeviceInfo {
   void set_architecture(const std::string_view* value_arg);
   void set_architecture(std::string_view value_arg);
 
+  bool operator==(const WireDeviceInfo& other) const;
+  bool operator!=(const WireDeviceInfo& other) const;
+  /// Returns a hash code value for the object. This method is supported for the benefit of hash tables.
+  size_t Hash() const;
+  /// Stream output operator for formatted string representation.
+  friend std::ostream& operator<<(std::ostream& os, const WireDeviceInfo& obj);
  private:
-  static PigeonDeviceInfo FromEncodableList(const flutter::EncodableList& list);
-  flutter::EncodableList ToEncodableList() const;
+  static WireDeviceInfo FromEncodableList(const ::flutter::EncodableList& list);
+  ::flutter::EncodableList ToEncodableList() const;
   friend class XueHuaDeviceInfoHostApi;
   friend class PigeonInternalCodecSerializer;
   std::optional<std::string> device_id_;
@@ -166,21 +173,26 @@ class PigeonDeviceInfo {
   std::optional<std::string> architecture_;
 };
 
+
 // Strongly-typed Pigeon payload for battery status.
 //
 // Generated class from Pigeon that represents data sent in messages.
-class PigeonBatteryInfo {
+class WireBatteryInfo {
  public:
   // Constructs an object setting all non-nullable fields.
-  explicit PigeonBatteryInfo(const PigeonBatteryChargingState& charging_state,
-                             const PigeonBatteryHealthStatus& health_status,
-                             bool has_battery);
+  explicit WireBatteryInfo(
+    const WireBatteryChargingState& charging_state,
+    const WireBatteryHealthStatus& health_status,
+    bool has_battery);
 
   // Constructs an object setting all fields.
-  explicit PigeonBatteryInfo(const double* level, const bool* is_charging,
-                             const PigeonBatteryChargingState& charging_state,
-                             const PigeonBatteryHealthStatus& health_status,
-                             const std::string* health, bool has_battery);
+  explicit WireBatteryInfo(
+    const double* level,
+    const bool* is_charging,
+    const WireBatteryChargingState& charging_state,
+    const WireBatteryHealthStatus& health_status,
+    const std::string* health,
+    bool has_battery);
 
   const double* level() const;
   void set_level(const double* value_arg);
@@ -190,11 +202,11 @@ class PigeonBatteryInfo {
   void set_is_charging(const bool* value_arg);
   void set_is_charging(bool value_arg);
 
-  const PigeonBatteryChargingState& charging_state() const;
-  void set_charging_state(const PigeonBatteryChargingState& value_arg);
+  const WireBatteryChargingState& charging_state() const;
+  void set_charging_state(const WireBatteryChargingState& value_arg);
 
-  const PigeonBatteryHealthStatus& health_status() const;
-  void set_health_status(const PigeonBatteryHealthStatus& value_arg);
+  const WireBatteryHealthStatus& health_status() const;
+  void set_health_status(const WireBatteryHealthStatus& value_arg);
 
   const std::string* health() const;
   void set_health(const std::string_view* value_arg);
@@ -203,41 +215,50 @@ class PigeonBatteryInfo {
   bool has_battery() const;
   void set_has_battery(bool value_arg);
 
+  bool operator==(const WireBatteryInfo& other) const;
+  bool operator!=(const WireBatteryInfo& other) const;
+  /// Returns a hash code value for the object. This method is supported for the benefit of hash tables.
+  size_t Hash() const;
+  /// Stream output operator for formatted string representation.
+  friend std::ostream& operator<<(std::ostream& os, const WireBatteryInfo& obj);
  private:
-  static PigeonBatteryInfo FromEncodableList(const flutter::EncodableList& list);
-  flutter::EncodableList ToEncodableList() const;
+  static WireBatteryInfo FromEncodableList(const ::flutter::EncodableList& list);
+  ::flutter::EncodableList ToEncodableList() const;
   friend class XueHuaDeviceInfoHostApi;
   friend class PigeonInternalCodecSerializer;
   std::optional<double> level_;
   std::optional<bool> is_charging_;
-  PigeonBatteryChargingState charging_state_;
-  PigeonBatteryHealthStatus health_status_;
+  WireBatteryChargingState charging_state_;
+  WireBatteryHealthStatus health_status_;
   std::optional<std::string> health_;
   bool has_battery_;
 };
 
+
 // Strongly-typed Pigeon payload for network connection details.
 //
 // Generated class from Pigeon that represents data sent in messages.
-class PigeonNetworkInfo {
+class WireNetworkInfo {
  public:
   // Constructs an object setting all non-nullable fields.
-  explicit PigeonNetworkInfo(const PigeonNetworkConnectionType& connection_type,
-                             const std::string& network_type);
+  explicit WireNetworkInfo(
+    const WireNetworkConnectionType& connection_type,
+    const std::string& network_type);
 
   // Constructs an object setting all fields.
-  explicit PigeonNetworkInfo(const std::string* ip_address,
-                             const PigeonNetworkConnectionType& connection_type,
-                             const std::string& network_type,
-                             const std::string* mac_address,
-                             const std::string* interface_name);
+  explicit WireNetworkInfo(
+    const std::string* ip_address,
+    const WireNetworkConnectionType& connection_type,
+    const std::string& network_type,
+    const std::string* mac_address,
+    const std::string* interface_name);
 
   const std::string* ip_address() const;
   void set_ip_address(const std::string_view* value_arg);
   void set_ip_address(std::string_view value_arg);
 
-  const PigeonNetworkConnectionType& connection_type() const;
-  void set_connection_type(const PigeonNetworkConnectionType& value_arg);
+  const WireNetworkConnectionType& connection_type() const;
+  void set_connection_type(const WireNetworkConnectionType& value_arg);
 
   const std::string& network_type() const;
   void set_network_type(std::string_view value_arg);
@@ -250,31 +271,42 @@ class PigeonNetworkInfo {
   void set_interface_name(const std::string_view* value_arg);
   void set_interface_name(std::string_view value_arg);
 
+  bool operator==(const WireNetworkInfo& other) const;
+  bool operator!=(const WireNetworkInfo& other) const;
+  /// Returns a hash code value for the object. This method is supported for the benefit of hash tables.
+  size_t Hash() const;
+  /// Stream output operator for formatted string representation.
+  friend std::ostream& operator<<(std::ostream& os, const WireNetworkInfo& obj);
  private:
-  static PigeonNetworkInfo FromEncodableList(const flutter::EncodableList& list);
-  flutter::EncodableList ToEncodableList() const;
+  static WireNetworkInfo FromEncodableList(const ::flutter::EncodableList& list);
+  ::flutter::EncodableList ToEncodableList() const;
   friend class XueHuaDeviceInfoHostApi;
   friend class PigeonInternalCodecSerializer;
   std::optional<std::string> ip_address_;
-  PigeonNetworkConnectionType connection_type_;
+  WireNetworkConnectionType connection_type_;
   std::string network_type_;
   std::optional<std::string> mac_address_;
   std::optional<std::string> interface_name_;
 };
 
+
 // Strongly-typed Pigeon payload for primary storage capacity.
 //
 // Generated class from Pigeon that represents data sent in messages.
-class PigeonStorageInfo {
+class WireStorageInfo {
  public:
   // Constructs an object setting all non-nullable fields.
-  explicit PigeonStorageInfo(int64_t total_bytes, int64_t free_bytes,
-                             const PigeonStorageMediumType& medium_type);
+  explicit WireStorageInfo(
+    int64_t total_bytes,
+    int64_t free_bytes,
+    const WireStorageMediumType& medium_type);
 
   // Constructs an object setting all fields.
-  explicit PigeonStorageInfo(int64_t total_bytes, int64_t free_bytes,
-                             const PigeonStorageMediumType& medium_type,
-                             const std::string* storage_type);
+  explicit WireStorageInfo(
+    int64_t total_bytes,
+    int64_t free_bytes,
+    const WireStorageMediumType& medium_type,
+    const std::string* storage_type);
 
   int64_t total_bytes() const;
   void set_total_bytes(int64_t value_arg);
@@ -282,36 +314,48 @@ class PigeonStorageInfo {
   int64_t free_bytes() const;
   void set_free_bytes(int64_t value_arg);
 
-  const PigeonStorageMediumType& medium_type() const;
-  void set_medium_type(const PigeonStorageMediumType& value_arg);
+  const WireStorageMediumType& medium_type() const;
+  void set_medium_type(const WireStorageMediumType& value_arg);
 
   const std::string* storage_type() const;
   void set_storage_type(const std::string_view* value_arg);
   void set_storage_type(std::string_view value_arg);
 
+  bool operator==(const WireStorageInfo& other) const;
+  bool operator!=(const WireStorageInfo& other) const;
+  /// Returns a hash code value for the object. This method is supported for the benefit of hash tables.
+  size_t Hash() const;
+  /// Stream output operator for formatted string representation.
+  friend std::ostream& operator<<(std::ostream& os, const WireStorageInfo& obj);
  private:
-  static PigeonStorageInfo FromEncodableList(const flutter::EncodableList& list);
-  flutter::EncodableList ToEncodableList() const;
+  static WireStorageInfo FromEncodableList(const ::flutter::EncodableList& list);
+  ::flutter::EncodableList ToEncodableList() const;
   friend class XueHuaDeviceInfoHostApi;
   friend class PigeonInternalCodecSerializer;
   int64_t total_bytes_;
   int64_t free_bytes_;
-  PigeonStorageMediumType medium_type_;
+  WireStorageMediumType medium_type_;
   std::optional<std::string> storage_type_;
 };
+
 
 // Strongly-typed Pigeon payload for primary display metrics.
 //
 // Generated class from Pigeon that represents data sent in messages.
-class PigeonDisplayInfo {
+class WireDisplayInfo {
  public:
   // Constructs an object setting all non-nullable fields.
-  explicit PigeonDisplayInfo(int64_t width, int64_t height,
-                             double scale_factor);
+  explicit WireDisplayInfo(
+    int64_t width,
+    int64_t height,
+    double scale_factor);
 
   // Constructs an object setting all fields.
-  explicit PigeonDisplayInfo(int64_t width, int64_t height, double scale_factor,
-                             const double* refresh_rate);
+  explicit WireDisplayInfo(
+    int64_t width,
+    int64_t height,
+    double scale_factor,
+    const double* refresh_rate);
 
   int64_t width() const;
   void set_width(int64_t value_arg);
@@ -326,9 +370,15 @@ class PigeonDisplayInfo {
   void set_refresh_rate(const double* value_arg);
   void set_refresh_rate(double value_arg);
 
+  bool operator==(const WireDisplayInfo& other) const;
+  bool operator!=(const WireDisplayInfo& other) const;
+  /// Returns a hash code value for the object. This method is supported for the benefit of hash tables.
+  size_t Hash() const;
+  /// Stream output operator for formatted string representation.
+  friend std::ostream& operator<<(std::ostream& os, const WireDisplayInfo& obj);
  private:
-  static PigeonDisplayInfo FromEncodableList(const flutter::EncodableList& list);
-  flutter::EncodableList ToEncodableList() const;
+  static WireDisplayInfo FromEncodableList(const ::flutter::EncodableList& list);
+  ::flutter::EncodableList ToEncodableList() const;
   friend class XueHuaDeviceInfoHostApi;
   friend class PigeonInternalCodecSerializer;
   int64_t width_;
@@ -337,7 +387,8 @@ class PigeonDisplayInfo {
   std::optional<double> refresh_rate_;
 };
 
-class PigeonInternalCodecSerializer : public flutter::StandardCodecSerializer {
+
+class PigeonInternalCodecSerializer : public ::flutter::StandardCodecSerializer {
  public:
   PigeonInternalCodecSerializer();
   inline static PigeonInternalCodecSerializer& GetInstance() {
@@ -345,44 +396,43 @@ class PigeonInternalCodecSerializer : public flutter::StandardCodecSerializer {
     return sInstance;
   }
 
-  void WriteValue(const flutter::EncodableValue& value,
-                  flutter::ByteStreamWriter* stream) const override;
-
+  void WriteValue(
+    const ::flutter::EncodableValue& value,
+    ::flutter::ByteStreamWriter* stream) const override;
  protected:
-  flutter::EncodableValue ReadValueOfType(
-      uint8_t type, flutter::ByteStreamReader* stream) const override;
+  ::flutter::EncodableValue ReadValueOfType(
+    uint8_t type,
+    ::flutter::ByteStreamReader* stream) const override;
 };
 
 // Host API implemented by Android, iOS, macOS, Windows, and Linux plugins.
 //
-// Generated interface from Pigeon that represents a handler of messages from
-// Flutter.
+// Generated interface from Pigeon that represents a handler of messages from Flutter.
 class XueHuaDeviceInfoHostApi {
  public:
   XueHuaDeviceInfoHostApi(const XueHuaDeviceInfoHostApi&) = delete;
   XueHuaDeviceInfoHostApi& operator=(const XueHuaDeviceInfoHostApi&) = delete;
   virtual ~XueHuaDeviceInfoHostApi() {}
-  virtual ErrorOr<PigeonDeviceInfo> GetDeviceInfo() = 0;
-  virtual ErrorOr<PigeonBatteryInfo> GetBatteryInfo() = 0;
-  virtual ErrorOr<PigeonNetworkInfo> GetNetworkInfo() = 0;
-  virtual ErrorOr<PigeonStorageInfo> GetStorageInfo() = 0;
-  virtual ErrorOr<PigeonDisplayInfo> GetDisplayInfo() = 0;
+  virtual ErrorOr<WireDeviceInfo> GetDeviceInfo() = 0;
+  virtual ErrorOr<WireBatteryInfo> GetBatteryInfo() = 0;
+  virtual ErrorOr<WireNetworkInfo> GetNetworkInfo() = 0;
+  virtual ErrorOr<WireStorageInfo> GetStorageInfo() = 0;
+  virtual ErrorOr<WireDisplayInfo> GetDisplayInfo() = 0;
 
   // The codec used by XueHuaDeviceInfoHostApi.
-  static const flutter::StandardMessageCodec& GetCodec();
-  // Sets up an instance of `XueHuaDeviceInfoHostApi` to handle messages through
-  // the `binary_messenger`.
-  static void SetUp(flutter::BinaryMessenger* binary_messenger,
-                    XueHuaDeviceInfoHostApi* api);
-  static void SetUp(flutter::BinaryMessenger* binary_messenger,
-                    XueHuaDeviceInfoHostApi* api,
-                    const std::string& message_channel_suffix);
-  static flutter::EncodableValue WrapError(std::string_view error_message);
-  static flutter::EncodableValue WrapError(const FlutterError& error);
-
+  static const ::flutter::StandardMessageCodec& GetCodec();
+  // Sets up an instance of `XueHuaDeviceInfoHostApi` to handle messages through the `binary_messenger`.
+  static void SetUp(
+    ::flutter::BinaryMessenger* binary_messenger,
+    XueHuaDeviceInfoHostApi* api);
+  static void SetUp(
+    ::flutter::BinaryMessenger* binary_messenger,
+    XueHuaDeviceInfoHostApi* api,
+    const std::string& message_channel_suffix);
+  static ::flutter::EncodableValue WrapError(std::string_view error_message);
+  static ::flutter::EncodableValue WrapError(const FlutterError& error);
  protected:
   XueHuaDeviceInfoHostApi() = default;
 };
-
 }  // namespace xue_hua_device_info
 #endif  // PIGEON_MESSAGES_G_H_

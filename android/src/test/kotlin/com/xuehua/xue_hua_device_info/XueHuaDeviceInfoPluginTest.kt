@@ -37,15 +37,26 @@ internal class XueHuaDeviceInfoPluginTest {
 
     @Test
     fun mapBatteryHealthStatus_and_mapChargingState() {
-        assertEquals(PigeonBatteryHealthStatus.GOOD, DeviceInfoHelpers.mapBatteryHealthStatus(2))
-        assertEquals(PigeonBatteryHealthStatus.OVERHEAT, DeviceInfoHelpers.mapBatteryHealthStatus(3))
-        assertEquals(PigeonBatteryHealthStatus.UNKNOWN, DeviceInfoHelpers.mapBatteryHealthStatus(-1))
+        assertEquals(WireBatteryHealthStatus.GOOD, DeviceInfoHelpers.mapBatteryHealthStatus(2))
+        assertEquals(WireBatteryHealthStatus.OVERHEAT, DeviceInfoHelpers.mapBatteryHealthStatus(3))
+        assertEquals(WireBatteryHealthStatus.UNKNOWN, DeviceInfoHelpers.mapBatteryHealthStatus(-1))
 
-        assertEquals(PigeonBatteryChargingState.CHARGING, DeviceInfoHelpers.mapChargingState(2))
-        assertEquals(PigeonBatteryChargingState.DISCHARGING, DeviceInfoHelpers.mapChargingState(3))
-        assertEquals(PigeonBatteryChargingState.NOT_CHARGING, DeviceInfoHelpers.mapChargingState(4))
-        assertEquals(PigeonBatteryChargingState.FULL, DeviceInfoHelpers.mapChargingState(5))
-        assertEquals(PigeonBatteryChargingState.UNKNOWN, DeviceInfoHelpers.mapChargingState(-1))
+        assertEquals(WireBatteryChargingState.CHARGING, DeviceInfoHelpers.mapChargingState(2))
+        assertEquals(WireBatteryChargingState.DISCHARGING, DeviceInfoHelpers.mapChargingState(3))
+        assertEquals(WireBatteryChargingState.NOT_CHARGING, DeviceInfoHelpers.mapChargingState(4))
+        assertEquals(WireBatteryChargingState.FULL, DeviceInfoHelpers.mapChargingState(5))
+        assertEquals(WireBatteryChargingState.UNKNOWN, DeviceInfoHelpers.mapChargingState(-1))
+    }
+
+    @Test
+    fun mapNetworkType_mapsAllConnectionTypesIncludingVpn() {
+        assertEquals("wifi", DeviceInfoHelpers.mapNetworkType(WireNetworkConnectionType.WIFI))
+        assertEquals("ethernet", DeviceInfoHelpers.mapNetworkType(WireNetworkConnectionType.ETHERNET))
+        assertEquals("cellular", DeviceInfoHelpers.mapNetworkType(WireNetworkConnectionType.CELLULAR))
+        assertEquals("vpn", DeviceInfoHelpers.mapNetworkType(WireNetworkConnectionType.VPN))
+        assertEquals("loopback", DeviceInfoHelpers.mapNetworkType(WireNetworkConnectionType.LOOPBACK))
+        assertEquals("none", DeviceInfoHelpers.mapNetworkType(WireNetworkConnectionType.NONE))
+        assertEquals("unknown", DeviceInfoHelpers.mapNetworkType(WireNetworkConnectionType.UNKNOWN))
     }
 
     @Test
@@ -88,7 +99,7 @@ internal class XueHuaDeviceInfoPluginTest {
     @Test
     fun pigeonDataClasses_roundTripToList() {
         val device =
-            PigeonDeviceInfo(
+            WireDeviceInfo(
                 deviceId = "id-1",
                 manufacturer = "Google",
                 model = "Pixel",
@@ -98,6 +109,6 @@ internal class XueHuaDeviceInfoPluginTest {
                 osVersion = "16",
                 architecture = "arm64-v8a",
             )
-        assertEquals(device, PigeonDeviceInfo.fromList(device.toList()))
+        assertEquals(device, WireDeviceInfo.fromList(device.toList()))
     }
 }

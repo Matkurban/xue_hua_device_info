@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../messages.g.dart';
 import 'device_enums.dart';
+import 'model_utils.dart';
 
 /// Immutable snapshot of primary storage capacity, usage metrics, and medium classification.
 @immutable
@@ -25,10 +26,10 @@ class StorageInfo {
                ? StorageMediumType.virtual
                : StorageMediumType.unknown);
 
-  /// Creates a [StorageInfo] domain model from a Pigeon [PigeonStorageInfo] message.
-  factory StorageInfo.fromPigeon(PigeonStorageInfo message) {
-    final cleanStorageType = _nonEmptyOrNull(message.storageType);
-    final resolvedMedium = message.mediumType != PigeonStorageMediumType.unknown
+  /// Creates a [StorageInfo] domain model from a Pigeon [WireStorageInfo] message.
+  factory StorageInfo.fromPigeon(WireStorageInfo message) {
+    final cleanStorageType = nonEmptyOrNull(message.storageType);
+    final resolvedMedium = message.mediumType != WireStorageMediumType.unknown
         ? StorageMediumType.fromPigeon(message.mediumType)
         : StorageMediumType.fromCode(cleanStorageType);
     final canonicalStorageType =
@@ -87,34 +88,30 @@ class StorageInfo {
   double get usedGigabytes => usedBytes / _bytesPerGigabyte;
 
   /// Returns a copy of this [StorageInfo] with selectively overridden fields.
+  ///
+  /// Pass `clearStorageType: true` to explicitly reset [storageType] to `null`.
   StorageInfo copyWith({
     int? totalBytes,
     int? freeBytes,
     StorageMediumType? mediumType,
     String? storageType,
+    bool clearStorageType = false,
   }) {
     return StorageInfo(
       totalBytes: totalBytes ?? this.totalBytes,
       freeBytes: freeBytes ?? this.freeBytes,
       mediumType: mediumType ?? this.mediumType,
-      storageType: storageType ?? this.storageType,
+      storageType:
+          clearStorageType ? null : (storageType ?? this.storageType),
     );
   }
 
-  /// Converts this [StorageInfo] into a Pigeon [PigeonStorageInfo] message.
-  PigeonStorageInfo toPigeon() {
-    final pigeonMedium = switch (mediumType) {
-      StorageMediumType.ssd => PigeonStorageMediumType.ssd,
-      StorageMediumType.hdd => PigeonStorageMediumType.hdd,
-      StorageMediumType.internal => PigeonStorageMediumType.internalStorage,
-      StorageMediumType.nvme => PigeonStorageMediumType.nvme,
-      StorageMediumType.virtual => PigeonStorageMediumType.virtualDisk,
-      StorageMediumType.unknown => PigeonStorageMediumType.unknown,
-    };
-    return PigeonStorageInfo(
+  /// Converts this [StorageInfo] into a Pigeon [WireStorageInfo] message.
+  WireStorageInfo toPigeon() {
+    return WireStorageInfo(
       totalBytes: totalBytes,
       freeBytes: freeBytes,
-      mediumType: pigeonMedium,
+      mediumType: mediumType.toPigeon(),
       storageType: storageType,
     );
   }
@@ -146,10 +143,4 @@ class StorageInfo {
       'StorageInfo(totalBytes: $totalBytes, freeBytes: $freeBytes, '
       'usedBytes: $usedBytes, mediumType: ${mediumType.code}, '
       'storageType: $storageType)';
-
-  static String? _nonEmptyOrNull(String? value) {
-    if (value == null) return null;
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? null : trimmed;
-  }
 }

@@ -20,7 +20,7 @@ import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NetworkInterface
 
-/** XueHuaDeviceInfoPlugin implemented with Pigeon HostApi. */
+/** XueHuaDeviceInfoPlugin implemented with Pigeon JNI Native Interop HostApi. */
 class XueHuaDeviceInfoPlugin :
     FlutterPlugin,
     XueHuaDeviceInfoHostApi {
@@ -28,15 +28,15 @@ class XueHuaDeviceInfoPlugin :
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         context = flutterPluginBinding.applicationContext
-        XueHuaDeviceInfoHostApi.setUp(flutterPluginBinding.binaryMessenger, this)
+        XueHuaDeviceInfoHostApiRegistrar().register(this, flutterPluginBinding)
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        XueHuaDeviceInfoHostApi.setUp(binding.binaryMessenger, null)
+        XueHuaDeviceInfoHostApiRegistrar().unregister(this, binding)
     }
 
     @SuppressLint("HardwareIds")
-    override fun getDeviceInfo(): PigeonDeviceInfo {
+    override fun getDeviceInfo(): WireDeviceInfo {
         try {
             val androidId =
                 Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
@@ -48,7 +48,7 @@ class XueHuaDeviceInfoPlugin :
                     Build.MODEL
                 }
             val abi = Build.SUPPORTED_ABIS.firstOrNull()
-            return PigeonDeviceInfo(
+            return WireDeviceInfo(
                 deviceId = androidId,
                 manufacturer = Build.MANUFACTURER,
                 model = Build.MODEL,
@@ -63,7 +63,7 @@ class XueHuaDeviceInfoPlugin :
         }
     }
 
-    override fun getBatteryInfo(): PigeonBatteryInfo {
+    override fun getBatteryInfo(): WireBatteryInfo {
         try {
             val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
             val rawLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
@@ -76,14 +76,14 @@ class XueHuaDeviceInfoPlugin :
                 status == BatteryManager.BATTERY_STATUS_CHARGING ||
                     status == BatteryManager.BATTERY_STATUS_FULL
             val healthCode = intent?.getIntExtra(BatteryManager.EXTRA_HEALTH, -1) ?: -1
-            return PigeonBatteryInfo(
+            return WireBatteryInfo(
                 level = level,
                 isCharging = if (present) isCharging else null,
                 chargingState =
                     if (present) {
                         DeviceInfoHelpers.mapChargingState(status)
                     } else {
-                        PigeonBatteryChargingState.UNKNOWN
+                        WireBatteryChargingState.UNKNOWN
                     },
                 healthStatus = DeviceInfoHelpers.mapBatteryHealthStatus(healthCode),
                 health = DeviceInfoHelpers.mapBatteryHealth(healthCode),
@@ -94,7 +94,7 @@ class XueHuaDeviceInfoPlugin :
         }
     }
 
-    override fun getNetworkInfo(): PigeonNetworkInfo {
+    override fun getNetworkInfo(): WireNetworkInfo {
         try {
             val connectivity =
                 context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -102,30 +102,23 @@ class XueHuaDeviceInfoPlugin :
             val caps = network?.let { connectivity.getNetworkCapabilities(it) }
             val connectionType =
                 when {
-                    caps == null -> PigeonNetworkConnectionType.NONE
+                    caps == null -> WireNetworkConnectionType.NONE
                     caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ->
-                        PigeonNetworkConnectionType.WIFI
+                        WireNetworkConnectionType.WIFI
                     caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ->
-                        PigeonNetworkConnectionType.ETHERNET
+                        WireNetworkConnectionType.ETHERNET
                     caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ->
-                        PigeonNetworkConnectionType.CELLULAR
+                        WireNetworkConnectionType.CELLULAR
                     caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN) ->
-                        PigeonNetworkConnectionType.VPN
-                    else -> PigeonNetworkConnectionType.UNKNOWN
+                        WireNetworkConnectionType.VPN
+                    else -> WireNetworkConnectionType.UNKNOWN
                 }
-            val networkType =
-                when (connectionType) {
-                    PigeonNetworkConnectionType.NONE -> "none"
-                    PigeonNetworkConnectionType.WIFI -> "wifi"
-                    PigeonNetworkConnectionType.ETHERNET -> "ethernet"
-                    PigeonNetworkConnectionType.CELLULAR -> "cellular"
-                    else -> "unknown"
-                }
+            val networkType = DeviceInfoHelpers.mapNetworkType(connectionType)
             val link = network?.let { connectivity.getLinkProperties(it) }
             val fallbackPair = ipv4FromNetworkInterfaces()
             val ip = ipv4FromLinkProperties(link) ?: fallbackPair?.first
             val ifaceName = link?.interfaceName ?: fallbackPair?.second
-            return PigeonNetworkInfo(
+            return WireNetworkInfo(
                 ipAddress = ip,
                 connectionType = connectionType,
                 networkType = networkType,
@@ -165,16 +158,16 @@ class XueHuaDeviceInfoPlugin :
         return host to preferred.second
     }
 
-    override fun getStorageInfo(): PigeonStorageInfo {
+    override fun getStorageInfo(): WireStorageInfo {
         try {
             val path = Environment.getDataDirectory()
             val stat = StatFs(path.path)
             val total = stat.blockCountLong * stat.blockSizeLong
             val free = stat.availableBlocksLong * stat.blockSizeLong
-            return PigeonStorageInfo(
+            return WireStorageInfo(
                 totalBytes = total,
                 freeBytes = free,
-                mediumType = PigeonStorageMediumType.INTERNAL_STORAGE,
+                mediumType = WireStorageMediumType.INTERNAL_STORAGE,
                 storageType = "internal",
             )
         } catch (e: Exception) {
@@ -182,7 +175,7 @@ class XueHuaDeviceInfoPlugin :
         }
     }
 
-    override fun getDisplayInfo(): PigeonDisplayInfo {
+    override fun getDisplayInfo(): WireDisplayInfo {
         try {
             val display = resolveDefaultDisplay()
             val metrics = context.resources.displayMetrics
@@ -195,7 +188,7 @@ class XueHuaDeviceInfoPlugin :
                     display != null && display.refreshRate > 0f -> display.refreshRate.toDouble()
                     else -> null
                 }
-            return PigeonDisplayInfo(
+            return WireDisplayInfo(
                 width = width,
                 height = height,
                 scaleFactor = metrics.density.toDouble(),

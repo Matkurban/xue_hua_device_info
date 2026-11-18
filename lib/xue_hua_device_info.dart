@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 
 import 'src/messages.g.dart';
@@ -7,18 +9,26 @@ export 'src/models.dart';
 
 /// Cross-platform device information client powered by Pigeon.
 ///
-/// Supports Android, iOS, macOS, Windows, and Linux.
+/// Supports Android (JNI Native Interop), iOS/macOS (Swift FFI Native Interop),
+/// and Windows/Linux (Pigeon typed BasicMessageChannel).
 /// Each subsystem (device identity, battery, network, storage, display) can be
 /// queried independently without loading unrelated subsystems.
 class XueHuaDeviceInfo {
   const XueHuaDeviceInfo._();
 
   static XueHuaDeviceInfoHostApi? _hostApiOverride;
-  static final XueHuaDeviceInfoHostApi _defaultHostApi =
-      XueHuaDeviceInfoHostApi();
+  static XueHuaDeviceInfoHostApi? _defaultHostApi;
 
   static XueHuaDeviceInfoHostApi get _api =>
-      _hostApiOverride ?? _defaultHostApi;
+      _hostApiOverride ?? (_defaultHostApi ??= _createDefaultHostApi());
+
+  static XueHuaDeviceInfoHostApi _createDefaultHostApi() {
+    if (!kIsWeb &&
+        (Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+      return XueHuaDeviceInfoHostApi.createWithNativeInteropApi();
+    }
+    return XueHuaDeviceInfoHostApi();
+  }
 
   /// Overrides the underlying Pigeon [XueHuaDeviceInfoHostApi] for unit testing.
   @visibleForTesting

@@ -12,8 +12,8 @@ class DisplayInfo {
     this.refreshRate,
   });
 
-  /// Creates a [DisplayInfo] domain model from a Pigeon [PigeonDisplayInfo] message.
-  factory DisplayInfo.fromPigeon(PigeonDisplayInfo message) {
+  /// Creates a [DisplayInfo] domain model from a Pigeon [WireDisplayInfo] message.
+  factory DisplayInfo.fromPigeon(WireDisplayInfo message) {
     return DisplayInfo(
       width: message.width < 0 ? 0 : message.width,
       height: message.height < 0 ? 0 : message.height,
@@ -57,23 +57,27 @@ class DisplayInfo {
   bool get isHighRefreshRate => (refreshRate ?? 60.0) > 60.5;
 
   /// Returns a copy of this [DisplayInfo] with selectively overridden fields.
+  ///
+  /// Pass `clearRefreshRate: true` to explicitly reset [refreshRate] to `null`.
   DisplayInfo copyWith({
     int? width,
     int? height,
     double? scaleFactor,
     double? refreshRate,
+    bool clearRefreshRate = false,
   }) {
     return DisplayInfo(
       width: width ?? this.width,
       height: height ?? this.height,
       scaleFactor: scaleFactor ?? this.scaleFactor,
-      refreshRate: refreshRate ?? this.refreshRate,
+      refreshRate:
+          clearRefreshRate ? null : (refreshRate ?? this.refreshRate),
     );
   }
 
-  /// Converts this [DisplayInfo] into a Pigeon [PigeonDisplayInfo] message.
-  PigeonDisplayInfo toPigeon() {
-    return PigeonDisplayInfo(
+  /// Converts this [DisplayInfo] into a Pigeon [WireDisplayInfo] message.
+  WireDisplayInfo toPigeon() {
+    return WireDisplayInfo(
       width: width,
       height: height,
       scaleFactor: scaleFactor,

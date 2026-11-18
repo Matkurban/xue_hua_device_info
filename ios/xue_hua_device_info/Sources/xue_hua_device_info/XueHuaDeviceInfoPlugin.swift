@@ -6,23 +6,18 @@ import UIKit
 public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHostApi {
     private let pathMonitor = NWPathMonitor()
     private let monitorQueue = DispatchQueue(label: "xue_hua_device_info.network")
+    private let pathLock = NSLock()
     private var currentPath: NWPath?
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let instance = XueHuaDeviceInfoPlugin()
         instance.startNetworkMonitor()
         registrar.publish(instance)
-        XueHuaDeviceInfoHostApiSetup.setUp(
-            binaryMessenger: registrar.messenger(),
-            api: instance
-        )
+        XueHuaDeviceInfoHostApiSetup.register(api: instance, registrar: registrar)
     }
 
     public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
-        XueHuaDeviceInfoHostApiSetup.setUp(
-            binaryMessenger: registrar.messenger(),
-            api: nil
-        )
+        XueHuaDeviceInfoHostApiSetup.unregister(api: self, registrar: registrar)
     }
 
     deinit {
@@ -31,12 +26,15 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHo
 
     private func startNetworkMonitor() {
         pathMonitor.pathUpdateHandler = { [weak self] path in
-            self?.currentPath = path
+            guard let self else { return }
+            self.pathLock.lock()
+            self.currentPath = path
+            self.pathLock.unlock()
         }
         pathMonitor.start(queue: monitorQueue)
     }
 
-    func getDeviceInfo() throws -> PigeonDeviceInfo {
+    func getDeviceInfo() throws -> WireDeviceInfo {
         let device = UIDevice.current
         var systemInfo = utsname()
         uname(&systemInfo)
@@ -53,7 +51,8 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHo
             let arch = "unknown"
         #endif
 
-        return PigeonDeviceInfo(
+        // iOS does not expose a hardware serial number via public APIs.
+        return WireDeviceInfo(
             deviceId: device.identifierForVendor?.uuidString,
             manufacturer: "Apple",
             model: machine.isEmpty ? device.model : machine,
@@ -65,7 +64,7 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHo
         )
     }
 
-    func getBatteryInfo() throws -> PigeonBatteryInfo {
+    func getBatteryInfo() throws -> WireBatteryInfo {
         let device = UIDevice.current
         device.isBatteryMonitoringEnabled = true
         defer { device.isBatteryMonitoringEnabled = false }
@@ -73,7 +72,7 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHo
         let level = device.batteryLevel
         let levelPercent: Double? = level < 0 ? nil : Double(level) * 100.0
         let isCharging: Bool?
-        let chargingState: PigeonBatteryChargingState
+        let chargingState: WireBatteryChargingState
         switch device.batteryState {
         case .charging:
             isCharging = true
@@ -92,7 +91,7 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHo
             chargingState = .unknown
         }
         // UIDevice has no public battery-health API.
-        return PigeonBatteryInfo(
+        return WireBatteryInfo(
             level: levelPercent,
             isCharging: isCharging,
             chargingState: chargingState,
@@ -102,9 +101,13 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHo
         )
     }
 
-    func getNetworkInfo() throws -> PigeonNetworkInfo {
-        let path = currentPath ?? pathMonitor.currentPath
-        let connectionType: PigeonNetworkConnectionType
+    func getNetworkInfo() throws -> WireNetworkInfo {
+        pathLock.lock()
+        let latestPath = currentPath
+        pathLock.unlock()
+        let path = latestPath ?? pathMonitor.currentPath
+
+        let connectionType: WireNetworkConnectionType
         let networkType: String
         if path.status != .satisfied {
             connectionType = .none
@@ -123,7 +126,7 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHo
             networkType = "unknown"
         }
         let resolved = localIPv4(preferCellular: networkType == "cellular")
-        return PigeonNetworkInfo(
+        return WireNetworkInfo(
             ipAddress: resolved?.ip,
             connectionType: connectionType,
             networkType: networkType,
@@ -195,7 +198,7 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHo
         return false
     }
 
-    func getStorageInfo() throws -> PigeonStorageInfo {
+    func getStorageInfo() throws -> WireStorageInfo {
         let url = URL(fileURLWithPath: NSHomeDirectory())
         let values = try? url.resourceValues(forKeys: [
             .volumeTotalCapacityKey,
@@ -203,7 +206,7 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHo
         ])
         let total = Int64(values?.volumeTotalCapacity ?? 0)
         let free = Int64(values?.volumeAvailableCapacityForImportantUsage ?? 0)
-        return PigeonStorageInfo(
+        return WireStorageInfo(
             totalBytes: total,
             freeBytes: free,
             mediumType: .internalStorage,
@@ -211,15 +214,26 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHo
         )
     }
 
-    func getDisplayInfo() throws -> PigeonDisplayInfo {
-        let screen = UIScreen.main
+    func getDisplayInfo() throws -> WireDisplayInfo {
+        let screen = resolveActiveScreen()
         let bounds = screen.bounds
         let scale = screen.scale
-        return PigeonDisplayInfo(
+        return WireDisplayInfo(
             width: Int64(bounds.width * scale),
             height: Int64(bounds.height * scale),
             scaleFactor: Double(scale),
             refreshRate: Double(screen.maximumFramesPerSecond)
         )
+    }
+
+    private func resolveActiveScreen() -> UIScreen {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        if let active = scenes.first(where: { $0.activationState == .foregroundActive }) {
+            return active.screen
+        }
+        if let firstScene = scenes.first {
+            return firstScene.screen
+        }
+        return UIScreen.main
     }
 }

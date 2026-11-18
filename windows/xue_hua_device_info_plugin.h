@@ -23,11 +23,11 @@ class XueHuaDeviceInfoPlugin : public flutter::Plugin,
   XueHuaDeviceInfoPlugin& operator=(const XueHuaDeviceInfoPlugin&) = delete;
 
   // XueHuaDeviceInfoHostApi implementation.
-  ErrorOr<PigeonDeviceInfo> GetDeviceInfo() override;
-  ErrorOr<PigeonBatteryInfo> GetBatteryInfo() override;
-  ErrorOr<PigeonNetworkInfo> GetNetworkInfo() override;
-  ErrorOr<PigeonStorageInfo> GetStorageInfo() override;
-  ErrorOr<PigeonDisplayInfo> GetDisplayInfo() override;
+  ErrorOr<WireDeviceInfo> GetDeviceInfo() override;
+  ErrorOr<WireBatteryInfo> GetBatteryInfo() override;
+  ErrorOr<WireNetworkInfo> GetNetworkInfo() override;
+  ErrorOr<WireStorageInfo> GetStorageInfo() override;
+  ErrorOr<WireDisplayInfo> GetDisplayInfo() override;
 };
 
 }  // namespace xue_hua_device_info

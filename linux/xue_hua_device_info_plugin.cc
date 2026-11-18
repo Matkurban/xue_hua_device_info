@@ -103,8 +103,8 @@ HandleGetDeviceInfo(gpointer /*user_data*/) {
     arch = uts.machine;
   }
 
-  g_autoptr(XueHuaDeviceInfoPigeonDeviceInfo) info =
-      xue_hua_device_info_pigeon_device_info_new(
+  g_autoptr(XueHuaDeviceInfoWireDeviceInfo) info =
+      xue_hua_device_info_wire_device_info_new(
           NullOrCString(uuid), NullOrCString(manufacturer),
           NullOrCString(model), NullOrCString(serial), NullOrCString(name),
           "linux", NullOrCString(os_version), NullOrCString(arch));
@@ -112,44 +112,59 @@ HandleGetDeviceInfo(gpointer /*user_data*/) {
       info);
 }
 
+static XueHuaDeviceInfoWireBatteryChargingState ResolveBatteryChargingState(
+    const BatteryReading& battery) {
+  if (battery.status == "Charging") {
+    return XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_CHARGING;
+  }
+  if (battery.status == "Discharging") {
+    return XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_DISCHARGING;
+  }
+  if (battery.status == "Full") {
+    return XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_FULL;
+  }
+  if (battery.status == "Not charging") {
+    return XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_NOT_CHARGING;
+  }
+  return XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_UNKNOWN;
+}
+
 static XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse*
 HandleGetBatteryInfo(gpointer /*user_data*/) {
   const BatteryReading battery = ReadBattery();
   if (!battery.found) {
-    g_autoptr(XueHuaDeviceInfoPigeonBatteryInfo) info =
-        xue_hua_device_info_pigeon_battery_info_new(
+    g_autoptr(XueHuaDeviceInfoWireBatteryInfo) info =
+        xue_hua_device_info_wire_battery_info_new(
             nullptr, nullptr,
-            XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_UNKNOWN,
-            XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_UNKNOWN, nullptr,
+            XUE_HUA_DEVICE_INFO_WIRE_BATTERY_CHARGING_STATE_UNKNOWN,
+            XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_UNKNOWN, nullptr,
             FALSE);
     return xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response_new(
         info);
   }
 
-  const gdouble level = battery.level;
-  const gboolean is_charging = battery.is_charging ? TRUE : FALSE;
-  const XueHuaDeviceInfoPigeonBatteryChargingState charging_state =
-      battery.is_charging
-          ? XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_CHARGING
-          : XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_DISCHARGING;
+  gdouble level = battery.level;
+  gboolean is_charging = battery.is_charging ? TRUE : FALSE;
+  const XueHuaDeviceInfoWireBatteryChargingState charging_state =
+      ResolveBatteryChargingState(battery);
 
-  XueHuaDeviceInfoPigeonBatteryHealthStatus health_status =
-      XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_UNKNOWN;
+  XueHuaDeviceInfoWireBatteryHealthStatus health_status =
+      XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_UNKNOWN;
   if (battery.health == "Good") {
-    health_status = XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_GOOD;
+    health_status = XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_GOOD;
   } else if (battery.health == "Overheat") {
-    health_status = XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_OVERHEAT;
+    health_status = XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_OVERHEAT;
   } else if (battery.health == "Dead") {
-    health_status = XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_DEAD;
+    health_status = XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_DEAD;
   } else if (battery.health == "Over voltage") {
     health_status =
-        XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_OVER_VOLTAGE;
+        XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_OVER_VOLTAGE;
   } else if (battery.health == "Cold") {
-    health_status = XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_COLD;
+    health_status = XUE_HUA_DEVICE_INFO_WIRE_BATTERY_HEALTH_STATUS_COLD;
   }
 
-  g_autoptr(XueHuaDeviceInfoPigeonBatteryInfo) info =
-      xue_hua_device_info_pigeon_battery_info_new(
+  g_autoptr(XueHuaDeviceInfoWireBatteryInfo) info =
+      xue_hua_device_info_wire_battery_info_new(
           &level, &is_charging, charging_state, health_status,
           NullOrCString(battery.health), TRUE);
   return xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response_new(
@@ -162,20 +177,22 @@ HandleGetNetworkInfo(gpointer /*user_data*/) {
       EnumerateIpv4(),
       ParseDefaultRouteInterface(ReadWholeFile("/proc/net/route")));
   const std::string net_type = net.found ? net.type : "none";
-  XueHuaDeviceInfoPigeonNetworkConnectionType conn_type =
-      XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_UNKNOWN;
+  XueHuaDeviceInfoWireNetworkConnectionType conn_type =
+      XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_UNKNOWN;
   if (net_type == "none") {
-    conn_type = XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_NONE;
+    conn_type = XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_NONE;
   } else if (net_type == "wifi") {
-    conn_type = XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_WIFI;
+    conn_type = XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_WIFI;
   } else if (net_type == "ethernet") {
-    conn_type = XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_ETHERNET;
+    conn_type = XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_ETHERNET;
   } else if (net_type == "cellular") {
-    conn_type = XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_CELLULAR;
+    conn_type = XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_CELLULAR;
+  } else if (net_type == "vpn") {
+    conn_type = XUE_HUA_DEVICE_INFO_WIRE_NETWORK_CONNECTION_TYPE_VPN;
   }
 
-  g_autoptr(XueHuaDeviceInfoPigeonNetworkInfo) info =
-      xue_hua_device_info_pigeon_network_info_new(
+  g_autoptr(XueHuaDeviceInfoWireNetworkInfo) info =
+      xue_hua_device_info_wire_network_info_new(
           NullOrCString(net.ipv4), conn_type, net_type.c_str(),
           NullOrCString(net.mac), NullOrCString(net.name));
   return xue_hua_device_info_xue_hua_device_info_host_api_get_network_info_response_new(
@@ -194,16 +211,16 @@ HandleGetStorageInfo(gpointer /*user_data*/) {
                  static_cast<int64_t>(stat.f_frsize);
   }
   const std::string storage_type = ResolveStorageType("/");
-  XueHuaDeviceInfoPigeonStorageMediumType medium_type =
-      XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_UNKNOWN;
+  XueHuaDeviceInfoWireStorageMediumType medium_type =
+      XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_UNKNOWN;
   if (storage_type == "ssd") {
-    medium_type = XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_SSD;
+    medium_type = XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_SSD;
   } else if (storage_type == "hdd") {
-    medium_type = XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_HDD;
+    medium_type = XUE_HUA_DEVICE_INFO_WIRE_STORAGE_MEDIUM_TYPE_HDD;
   }
 
-  g_autoptr(XueHuaDeviceInfoPigeonStorageInfo) info =
-      xue_hua_device_info_pigeon_storage_info_new(
+  g_autoptr(XueHuaDeviceInfoWireStorageInfo) info =
+      xue_hua_device_info_wire_storage_info_new(
           total, free_bytes, medium_type, NullOrCString(storage_type));
   return xue_hua_device_info_xue_hua_device_info_host_api_get_storage_info_response_new(
       info);
@@ -241,10 +258,10 @@ HandleGetDisplayInfo(gpointer /*user_data*/) {
     }
   }
 
-  const gdouble* refresh_ptr = refresh > 0.0 ? &refresh : nullptr;
-  g_autoptr(XueHuaDeviceInfoPigeonDisplayInfo) info =
-      xue_hua_device_info_pigeon_display_info_new(width, height, scale,
-                                                  refresh_ptr);
+  gdouble* refresh_ptr = refresh > 0.0 ? &refresh : nullptr;
+  g_autoptr(XueHuaDeviceInfoWireDisplayInfo) info =
+      xue_hua_device_info_wire_display_info_new(width, height, scale,
+                                                refresh_ptr);
   return xue_hua_device_info_xue_hua_device_info_host_api_get_display_info_response_new(
       info);
 }
@@ -265,13 +282,12 @@ void xue_hua_device_info_plugin_register_with_registrar(
   XueHuaDeviceInfoPlugin* plugin = XUE_HUA_DEVICE_INFO_PLUGIN(
       g_object_new(xue_hua_device_info_plugin_get_type(), nullptr));
 
-  static const XueHuaDeviceInfoXueHuaDeviceInfoHostApiVTable vtable = {
-      .get_device_info = HandleGetDeviceInfo,
-      .get_battery_info = HandleGetBatteryInfo,
-      .get_network_info = HandleGetNetworkInfo,
-      .get_storage_info = HandleGetStorageInfo,
-      .get_display_info = HandleGetDisplayInfo,
-  };
+  static XueHuaDeviceInfoXueHuaDeviceInfoHostApiVTable vtable = {};
+  vtable.get_device_info = HandleGetDeviceInfo;
+  vtable.get_battery_info = HandleGetBatteryInfo;
+  vtable.get_network_info = HandleGetNetworkInfo;
+  vtable.get_storage_info = HandleGetStorageInfo;
+  vtable.get_display_info = HandleGetDisplayInfo;
 
   xue_hua_device_info_xue_hua_device_info_host_api_set_method_handlers(
       fl_plugin_registrar_get_messenger(registrar), nullptr, &vtable,

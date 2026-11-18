@@ -5,64 +5,177 @@
 package com.xuehua.xue_hua_device_info
 
 import android.util.Log
-import io.flutter.plugin.common.BasicMessageChannel
-import io.flutter.plugin.common.BinaryMessenger
-import io.flutter.plugin.common.MessageCodec
+import androidx.annotation.Keep
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.StandardMessageCodec
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
-
 private object MessagesPigeonUtils {
-    fun wrapResult(result: Any?): List<Any?> = listOf(result)
 
-    fun wrapError(exception: Throwable): List<Any?> =
-        if (exception is FlutterError) {
-            listOf(
-                exception.code,
-                exception.message,
-                exception.details,
-            )
-        } else {
-            listOf(
-                exception.javaClass.simpleName,
-                exception.toString(),
-                "Cause: " + exception.cause + ", Stacktrace: " + Log.getStackTraceString(exception),
-            )
-        }
+  fun wrapResult(result: Any?): List<Any?> {
+    return listOf(result)
+  }
 
-    fun deepEquals(
-        a: Any?,
-        b: Any?,
-    ): Boolean {
-        if (a is ByteArray && b is ByteArray) {
-            return a.contentEquals(b)
-        }
-        if (a is IntArray && b is IntArray) {
-            return a.contentEquals(b)
-        }
-        if (a is LongArray && b is LongArray) {
-            return a.contentEquals(b)
-        }
-        if (a is DoubleArray && b is DoubleArray) {
-            return a.contentEquals(b)
-        }
-        if (a is Array<*> && b is Array<*>) {
-            return a.size == b.size &&
-                a.indices.all { deepEquals(a[it], b[it]) }
-        }
-        if (a is List<*> && b is List<*>) {
-            return a.size == b.size &&
-                a.indices.all { deepEquals(a[it], b[it]) }
-        }
-        if (a is Map<*, *> && b is Map<*, *>) {
-            return a.size == b.size &&
-                a.all {
-                    (b as Map<Any?, Any?>).containsKey(it.key) &&
-                        deepEquals(it.value, b[it.key])
-                }
-        }
-        return a == b
+  fun wrapError(exception: Throwable): List<Any?> {
+    return if (exception is FlutterError) {
+      listOf(
+        exception.code,
+        exception.message,
+        exception.details
+      )
+    } else {
+      listOf(
+        exception.javaClass.simpleName,
+        exception.toString(),
+        "Cause: " + exception.cause + ", Stacktrace: " + Log.getStackTraceString(exception)
+      )
     }
+  }
+  fun doubleEquals(a: Double, b: Double): Boolean {
+    // Normalize -0.0 to 0.0 and handle NaN equality.
+    return (if (a == 0.0) 0.0 else a) == (if (b == 0.0) 0.0 else b) || (a.isNaN() && b.isNaN())
+  }
+
+  fun floatEquals(a: Float, b: Float): Boolean {
+    // Normalize -0.0 to 0.0 and handle NaN equality.
+    return (if (a == 0.0f) 0.0f else a) == (if (b == 0.0f) 0.0f else b) || (a.isNaN() && b.isNaN())
+  }
+
+  fun doubleHash(d: Double): Int {
+    // Normalize -0.0 to 0.0 and handle NaN to ensure consistent hash codes.
+    val normalized = if (d == 0.0) 0.0 else d
+    val bits = java.lang.Double.doubleToLongBits(normalized)
+    return (bits xor (bits ushr 32)).toInt()
+  }
+
+  fun floatHash(f: Float): Int {
+    // Normalize -0.0 to 0.0 and handle NaN to ensure consistent hash codes.
+    val normalized = if (f == 0.0f) 0.0f else f
+    return java.lang.Float.floatToIntBits(normalized)
+  }
+
+  fun deepEquals(a: Any?, b: Any?): Boolean {
+    if (a === b) {
+      return true
+    }
+    if (a == null || b == null) {
+      return false
+    }
+    if (a is ByteArray && b is ByteArray) {
+      return a.contentEquals(b)
+    }
+    if (a is IntArray && b is IntArray) {
+      return a.contentEquals(b)
+    }
+    if (a is LongArray && b is LongArray) {
+      return a.contentEquals(b)
+    }
+    if (a is DoubleArray && b is DoubleArray) {
+      if (a.size != b.size) return false
+      for (i in a.indices) {
+        if (!doubleEquals(a[i], b[i])) return false
+      }
+      return true
+    }
+    if (a is FloatArray && b is FloatArray) {
+      if (a.size != b.size) return false
+      for (i in a.indices) {
+        if (!floatEquals(a[i], b[i])) return false
+      }
+      return true
+    }
+    if (a is Array<*> && b is Array<*>) {
+      if (a.size != b.size) return false
+      for (i in a.indices) {
+        if (!deepEquals(a[i], b[i])) return false
+      }
+      return true
+    }
+    if (a is List<*> && b is List<*>) {
+      if (a.size != b.size) return false
+      val iterA = a.iterator()
+      val iterB = b.iterator()
+      while (iterA.hasNext() && iterB.hasNext()) {
+        if (!deepEquals(iterA.next(), iterB.next())) return false
+      }
+      return true
+    }
+    if (a is Map<*, *> && b is Map<*, *>) {
+      if (a.size != b.size) return false
+      for (entry in a) {
+        val key = entry.key
+        var found = false
+        for (bEntry in b) {
+          if (deepEquals(key, bEntry.key)) {
+            if (deepEquals(entry.value, bEntry.value)) {
+              found = true
+              break
+            } else {
+              return false
+            }
+          }
+        }
+        if (!found) return false
+      }
+      return true
+    }
+    if (a is Double && b is Double) {
+      return doubleEquals(a, b)
+    }
+    if (a is Float && b is Float) {
+      return floatEquals(a, b)
+    }
+    return a == b
+  }
+
+  fun deepHash(value: Any?): Int {
+    return when (value) {
+      null -> 0
+      is ByteArray -> value.contentHashCode()
+      is IntArray -> value.contentHashCode()
+      is LongArray -> value.contentHashCode()
+      is DoubleArray -> {
+        var result = 1
+        for (item in value) {
+          result = 31 * result + doubleHash(item)
+        }
+        result
+      }
+      is FloatArray -> {
+        var result = 1
+        for (item in value) {
+          result = 31 * result + floatHash(item)
+        }
+        result
+      }
+      is Array<*> -> {
+        var result = 1
+        for (item in value) {
+          result = 31 * result + deepHash(item)
+        }
+        result
+      }
+      is List<*> -> {
+        var result = 1
+        for (item in value) {
+          result = 31 * result + deepHash(item)
+        }
+        result
+      }
+      is Map<*, *> -> {
+        var result = 0
+        for (entry in value) {
+          result += ((deepHash(entry.key) * 31) xor deepHash(entry.value))
+        }
+        result
+      }
+      is Double -> doubleHash(value)
+      is Float -> floatHash(value)
+      else -> value.hashCode()
+    }
+  }
+
 }
 
 /**
@@ -71,81 +184,165 @@ private object MessagesPigeonUtils {
  * @property message The error message.
  * @property details The error details. Must be a datatype supported by the api codec.
  */
-class FlutterError(
-    val code: String,
-    override val message: String? = null,
-    val details: Any? = null,
-) : Throwable()
+@Keep
+class FlutterError (
+  val code: String,
+  override val message: String? = null,
+  val details: Any? = null
+) : RuntimeException()
+private const val defaultInstanceName = "PigeonDefaultClassName32uh4ui3lh445uh4h3l2l455g4y34u"
+
+/** Computes keys that identify the Flutter engine a registration belongs to. */
+private object MessagesPigeonEngineKeys {
+  /** Sentinel meaning that no engine key is known. */
+  const val NO_KEY: Long = Long.MIN_VALUE
+
+  /** `FlutterPluginBinding.getEngineId`, which is missing on older Flutter versions. */
+  private val getEngineIdMethod: java.lang.reflect.Method? by lazy {
+    try {
+      FlutterPlugin.FlutterPluginBinding::class.java.getMethod("getEngineId")
+    } catch (e: Exception) {
+      null
+    }
+  }
+
+  /** Keys for engine messengers, used when an exact engine id is unavailable. */
+  private val messengerKeys = java.util.WeakHashMap<Any, Long>()
+
+  /**
+   * Keys already computed for each binding, so `register` and `unregister` with
+   * the same binding always agree even if [keyOf] for its engine later records
+   * an exact key for the messenger.
+   */
+  private val bindingKeys = java.util.WeakHashMap<FlutterPlugin.FlutterPluginBinding, Long>()
+
+  private var nextSyntheticKey: Long = -1L
+
+  /** Returns the key for the engine that [binding] belongs to. */
+  @Synchronized
+  fun keyOf(binding: FlutterPlugin.FlutterPluginBinding): Long {
+    return bindingKeys.getOrPut(binding) { computeKey(binding) }
+  }
+
+  private fun computeKey(binding: FlutterPlugin.FlutterPluginBinding): Long {
+    val method = getEngineIdMethod
+    if (method != null) {
+      try {
+        // Real engine ids are never 0, but an engine without one, or a test
+        // double, reports 0, which must not be shared between engines.
+        val engineId = method.invoke(binding) as Long
+        if (engineId != 0L) {
+          return engineId
+        }
+      } catch (e: Exception) {
+        // Fall back to a messenger-based key.
+      }
+    }
+    return keyOfMessenger(binding.binaryMessenger)
+  }
+
+  /** Returns the key for [engine]. */
+  @Synchronized
+  fun keyOf(engine: FlutterEngine): Long {
+    val key = engine.engineId
+    if (key == 0L) {
+      // Real engine ids are never 0, but an engine without one, or a test
+      // double, reports 0, which must not be shared between engines.
+      return keyOfMessenger(engine.dartExecutor)
+    }
+    // Record the exact key so later lookups through a binding for this engine
+    // agree with it even when the binding cannot report the engine id.
+    messengerKeys[engine.dartExecutor] = key
+    return key
+  }
+
+  @Synchronized
+  private fun keyOfMessenger(messenger: Any): Long {
+    return messengerKeys.getOrPut(messenger) { nextSyntheticKey-- }
+  }
+}
 
 /** Charging state reported by the host power subsystem. */
-enum class PigeonBatteryChargingState(
-    val raw: Int,
-) {
-    CHARGING(0),
-    DISCHARGING(1),
-    FULL(2),
-    NOT_CHARGING(3),
-    UNKNOWN(4),
-    ;
+@Keep
+enum class WireBatteryChargingState(val raw: Int) {
+  CHARGING(0),
+  DISCHARGING(1),
+  FULL(2),
+  NOT_CHARGING(3),
+  UNKNOWN(4);
 
-    companion object {
-        fun ofRaw(raw: Int): PigeonBatteryChargingState? = entries.firstOrNull { it.raw == raw }
+  @Keep
+  companion object {
+    private val pigeonValues = values()
+
+    fun ofRaw(raw: Int): WireBatteryChargingState? {
+      return pigeonValues.getOrNull(raw)
     }
+  }
 }
 
 /** Battery health classification reported by the host platform. */
-enum class PigeonBatteryHealthStatus(
-    val raw: Int,
-) {
-    GOOD(0),
-    FAIR(1),
-    POOR(2),
-    OVERHEAT(3),
-    DEAD(4),
-    OVER_VOLTAGE(5),
-    UNSPECIFIED_FAILURE(6),
-    COLD(7),
-    UNKNOWN(8),
-    ;
+@Keep
+enum class WireBatteryHealthStatus(val raw: Int) {
+  GOOD(0),
+  FAIR(1),
+  POOR(2),
+  OVERHEAT(3),
+  DEAD(4),
+  OVER_VOLTAGE(5),
+  UNSPECIFIED_FAILURE(6),
+  COLD(7),
+  UNKNOWN(8);
 
-    companion object {
-        fun ofRaw(raw: Int): PigeonBatteryHealthStatus? = entries.firstOrNull { it.raw == raw }
+  @Keep
+  companion object {
+    private val pigeonValues = values()
+
+    fun ofRaw(raw: Int): WireBatteryHealthStatus? {
+      return pigeonValues.getOrNull(raw)
     }
+  }
 }
 
 /** Active network transport classification. */
-enum class PigeonNetworkConnectionType(
-    val raw: Int,
-) {
-    WIFI(0),
-    ETHERNET(1),
-    CELLULAR(2),
-    VPN(3),
-    LOOPBACK(4),
-    NONE(5),
-    UNKNOWN(6),
-    ;
+@Keep
+enum class WireNetworkConnectionType(val raw: Int) {
+  WIFI(0),
+  ETHERNET(1),
+  CELLULAR(2),
+  VPN(3),
+  LOOPBACK(4),
+  NONE(5),
+  UNKNOWN(6);
 
-    companion object {
-        fun ofRaw(raw: Int): PigeonNetworkConnectionType? = entries.firstOrNull { it.raw == raw }
+  @Keep
+  companion object {
+    private val pigeonValues = values()
+
+    fun ofRaw(raw: Int): WireNetworkConnectionType? {
+      return pigeonValues.getOrNull(raw)
     }
+  }
 }
 
 /** Physical storage medium classification. */
-enum class PigeonStorageMediumType(
-    val raw: Int,
-) {
-    SSD(0),
-    HDD(1),
-    INTERNAL_STORAGE(2),
-    NVME(3),
-    VIRTUAL_DISK(4),
-    UNKNOWN(5),
-    ;
+@Keep
+enum class WireStorageMediumType(val raw: Int) {
+  SSD(0),
+  HDD(1),
+  INTERNAL_STORAGE(2),
+  NVME(3),
+  VIRTUAL_DISK(4),
+  UNKNOWN(5);
 
-    companion object {
-        fun ofRaw(raw: Int): PigeonStorageMediumType? = entries.firstOrNull { it.raw == raw }
+  @Keep
+  companion object {
+    private val pigeonValues = values()
+
+    fun ofRaw(raw: Int): WireStorageMediumType? {
+      return pigeonValues.getOrNull(raw)
     }
+  }
 }
 
 /**
@@ -153,62 +350,69 @@ enum class PigeonStorageMediumType(
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class PigeonDeviceInfo(
-    val deviceId: String? = null,
-    val manufacturer: String? = null,
-    val model: String? = null,
-    val serial: String? = null,
-    val name: String? = null,
-    val operatingSystem: String? = null,
-    val osVersion: String? = null,
-    val architecture: String? = null,
-) {
-    companion object {
-        fun fromList(pigeonVar_list: List<Any?>): PigeonDeviceInfo {
-            val deviceId = pigeonVar_list[0] as String?
-            val manufacturer = pigeonVar_list[1] as String?
-            val model = pigeonVar_list[2] as String?
-            val serial = pigeonVar_list[3] as String?
-            val name = pigeonVar_list[4] as String?
-            val operatingSystem = pigeonVar_list[5] as String?
-            val osVersion = pigeonVar_list[6] as String?
-            val architecture = pigeonVar_list[7] as String?
-            return PigeonDeviceInfo(
-                deviceId = deviceId,
-                manufacturer = manufacturer,
-                model = model,
-                serial = serial,
-                name = name,
-                operatingSystem = operatingSystem,
-                osVersion = osVersion,
-                architecture = architecture,
-            )
-        }
+@Keep
+data class WireDeviceInfo (
+  val deviceId: String? = null,
+  val manufacturer: String? = null,
+  val model: String? = null,
+  val serial: String? = null,
+  val name: String? = null,
+  val operatingSystem: String? = null,
+  val osVersion: String? = null,
+  val architecture: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): WireDeviceInfo {
+      val deviceId = pigeonVar_list[0] as String?
+      val manufacturer = pigeonVar_list[1] as String?
+      val model = pigeonVar_list[2] as String?
+      val serial = pigeonVar_list[3] as String?
+      val name = pigeonVar_list[4] as String?
+      val operatingSystem = pigeonVar_list[5] as String?
+      val osVersion = pigeonVar_list[6] as String?
+      val architecture = pigeonVar_list[7] as String?
+      return WireDeviceInfo(deviceId, manufacturer, model, serial, name, operatingSystem, osVersion, architecture)
     }
-
-    fun toList(): List<Any?> =
-        listOf(
-            deviceId,
-            manufacturer,
-            model,
-            serial,
-            name,
-            operatingSystem,
-            osVersion,
-            architecture,
-        )
-
-    override fun equals(other: Any?): Boolean {
-        if (other !is PigeonDeviceInfo) {
-            return false
-        }
-        if (this === other) {
-            return true
-        }
-        return MessagesPigeonUtils.deepEquals(toList(), other.toList())
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      deviceId,
+      manufacturer,
+      model,
+      serial,
+      name,
+      operatingSystem,
+      osVersion,
+      architecture,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
     }
+    if (this === other) {
+      return true
+    }
+    val other = other as WireDeviceInfo
+    return MessagesPigeonUtils.deepEquals(this.deviceId, other.deviceId) && MessagesPigeonUtils.deepEquals(this.manufacturer, other.manufacturer) && MessagesPigeonUtils.deepEquals(this.model, other.model) && MessagesPigeonUtils.deepEquals(this.serial, other.serial) && MessagesPigeonUtils.deepEquals(this.name, other.name) && MessagesPigeonUtils.deepEquals(this.operatingSystem, other.operatingSystem) && MessagesPigeonUtils.deepEquals(this.osVersion, other.osVersion) && MessagesPigeonUtils.deepEquals(this.architecture, other.architecture)
+  }
 
-    override fun hashCode(): Int = toList().hashCode()
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.deviceId)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.manufacturer)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.model)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.serial)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.name)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.operatingSystem)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.osVersion)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.architecture)
+    return result
+  }
+  override fun toString(): String {
+    return "WireDeviceInfo(deviceId=$deviceId, manufacturer=$manufacturer, model=$model, serial=$serial, name=$name, operatingSystem=$operatingSystem, osVersion=$osVersion, architecture=$architecture)"
+  }
 }
 
 /**
@@ -216,54 +420,61 @@ data class PigeonDeviceInfo(
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class PigeonBatteryInfo(
-    val level: Double? = null,
-    val isCharging: Boolean? = null,
-    val chargingState: PigeonBatteryChargingState,
-    val healthStatus: PigeonBatteryHealthStatus,
-    val health: String? = null,
-    val hasBattery: Boolean,
-) {
-    companion object {
-        fun fromList(pigeonVar_list: List<Any?>): PigeonBatteryInfo {
-            val level = pigeonVar_list[0] as Double?
-            val isCharging = pigeonVar_list[1] as Boolean?
-            val chargingState = pigeonVar_list[2] as PigeonBatteryChargingState
-            val healthStatus = pigeonVar_list[3] as PigeonBatteryHealthStatus
-            val health = pigeonVar_list[4] as String?
-            val hasBattery = pigeonVar_list[5] as Boolean
-            return PigeonBatteryInfo(
-                level = level,
-                isCharging = isCharging,
-                chargingState = chargingState,
-                healthStatus = healthStatus,
-                health = health,
-                hasBattery = hasBattery,
-            )
-        }
+@Keep
+data class WireBatteryInfo (
+  val level: Double? = null,
+  val isCharging: Boolean? = null,
+  val chargingState: WireBatteryChargingState,
+  val healthStatus: WireBatteryHealthStatus,
+  val health: String? = null,
+  val hasBattery: Boolean
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): WireBatteryInfo {
+      val level = pigeonVar_list[0] as Double?
+      val isCharging = pigeonVar_list[1] as Boolean?
+      val chargingState = pigeonVar_list[2] as WireBatteryChargingState
+      val healthStatus = pigeonVar_list[3] as WireBatteryHealthStatus
+      val health = pigeonVar_list[4] as String?
+      val hasBattery = pigeonVar_list[5] as Boolean
+      return WireBatteryInfo(level, isCharging, chargingState, healthStatus, health, hasBattery)
     }
-
-    fun toList(): List<Any?> =
-        listOf(
-            level,
-            isCharging,
-            chargingState,
-            healthStatus,
-            health,
-            hasBattery,
-        )
-
-    override fun equals(other: Any?): Boolean {
-        if (other !is PigeonBatteryInfo) {
-            return false
-        }
-        if (this === other) {
-            return true
-        }
-        return MessagesPigeonUtils.deepEquals(toList(), other.toList())
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      level,
+      isCharging,
+      chargingState,
+      healthStatus,
+      health,
+      hasBattery,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
     }
+    if (this === other) {
+      return true
+    }
+    val other = other as WireBatteryInfo
+    return MessagesPigeonUtils.deepEquals(this.level, other.level) && MessagesPigeonUtils.deepEquals(this.isCharging, other.isCharging) && MessagesPigeonUtils.deepEquals(this.chargingState, other.chargingState) && MessagesPigeonUtils.deepEquals(this.healthStatus, other.healthStatus) && MessagesPigeonUtils.deepEquals(this.health, other.health) && MessagesPigeonUtils.deepEquals(this.hasBattery, other.hasBattery)
+  }
 
-    override fun hashCode(): Int = toList().hashCode()
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.level)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.isCharging)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.chargingState)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.healthStatus)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.health)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.hasBattery)
+    return result
+  }
+  override fun toString(): String {
+    return "WireBatteryInfo(level=$level, isCharging=$isCharging, chargingState=$chargingState, healthStatus=$healthStatus, health=$health, hasBattery=$hasBattery)"
+  }
 }
 
 /**
@@ -271,50 +482,57 @@ data class PigeonBatteryInfo(
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class PigeonNetworkInfo(
-    val ipAddress: String? = null,
-    val connectionType: PigeonNetworkConnectionType,
-    val networkType: String,
-    val macAddress: String? = null,
-    val interfaceName: String? = null,
-) {
-    companion object {
-        fun fromList(pigeonVar_list: List<Any?>): PigeonNetworkInfo {
-            val ipAddress = pigeonVar_list[0] as String?
-            val connectionType = pigeonVar_list[1] as PigeonNetworkConnectionType
-            val networkType = pigeonVar_list[2] as String
-            val macAddress = pigeonVar_list[3] as String?
-            val interfaceName = pigeonVar_list[4] as String?
-            return PigeonNetworkInfo(
-                ipAddress = ipAddress,
-                connectionType = connectionType,
-                networkType = networkType,
-                macAddress = macAddress,
-                interfaceName = interfaceName,
-            )
-        }
+@Keep
+data class WireNetworkInfo (
+  val ipAddress: String? = null,
+  val connectionType: WireNetworkConnectionType,
+  val networkType: String,
+  val macAddress: String? = null,
+  val interfaceName: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): WireNetworkInfo {
+      val ipAddress = pigeonVar_list[0] as String?
+      val connectionType = pigeonVar_list[1] as WireNetworkConnectionType
+      val networkType = pigeonVar_list[2] as String
+      val macAddress = pigeonVar_list[3] as String?
+      val interfaceName = pigeonVar_list[4] as String?
+      return WireNetworkInfo(ipAddress, connectionType, networkType, macAddress, interfaceName)
     }
-
-    fun toList(): List<Any?> =
-        listOf(
-            ipAddress,
-            connectionType,
-            networkType,
-            macAddress,
-            interfaceName,
-        )
-
-    override fun equals(other: Any?): Boolean {
-        if (other !is PigeonNetworkInfo) {
-            return false
-        }
-        if (this === other) {
-            return true
-        }
-        return MessagesPigeonUtils.deepEquals(toList(), other.toList())
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      ipAddress,
+      connectionType,
+      networkType,
+      macAddress,
+      interfaceName,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
     }
+    if (this === other) {
+      return true
+    }
+    val other = other as WireNetworkInfo
+    return MessagesPigeonUtils.deepEquals(this.ipAddress, other.ipAddress) && MessagesPigeonUtils.deepEquals(this.connectionType, other.connectionType) && MessagesPigeonUtils.deepEquals(this.networkType, other.networkType) && MessagesPigeonUtils.deepEquals(this.macAddress, other.macAddress) && MessagesPigeonUtils.deepEquals(this.interfaceName, other.interfaceName)
+  }
 
-    override fun hashCode(): Int = toList().hashCode()
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.ipAddress)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.connectionType)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.networkType)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.macAddress)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.interfaceName)
+    return result
+  }
+  override fun toString(): String {
+    return "WireNetworkInfo(ipAddress=$ipAddress, connectionType=$connectionType, networkType=$networkType, macAddress=$macAddress, interfaceName=$interfaceName)"
+  }
 }
 
 /**
@@ -322,46 +540,53 @@ data class PigeonNetworkInfo(
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class PigeonStorageInfo(
-    val totalBytes: Long,
-    val freeBytes: Long,
-    val mediumType: PigeonStorageMediumType,
-    val storageType: String? = null,
-) {
-    companion object {
-        fun fromList(pigeonVar_list: List<Any?>): PigeonStorageInfo {
-            val totalBytes = pigeonVar_list[0] as Long
-            val freeBytes = pigeonVar_list[1] as Long
-            val mediumType = pigeonVar_list[2] as PigeonStorageMediumType
-            val storageType = pigeonVar_list[3] as String?
-            return PigeonStorageInfo(
-                totalBytes = totalBytes,
-                freeBytes = freeBytes,
-                mediumType = mediumType,
-                storageType = storageType,
-            )
-        }
+@Keep
+data class WireStorageInfo (
+  val totalBytes: Long,
+  val freeBytes: Long,
+  val mediumType: WireStorageMediumType,
+  val storageType: String? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): WireStorageInfo {
+      val totalBytes = pigeonVar_list[0] as Long
+      val freeBytes = pigeonVar_list[1] as Long
+      val mediumType = pigeonVar_list[2] as WireStorageMediumType
+      val storageType = pigeonVar_list[3] as String?
+      return WireStorageInfo(totalBytes, freeBytes, mediumType, storageType)
     }
-
-    fun toList(): List<Any?> =
-        listOf(
-            totalBytes,
-            freeBytes,
-            mediumType,
-            storageType,
-        )
-
-    override fun equals(other: Any?): Boolean {
-        if (other !is PigeonStorageInfo) {
-            return false
-        }
-        if (this === other) {
-            return true
-        }
-        return MessagesPigeonUtils.deepEquals(toList(), other.toList())
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      totalBytes,
+      freeBytes,
+      mediumType,
+      storageType,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
     }
+    if (this === other) {
+      return true
+    }
+    val other = other as WireStorageInfo
+    return MessagesPigeonUtils.deepEquals(this.totalBytes, other.totalBytes) && MessagesPigeonUtils.deepEquals(this.freeBytes, other.freeBytes) && MessagesPigeonUtils.deepEquals(this.mediumType, other.mediumType) && MessagesPigeonUtils.deepEquals(this.storageType, other.storageType)
+  }
 
-    override fun hashCode(): Int = toList().hashCode()
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.totalBytes)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.freeBytes)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.mediumType)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.storageType)
+    return result
+  }
+  override fun toString(): String {
+    return "WireStorageInfo(totalBytes=$totalBytes, freeBytes=$freeBytes, mediumType=$mediumType, storageType=$storageType)"
+  }
 }
 
 /**
@@ -369,280 +594,364 @@ data class PigeonStorageInfo(
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class PigeonDisplayInfo(
-    val width: Long,
-    val height: Long,
-    val scaleFactor: Double,
-    val refreshRate: Double? = null,
-) {
-    companion object {
-        fun fromList(pigeonVar_list: List<Any?>): PigeonDisplayInfo {
-            val width = pigeonVar_list[0] as Long
-            val height = pigeonVar_list[1] as Long
-            val scaleFactor = pigeonVar_list[2] as Double
-            val refreshRate = pigeonVar_list[3] as Double?
-            return PigeonDisplayInfo(
-                width = width,
-                height = height,
-                scaleFactor = scaleFactor,
-                refreshRate = refreshRate,
-            )
-        }
+@Keep
+data class WireDisplayInfo (
+  val width: Long,
+  val height: Long,
+  val scaleFactor: Double,
+  val refreshRate: Double? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): WireDisplayInfo {
+      val width = pigeonVar_list[0] as Long
+      val height = pigeonVar_list[1] as Long
+      val scaleFactor = pigeonVar_list[2] as Double
+      val refreshRate = pigeonVar_list[3] as Double?
+      return WireDisplayInfo(width, height, scaleFactor, refreshRate)
     }
-
-    fun toList(): List<Any?> =
-        listOf(
-            width,
-            height,
-            scaleFactor,
-            refreshRate,
-        )
-
-    override fun equals(other: Any?): Boolean {
-        if (other !is PigeonDisplayInfo) {
-            return false
-        }
-        if (this === other) {
-            return true
-        }
-        return MessagesPigeonUtils.deepEquals(toList(), other.toList())
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      width,
+      height,
+      scaleFactor,
+      refreshRate,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
     }
+    if (this === other) {
+      return true
+    }
+    val other = other as WireDisplayInfo
+    return MessagesPigeonUtils.deepEquals(this.width, other.width) && MessagesPigeonUtils.deepEquals(this.height, other.height) && MessagesPigeonUtils.deepEquals(this.scaleFactor, other.scaleFactor) && MessagesPigeonUtils.deepEquals(this.refreshRate, other.refreshRate)
+  }
 
-    override fun hashCode(): Int = toList().hashCode()
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.width)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.height)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.scaleFactor)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.refreshRate)
+    return result
+  }
+  override fun toString(): String {
+    return "WireDisplayInfo(width=$width, height=$height, scaleFactor=$scaleFactor, refreshRate=$refreshRate)"
+  }
 }
-
 private open class MessagesPigeonCodec : StandardMessageCodec() {
-    override fun readValueOfType(
-        type: Byte,
-        buffer: ByteBuffer,
-    ): Any? =
-        when (type) {
-            129.toByte() -> {
-                val raw = readValue(buffer) as Long?
-                raw?.let { PigeonBatteryChargingState.ofRaw(it.toInt()) }
-            }
-            130.toByte() -> {
-                val raw = readValue(buffer) as Long?
-                raw?.let { PigeonBatteryHealthStatus.ofRaw(it.toInt()) }
-            }
-            131.toByte() -> {
-                val raw = readValue(buffer) as Long?
-                raw?.let { PigeonNetworkConnectionType.ofRaw(it.toInt()) }
-            }
-            132.toByte() -> {
-                val raw = readValue(buffer) as Long?
-                raw?.let { PigeonStorageMediumType.ofRaw(it.toInt()) }
-            }
-            133.toByte() -> {
-                (readValue(buffer) as? List<Any?>)?.let {
-                    PigeonDeviceInfo.fromList(it)
-                }
-            }
-            134.toByte() -> {
-                (readValue(buffer) as? List<Any?>)?.let {
-                    PigeonBatteryInfo.fromList(it)
-                }
-            }
-            135.toByte() -> {
-                (readValue(buffer) as? List<Any?>)?.let {
-                    PigeonNetworkInfo.fromList(it)
-                }
-            }
-            136.toByte() -> {
-                (readValue(buffer) as? List<Any?>)?.let {
-                    PigeonStorageInfo.fromList(it)
-                }
-            }
-            137.toByte() -> {
-                (readValue(buffer) as? List<Any?>)?.let {
-                    PigeonDisplayInfo.fromList(it)
-                }
-            }
-            else -> super.readValueOfType(type, buffer)
+  override fun readValueOfType(type: Byte, buffer: ByteBuffer): Any? {
+    return when (type) {
+      129.toByte() -> {
+        (readValue(buffer) as Long?)?.let {
+          WireBatteryChargingState.ofRaw(it.toInt())
         }
-
-    override fun writeValue(
-        stream: ByteArrayOutputStream,
-        value: Any?,
-    ) {
-        when (value) {
-            is PigeonBatteryChargingState -> {
-                stream.write(129)
-                writeValue(stream, value.raw.toLong())
-            }
-            is PigeonBatteryHealthStatus -> {
-                stream.write(130)
-                writeValue(stream, value.raw.toLong())
-            }
-            is PigeonNetworkConnectionType -> {
-                stream.write(131)
-                writeValue(stream, value.raw.toLong())
-            }
-            is PigeonStorageMediumType -> {
-                stream.write(132)
-                writeValue(stream, value.raw.toLong())
-            }
-            is PigeonDeviceInfo -> {
-                stream.write(133)
-                writeValue(stream, value.toList())
-            }
-            is PigeonBatteryInfo -> {
-                stream.write(134)
-                writeValue(stream, value.toList())
-            }
-            is PigeonNetworkInfo -> {
-                stream.write(135)
-                writeValue(stream, value.toList())
-            }
-            is PigeonStorageInfo -> {
-                stream.write(136)
-                writeValue(stream, value.toList())
-            }
-            is PigeonDisplayInfo -> {
-                stream.write(137)
-                writeValue(stream, value.toList())
-            }
-            else -> super.writeValue(stream, value)
+      }
+      130.toByte() -> {
+        (readValue(buffer) as Long?)?.let {
+          WireBatteryHealthStatus.ofRaw(it.toInt())
         }
+      }
+      131.toByte() -> {
+        (readValue(buffer) as Long?)?.let {
+          WireNetworkConnectionType.ofRaw(it.toInt())
+        }
+      }
+      132.toByte() -> {
+        (readValue(buffer) as Long?)?.let {
+          WireStorageMediumType.ofRaw(it.toInt())
+        }
+      }
+      133.toByte() -> {
+        (readValue(buffer) as? List<Any?>)?.let {
+          WireDeviceInfo.fromList(it)
+        }
+      }
+      134.toByte() -> {
+        (readValue(buffer) as? List<Any?>)?.let {
+          WireBatteryInfo.fromList(it)
+        }
+      }
+      135.toByte() -> {
+        (readValue(buffer) as? List<Any?>)?.let {
+          WireNetworkInfo.fromList(it)
+        }
+      }
+      136.toByte() -> {
+        (readValue(buffer) as? List<Any?>)?.let {
+          WireStorageInfo.fromList(it)
+        }
+      }
+      137.toByte() -> {
+        (readValue(buffer) as? List<Any?>)?.let {
+          WireDisplayInfo.fromList(it)
+        }
+      }
+      else -> super.readValueOfType(type, buffer)
     }
+  }
+  override fun writeValue(stream: ByteArrayOutputStream, value: Any?)   {
+    when (value) {
+      is WireBatteryChargingState -> {
+        stream.write(129)
+        writeValue(stream, value.raw.toLong())
+      }
+      is WireBatteryHealthStatus -> {
+        stream.write(130)
+        writeValue(stream, value.raw.toLong())
+      }
+      is WireNetworkConnectionType -> {
+        stream.write(131)
+        writeValue(stream, value.raw.toLong())
+      }
+      is WireStorageMediumType -> {
+        stream.write(132)
+        writeValue(stream, value.raw.toLong())
+      }
+      is WireDeviceInfo -> {
+        stream.write(133)
+        writeValue(stream, value.toList())
+      }
+      is WireBatteryInfo -> {
+        stream.write(134)
+        writeValue(stream, value.toList())
+      }
+      is WireNetworkInfo -> {
+        stream.write(135)
+        writeValue(stream, value.toList())
+      }
+      is WireStorageInfo -> {
+        stream.write(136)
+        writeValue(stream, value.toList())
+      }
+      is WireDisplayInfo -> {
+        stream.write(137)
+        writeValue(stream, value.toList())
+      }
+      else -> super.writeValue(stream, value)
+    }
+  }
 }
 
 /**
- * Host API implemented by Android, iOS, macOS, Windows, and Linux plugins.
- *
- * Generated interface from Pigeon that represents a handler of messages from Flutter.
+ * Encodes and decodes the buffers that native interop calls pass to and from
+ * Dart, in the same format as the message codec.
  */
+private object MessagesPigeonInteropCodec : MessagesPigeonCodec() {
+  fun encode(value: Any?): ByteArray {
+    val stream = ByteArrayOutputStream()
+    writeValue(stream, value)
+    return stream.toByteArray()
+  }
+
+  fun encodeOrNull(value: Any?): ByteArray? {
+    return if (value == null) null else encode(value)
+  }
+
+  fun decode(bytes: ByteArray): Any? {
+    return decodeMessage(ByteBuffer.wrap(bytes))
+  }
+
+  fun decodeArguments(bytes: ByteArray): List<Any?> {
+    return decode(bytes) as List<Any?>
+  }
+}
+
+
+val XueHuaDeviceInfoHostApiInstances: MutableMap<String, MutableList<XueHuaDeviceInfoHostApiRegistrar>> = mutableMapOf()
+@Keep
 interface XueHuaDeviceInfoHostApi {
-    fun getDeviceInfo(): PigeonDeviceInfo
+  fun getDeviceInfo(): WireDeviceInfo
+  fun getBatteryInfo(): WireBatteryInfo
+  fun getNetworkInfo(): WireNetworkInfo
+  fun getStorageInfo(): WireStorageInfo
+  fun getDisplayInfo(): WireDisplayInfo
+}
+@Keep
+class XueHuaDeviceInfoHostApiRegistrar private constructor(private val engineKey: Long) {
+  @Volatile private var api: XueHuaDeviceInfoHostApi? = null
 
-    fun getBatteryInfo(): PigeonBatteryInfo
+  constructor() : this(MessagesPigeonEngineKeys.NO_KEY)
 
-    fun getNetworkInfo(): PigeonNetworkInfo
+  /**
+   * Registers [api] under [name] (or the default instance when [name] is
+   * omitted) for the engine of the plugin binding [binding].
+   *
+   * The registration is tied to that engine: unregistering it for this engine
+   * leaves other engines' registrations in place, and Dart code running on an
+   * engine uses the instance registered for that engine when it is known.
+   */
+  @Keep
+  fun register(api: XueHuaDeviceInfoHostApi, binding: FlutterPlugin.FlutterPluginBinding, name: String = defaultInstanceName) {
+    registerWithKey(api, MessagesPigeonEngineKeys.keyOf(binding), name)
+  }
 
-    fun getStorageInfo(): PigeonStorageInfo
+  /**
+   * Registers [api] under [name] (or the default instance when [name] is
+   * omitted) for the engine of [engine].
+   *
+   * The registration is tied to that engine: unregistering it for this engine
+   * leaves other engines' registrations in place, and Dart code running on an
+   * engine uses the instance registered for that engine when it is known.
+   */
+  @Keep
+  fun register(api: XueHuaDeviceInfoHostApi, engine: FlutterEngine, name: String = defaultInstanceName) {
+    registerWithKey(api, MessagesPigeonEngineKeys.keyOf(engine), name)
+  }
 
-    fun getDisplayInfo(): PigeonDisplayInfo
+  /**
+   * Removes [api] from the registrations under [name] (or the default instance
+   * when [name] is omitted) for the engine of the plugin binding [binding], leaving other
+   * registrations in place.
+   *
+   * Instances are matched by identity. If [api] is not registered for that
+   * engine but is registered for exactly one other engine, that registration is
+   * removed. Does nothing if [api] is not registered, or is only registered for
+   * several other engines.
+   */
+  @Keep
+  fun unregister(api: XueHuaDeviceInfoHostApi, binding: FlutterPlugin.FlutterPluginBinding, name: String = defaultInstanceName) {
+    unregisterWithKey(api, MessagesPigeonEngineKeys.keyOf(binding), name)
+  }
 
-    companion object {
-        /** The codec used by XueHuaDeviceInfoHostApi. */
-        val codec: MessageCodec<Any?> by lazy {
-            MessagesPigeonCodec()
-        }
+  /**
+   * Removes [api] from the registrations under [name] (or the default instance
+   * when [name] is omitted) for the engine of [engine], leaving other
+   * registrations in place.
+   *
+   * Instances are matched by identity. If [api] is not registered for that
+   * engine but is registered for exactly one other engine, that registration is
+   * removed. Does nothing if [api] is not registered, or is only registered for
+   * several other engines.
+   */
+  @Keep
+  fun unregister(api: XueHuaDeviceInfoHostApi, engine: FlutterEngine, name: String = defaultInstanceName) {
+    unregisterWithKey(api, MessagesPigeonEngineKeys.keyOf(engine), name)
+  }
 
-        /** Sets up an instance of `XueHuaDeviceInfoHostApi` to handle messages through the `binaryMessenger`. */
-        @JvmOverloads
-        fun setUp(
-            binaryMessenger: BinaryMessenger,
-            api: XueHuaDeviceInfoHostApi?,
-            messageChannelSuffix: String = "",
-        ) {
-            val separatedMessageChannelSuffix =
-                if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
-            run {
-                val channel =
-                    BasicMessageChannel<Any?>(
-                        binaryMessenger,
-                        "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getDeviceInfo$separatedMessageChannelSuffix",
-                        codec,
-                    )
-                if (api != null) {
-                    channel.setMessageHandler { _, reply ->
-                        val wrapped: List<Any?> =
-                            try {
-                                listOf(api.getDeviceInfo())
-                            } catch (exception: Throwable) {
-                                MessagesPigeonUtils.wrapError(exception)
-                            }
-                        reply.reply(wrapped)
-                    }
-                } else {
-                    channel.setMessageHandler(null)
-                }
-            }
-            run {
-                val channel =
-                    BasicMessageChannel<Any?>(
-                        binaryMessenger,
-                        "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getBatteryInfo$separatedMessageChannelSuffix",
-                        codec,
-                    )
-                if (api != null) {
-                    channel.setMessageHandler { _, reply ->
-                        val wrapped: List<Any?> =
-                            try {
-                                listOf(api.getBatteryInfo())
-                            } catch (exception: Throwable) {
-                                MessagesPigeonUtils.wrapError(exception)
-                            }
-                        reply.reply(wrapped)
-                    }
-                } else {
-                    channel.setMessageHandler(null)
-                }
-            }
-            run {
-                val channel =
-                    BasicMessageChannel<Any?>(
-                        binaryMessenger,
-                        "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getNetworkInfo$separatedMessageChannelSuffix",
-                        codec,
-                    )
-                if (api != null) {
-                    channel.setMessageHandler { _, reply ->
-                        val wrapped: List<Any?> =
-                            try {
-                                listOf(api.getNetworkInfo())
-                            } catch (exception: Throwable) {
-                                MessagesPigeonUtils.wrapError(exception)
-                            }
-                        reply.reply(wrapped)
-                    }
-                } else {
-                    channel.setMessageHandler(null)
-                }
-            }
-            run {
-                val channel =
-                    BasicMessageChannel<Any?>(
-                        binaryMessenger,
-                        "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getStorageInfo$separatedMessageChannelSuffix",
-                        codec,
-                    )
-                if (api != null) {
-                    channel.setMessageHandler { _, reply ->
-                        val wrapped: List<Any?> =
-                            try {
-                                listOf(api.getStorageInfo())
-                            } catch (exception: Throwable) {
-                                MessagesPigeonUtils.wrapError(exception)
-                            }
-                        reply.reply(wrapped)
-                    }
-                } else {
-                    channel.setMessageHandler(null)
-                }
-            }
-            run {
-                val channel =
-                    BasicMessageChannel<Any?>(
-                        binaryMessenger,
-                        "dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getDisplayInfo$separatedMessageChannelSuffix",
-                        codec,
-                    )
-                if (api != null) {
-                    channel.setMessageHandler { _, reply ->
-                        val wrapped: List<Any?> =
-                            try {
-                                listOf(api.getDisplayInfo())
-                            } catch (exception: Throwable) {
-                                MessagesPigeonUtils.wrapError(exception)
-                            }
-                        reply.reply(wrapped)
-                    }
-                } else {
-                    channel.setMessageHandler(null)
-                }
-            }
-        }
+  private fun registerWithKey(api: XueHuaDeviceInfoHostApi, engineKey: Long, name: String) {
+    kotlin.synchronized(XueHuaDeviceInfoHostApiInstances) {
+      val list = XueHuaDeviceInfoHostApiInstances.getOrPut(name) { mutableListOf() }
+      val index = list.indexOfFirst { it.api === api && it.engineKey == engineKey }
+      if (index >= 0) {
+        list.add(list.removeAt(index))
+      } else {
+        val wrapper = XueHuaDeviceInfoHostApiRegistrar(engineKey)
+        wrapper.api = api
+        list.add(wrapper)
+      }
     }
+  }
+
+  private fun unregisterWithKey(api: XueHuaDeviceInfoHostApi, engineKey: Long, name: String) {
+    kotlin.synchronized(XueHuaDeviceInfoHostApiInstances) {
+      val list = XueHuaDeviceInfoHostApiInstances[name] ?: return
+      val removeKey =
+        if (list.any { it.api === api && it.engineKey == engineKey }) {
+          engineKey
+        } else {
+          list.filter { it.api === api }.map { it.engineKey }.distinct().singleOrNull() ?: return
+        }
+      val iterator = list.iterator()
+      while (iterator.hasNext()) {
+        val entry = iterator.next()
+        if (entry.api === api && entry.engineKey == removeKey) {
+          entry.api = null
+          iterator.remove()
+        }
+      }
+      if (list.isEmpty()) {
+        XueHuaDeviceInfoHostApiInstances.remove(name)
+      }
+    }
+  }
+
+  companion object {
+    /**
+     * Returns the instance registered under [name] for the engine identified by
+     * [engineId].
+     *
+     * Falls back to the most recent instance registered for [affinityKey], then to
+     * the most recent instance overall. Either key may be `Long.MIN_VALUE` when it
+     * is unknown.
+     *
+     * This is called by the generated Dart code and is not intended for direct use.
+     */
+    @JvmStatic
+    @Keep
+    fun pigeonResolveInstance(engineId: Long, affinityKey: Long, name: String = defaultInstanceName): XueHuaDeviceInfoHostApiRegistrar? {
+      return kotlin.synchronized(XueHuaDeviceInfoHostApiInstances) {
+        val list = XueHuaDeviceInfoHostApiInstances[name] ?: return null
+        val exact = if (engineId != MessagesPigeonEngineKeys.NO_KEY) list.lastOrNull { it.engineKey == engineId } else null
+        val affine = if (affinityKey != MessagesPigeonEngineKeys.NO_KEY) list.lastOrNull { it.engineKey == affinityKey } else null
+        exact ?: affine ?: list.lastOrNull()
+      }
+    }
+
+    /**
+     * Returns the engine key that [instance] was registered with, or
+     * `Long.MIN_VALUE` if it is unknown.
+     *
+     * This is called by the generated Dart code and is not intended for direct use.
+     */
+    @JvmStatic
+    @Keep
+    fun pigeonEngineKeyOf(instance: XueHuaDeviceInfoHostApiRegistrar): Long {
+      return instance.engineKey
+    }
+  }
+
+  fun getDeviceInfo(): ByteArray? {
+    val pigeonVar_api = this.api ?: throw FlutterError("unregistered-instance", "XueHuaDeviceInfoHostApi has not been registered.")
+    try {
+      return MessagesPigeonInteropCodec.encodeOrNull(pigeonVar_api.getDeviceInfo())
+    } catch (e: FlutterError) {
+      throw FlutterError(e.code, e.message, MessagesPigeonInteropCodec.encodeOrNull(e.details)).apply {
+        stackTrace = e.stackTrace
+      }
+    }
+  }
+  fun getBatteryInfo(): ByteArray? {
+    val pigeonVar_api = this.api ?: throw FlutterError("unregistered-instance", "XueHuaDeviceInfoHostApi has not been registered.")
+    try {
+      return MessagesPigeonInteropCodec.encodeOrNull(pigeonVar_api.getBatteryInfo())
+    } catch (e: FlutterError) {
+      throw FlutterError(e.code, e.message, MessagesPigeonInteropCodec.encodeOrNull(e.details)).apply {
+        stackTrace = e.stackTrace
+      }
+    }
+  }
+  fun getNetworkInfo(): ByteArray? {
+    val pigeonVar_api = this.api ?: throw FlutterError("unregistered-instance", "XueHuaDeviceInfoHostApi has not been registered.")
+    try {
+      return MessagesPigeonInteropCodec.encodeOrNull(pigeonVar_api.getNetworkInfo())
+    } catch (e: FlutterError) {
+      throw FlutterError(e.code, e.message, MessagesPigeonInteropCodec.encodeOrNull(e.details)).apply {
+        stackTrace = e.stackTrace
+      }
+    }
+  }
+  fun getStorageInfo(): ByteArray? {
+    val pigeonVar_api = this.api ?: throw FlutterError("unregistered-instance", "XueHuaDeviceInfoHostApi has not been registered.")
+    try {
+      return MessagesPigeonInteropCodec.encodeOrNull(pigeonVar_api.getStorageInfo())
+    } catch (e: FlutterError) {
+      throw FlutterError(e.code, e.message, MessagesPigeonInteropCodec.encodeOrNull(e.details)).apply {
+        stackTrace = e.stackTrace
+      }
+    }
+  }
+  fun getDisplayInfo(): ByteArray? {
+    val pigeonVar_api = this.api ?: throw FlutterError("unregistered-instance", "XueHuaDeviceInfoHostApi has not been registered.")
+    try {
+      return MessagesPigeonInteropCodec.encodeOrNull(pigeonVar_api.getDisplayInfo())
+    } catch (e: FlutterError) {
+      throw FlutterError(e.code, e.message, MessagesPigeonInteropCodec.encodeOrNull(e.details)).apply {
+        stackTrace = e.stackTrace
+      }
+    }
+  }
 }

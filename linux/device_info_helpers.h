@@ -28,6 +28,7 @@ struct BatteryReading {
   bool found = false;        // A usable battery with a valid capacity exists.
   double level = 0.0;        // 0..100
   bool is_charging = false;  // status is Charging or Full
+  std::string status;        // Raw `status` file content (e.g. Charging, Full, Not charging)
   std::string health;        // `health` file content, "" when unavailable
 };
 

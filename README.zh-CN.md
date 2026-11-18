@@ -4,22 +4,22 @@
 
 Flutter 跨平台设备信息插件：设备标识、电池状态、网络连接、存储空间、显示屏参数。
 
-基于 **Pigeon (`^30.0.4`)** 强类型跨平台通信生成（Kotlin / Swift / C++ / GObject），移除了旧版 `plugin_platform_interface` 与手写 `MethodChannel`。不支持 Web。
+基于 **Pigeon (`^30.0.4`)** 强类型跨平台通信生成（Android JNI / Apple Swift FFI 原生互操作 + Windows C++ / Linux GObject 强类型通道），移除了旧版 `plugin_platform_interface` 与手写 `MethodChannel`。不支持 Web。
 
 ---
 
 ## 支持平台
 
-| 平台    | 支持 | 实现方式                               |
-| ------- | ---- | -------------------------------------- |
-| Android | 是   | Kotlin + Pigeon HostApi                |
-| iOS     | 是   | Swift + Pigeon HostApi (SPM/CocoaPods) |
-| macOS   | 是   | Swift + Pigeon HostApi (SPM/CocoaPods) |
-| Windows | 是   | C++ + Pigeon HostApi                   |
-| Linux   | 是   | C++/GObject + Pigeon HostApi           |
-| Web     | 否   | 不支持                                 |
+| 平台    | 支持 | 实现方式                                               |
+| ------- | ---- | ------------------------------------------------------ |
+| Android | 是   | Kotlin + Pigeon HostApi（JNI Native Interop）          |
+| iOS     | 是   | Swift + Pigeon HostApi（FFI Native Interop, SPM/CocoaPods） |
+| macOS   | 是   | Swift + Pigeon HostApi（FFI Native Interop, SPM/CocoaPods） |
+| Windows | 是   | C++ + Pigeon HostApi（Typed BasicMessageChannel）      |
+| Linux   | 是   | C++/GObject + Pigeon HostApi（Typed BasicMessageChannel） |
+| Web     | 否   | 不支持                                                 |
 
-**环境要求：** Dart `^3.13.0`，Flutter `>=3.47.0`
+**环境要求：** Dart `^3.12.0`，Flutter `>=3.44.0`
 
 ---
 

@@ -103,6 +103,7 @@ TEST_F(FakeRootTest, BatterySkipsMainsAndDeviceScope) {
   ASSERT_TRUE(b.found);
   EXPECT_DOUBLE_EQ(b.level, 87.0);
   EXPECT_TRUE(b.is_charging);
+  EXPECT_EQ(b.status, "Charging");
   EXPECT_EQ(b.health, "Good");
 }
 
@@ -119,6 +120,7 @@ TEST_F(FakeRootTest, BatterySkipsAbsentAndMapsUnknownHealth) {
   ASSERT_TRUE(b.found);
   EXPECT_DOUBLE_EQ(b.level, 60.0);
   EXPECT_FALSE(b.is_charging);
+  EXPECT_EQ(b.status, "Not charging");
   EXPECT_EQ(b.health, "");
 }
 
