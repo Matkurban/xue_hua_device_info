@@ -95,16 +95,19 @@ class DeviceInfo {
   }) {
     return DeviceInfo(
       deviceId: clearDeviceId ? null : (deviceId ?? this.deviceId),
-      manufacturer:
-          clearManufacturer ? null : (manufacturer ?? this.manufacturer),
+      manufacturer: clearManufacturer
+          ? null
+          : (manufacturer ?? this.manufacturer),
       model: clearModel ? null : (model ?? this.model),
       serial: clearSerial ? null : (serial ?? this.serial),
       name: clearName ? null : (name ?? this.name),
-      operatingSystem:
-          clearOperatingSystem ? null : (operatingSystem ?? this.operatingSystem),
+      operatingSystem: clearOperatingSystem
+          ? null
+          : (operatingSystem ?? this.operatingSystem),
       osVersion: clearOsVersion ? null : (osVersion ?? this.osVersion),
-      architecture:
-          clearArchitecture ? null : (architecture ?? this.architecture),
+      architecture: clearArchitecture
+          ? null
+          : (architecture ?? this.architecture),
     );
   }
 

@@ -23,8 +23,7 @@ class XueHuaDeviceInfo {
       _hostApiOverride ?? (_defaultHostApi ??= _createDefaultHostApi());
 
   static XueHuaDeviceInfoHostApi _createDefaultHostApi() {
-    if (!kIsWeb &&
-        (Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
       return XueHuaDeviceInfoHostApi.createWithNativeInteropApi();
     }
     return XueHuaDeviceInfoHostApi();

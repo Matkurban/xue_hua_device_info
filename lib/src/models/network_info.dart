@@ -51,8 +51,7 @@ class NetworkInfo {
         ? NetworkConnectionType.fromPigeon(message.connectionType)
         : NetworkConnectionType.fromCode(message.networkType);
     final rawType = message.networkType.trim();
-    final canonicalType =
-        rawType.isEmpty || rawType.toLowerCase() == 'unknown'
+    final canonicalType = rawType.isEmpty || rawType.toLowerCase() == 'unknown'
         ? resolvedType.code
         : rawType;
 
@@ -113,8 +112,9 @@ class NetworkInfo {
       connectionType: nextConnectionType,
       networkType: nextNetworkType,
       macAddress: clearMacAddress ? null : (macAddress ?? this.macAddress),
-      interfaceName:
-          clearInterfaceName ? null : (interfaceName ?? this.interfaceName),
+      interfaceName: clearInterfaceName
+          ? null
+          : (interfaceName ?? this.interfaceName),
     );
   }
 

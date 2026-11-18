@@ -18,8 +18,7 @@ class DisplayInfo {
       width: message.width < 0 ? 0 : message.width,
       height: message.height < 0 ? 0 : message.height,
       scaleFactor: message.scaleFactor <= 0 ? 1.0 : message.scaleFactor,
-      refreshRate:
-          message.refreshRate != null && message.refreshRate! > 0
+      refreshRate: message.refreshRate != null && message.refreshRate! > 0
           ? message.refreshRate
           : null,
     );
@@ -38,10 +37,12 @@ class DisplayInfo {
   final double? refreshRate;
 
   /// Logical width in points (`width / scaleFactor`).
-  double get logicalWidth => scaleFactor > 0 ? width / scaleFactor : width.toDouble();
+  double get logicalWidth =>
+      scaleFactor > 0 ? width / scaleFactor : width.toDouble();
 
   /// Logical height in points (`height / scaleFactor`).
-  double get logicalHeight => scaleFactor > 0 ? height / scaleFactor : height.toDouble();
+  double get logicalHeight =>
+      scaleFactor > 0 ? height / scaleFactor : height.toDouble();
 
   /// Display aspect ratio (`width / height`), or `0.0` when height is zero.
   double get aspectRatio => height > 0 ? width / height : 0.0;
@@ -70,8 +71,7 @@ class DisplayInfo {
       width: width ?? this.width,
       height: height ?? this.height,
       scaleFactor: scaleFactor ?? this.scaleFactor,
-      refreshRate:
-          clearRefreshRate ? null : (refreshRate ?? this.refreshRate),
+      refreshRate: clearRefreshRate ? null : (refreshRate ?? this.refreshRate),
     );
   }
 

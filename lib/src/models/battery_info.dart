@@ -26,7 +26,8 @@ class BatteryInfo {
 
   /// Creates a [BatteryInfo] domain model from a Pigeon [WireBatteryInfo] message.
   factory BatteryInfo.fromPigeon(WireBatteryInfo message) {
-    final normalizedLevel = message.level != null &&
+    final normalizedLevel =
+        message.level != null &&
             message.level! >= 0.0 &&
             message.level! <= 100.0
         ? message.level

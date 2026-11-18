@@ -101,8 +101,7 @@ class StorageInfo {
       totalBytes: totalBytes ?? this.totalBytes,
       freeBytes: freeBytes ?? this.freeBytes,
       mediumType: mediumType ?? this.mediumType,
-      storageType:
-          clearStorageType ? null : (storageType ?? this.storageType),
+      storageType: clearStorageType ? null : (storageType ?? this.storageType),
     );
   }
 

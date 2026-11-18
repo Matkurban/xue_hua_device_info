@@ -8,15 +8,16 @@ import 'dart:typed_data' show Float64List, Int32List, Int64List;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
-import 'package:meta/meta.dart' show immutable, internal, protected, visibleForTesting;
+import 'package:meta/meta.dart'
+    show immutable, internal, protected, visibleForTesting;
 import './messages.g.dart'
     if (dart.library.ffi) './messages.native_interop.g.dart'
     as pigeon_native;
 
 Object? _extractReplyValueOrThrow(
-    List<Object?>? replyList,
-    String channelName, {
-    required bool isNullValid,
+  List<Object?>? replyList,
+  String channelName, {
+  required bool isNullValid,
 }) {
   if (replyList == null) {
     throw PlatformException(
@@ -50,8 +51,9 @@ bool _deepEquals(Object? a, Object? b) {
   }
   if (a is List && b is List) {
     return a.length == b.length &&
-        a.indexed
-            .every(((int, dynamic) item) => _deepEquals(item.$2, b[item.$1]));
+        a.indexed.every(
+          ((int, dynamic) item) => _deepEquals(item.$2, b[item.$1]),
+        );
   }
   if (a is Map && b is Map) {
     if (a.length != b.length) {
@@ -100,14 +102,13 @@ int _deepHash(Object? value) {
   return value.hashCode;
 }
 
-
 /// Charging state reported by the host power subsystem.
 enum WireBatteryChargingState {
   charging,
   discharging,
   full,
   notCharging,
-  unknown;
+  unknown,
 }
 
 /// Battery health classification reported by the host platform.
@@ -120,7 +121,7 @@ enum WireBatteryHealthStatus {
   overVoltage,
   unspecifiedFailure,
   cold,
-  unknown;
+  unknown,
 }
 
 /// Active network transport classification.
@@ -131,7 +132,7 @@ enum WireNetworkConnectionType {
   vpn,
   loopback,
   none,
-  unknown;
+  unknown,
 }
 
 /// Physical storage medium classification.
@@ -141,7 +142,7 @@ enum WireStorageMediumType {
   internalStorage,
   nvme,
   virtualDisk,
-  unknown;
+  unknown,
 }
 
 /// Strongly-typed Pigeon payload for device identity and system descriptors.
@@ -187,7 +188,8 @@ class WireDeviceInfo {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static WireDeviceInfo decode(Object result) {
     result as List<Object?>;
@@ -212,7 +214,14 @@ class WireDeviceInfo {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(deviceId, other.deviceId) && _deepEquals(manufacturer, other.manufacturer) && _deepEquals(model, other.model) && _deepEquals(serial, other.serial) && _deepEquals(name, other.name) && _deepEquals(operatingSystem, other.operatingSystem) && _deepEquals(osVersion, other.osVersion) && _deepEquals(architecture, other.architecture);
+    return _deepEquals(deviceId, other.deviceId) &&
+        _deepEquals(manufacturer, other.manufacturer) &&
+        _deepEquals(model, other.model) &&
+        _deepEquals(serial, other.serial) &&
+        _deepEquals(name, other.name) &&
+        _deepEquals(operatingSystem, other.operatingSystem) &&
+        _deepEquals(osVersion, other.osVersion) &&
+        _deepEquals(architecture, other.architecture);
   }
 
   @override
@@ -260,7 +269,8 @@ class WireBatteryInfo {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static WireBatteryInfo decode(Object result) {
     result as List<Object?>;
@@ -283,7 +293,12 @@ class WireBatteryInfo {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(level, other.level) && _deepEquals(isCharging, other.isCharging) && _deepEquals(chargingState, other.chargingState) && _deepEquals(healthStatus, other.healthStatus) && _deepEquals(health, other.health) && _deepEquals(hasBattery, other.hasBattery);
+    return _deepEquals(level, other.level) &&
+        _deepEquals(isCharging, other.isCharging) &&
+        _deepEquals(chargingState, other.chargingState) &&
+        _deepEquals(healthStatus, other.healthStatus) &&
+        _deepEquals(health, other.health) &&
+        _deepEquals(hasBattery, other.hasBattery);
   }
 
   @override
@@ -327,7 +342,8 @@ class WireNetworkInfo {
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static WireNetworkInfo decode(Object result) {
     result as List<Object?>;
@@ -349,7 +365,11 @@ class WireNetworkInfo {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(ipAddress, other.ipAddress) && _deepEquals(connectionType, other.connectionType) && _deepEquals(networkType, other.networkType) && _deepEquals(macAddress, other.macAddress) && _deepEquals(interfaceName, other.interfaceName);
+    return _deepEquals(ipAddress, other.ipAddress) &&
+        _deepEquals(connectionType, other.connectionType) &&
+        _deepEquals(networkType, other.networkType) &&
+        _deepEquals(macAddress, other.macAddress) &&
+        _deepEquals(interfaceName, other.interfaceName);
   }
 
   @override
@@ -380,16 +400,12 @@ class WireStorageInfo {
   String? storageType;
 
   List<Object?> _toList() {
-    return <Object?>[
-      totalBytes,
-      freeBytes,
-      mediumType,
-      storageType,
-    ];
+    return <Object?>[totalBytes, freeBytes, mediumType, storageType];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static WireStorageInfo decode(Object result) {
     result as List<Object?>;
@@ -410,7 +426,10 @@ class WireStorageInfo {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(totalBytes, other.totalBytes) && _deepEquals(freeBytes, other.freeBytes) && _deepEquals(mediumType, other.mediumType) && _deepEquals(storageType, other.storageType);
+    return _deepEquals(totalBytes, other.totalBytes) &&
+        _deepEquals(freeBytes, other.freeBytes) &&
+        _deepEquals(mediumType, other.mediumType) &&
+        _deepEquals(storageType, other.storageType);
   }
 
   @override
@@ -441,16 +460,12 @@ class WireDisplayInfo {
   double? refreshRate;
 
   List<Object?> _toList() {
-    return <Object?>[
-      width,
-      height,
-      scaleFactor,
-      refreshRate,
-    ];
+    return <Object?>[width, height, scaleFactor, refreshRate];
   }
 
   Object encode() {
-    return _toList();  }
+    return _toList();
+  }
 
   static WireDisplayInfo decode(Object result) {
     result as List<Object?>;
@@ -471,7 +486,10 @@ class WireDisplayInfo {
     if (identical(this, other)) {
       return true;
     }
-    return _deepEquals(width, other.width) && _deepEquals(height, other.height) && _deepEquals(scaleFactor, other.scaleFactor) && _deepEquals(refreshRate, other.refreshRate);
+    return _deepEquals(width, other.width) &&
+        _deepEquals(height, other.height) &&
+        _deepEquals(scaleFactor, other.scaleFactor) &&
+        _deepEquals(refreshRate, other.refreshRate);
   }
 
   @override
@@ -484,7 +502,6 @@ class WireDisplayInfo {
   }
 }
 
-
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
   @override
@@ -492,31 +509,31 @@ class _PigeonCodec extends StandardMessageCodec {
     if (value is int) {
       buffer.putUint8(4);
       buffer.putInt64(value);
-    }    else if (value is WireBatteryChargingState) {
+    } else if (value is WireBatteryChargingState) {
       buffer.putUint8(129);
       writeValue(buffer, value.index);
-    }    else if (value is WireBatteryHealthStatus) {
+    } else if (value is WireBatteryHealthStatus) {
       buffer.putUint8(130);
       writeValue(buffer, value.index);
-    }    else if (value is WireNetworkConnectionType) {
+    } else if (value is WireNetworkConnectionType) {
       buffer.putUint8(131);
       writeValue(buffer, value.index);
-    }    else if (value is WireStorageMediumType) {
+    } else if (value is WireStorageMediumType) {
       buffer.putUint8(132);
       writeValue(buffer, value.index);
-    }    else if (value is WireDeviceInfo) {
+    } else if (value is WireDeviceInfo) {
       buffer.putUint8(133);
       writeValue(buffer, value.encode());
-    }    else if (value is WireBatteryInfo) {
+    } else if (value is WireBatteryInfo) {
       buffer.putUint8(134);
       writeValue(buffer, value.encode());
-    }    else if (value is WireNetworkInfo) {
+    } else if (value is WireNetworkInfo) {
       buffer.putUint8(135);
       writeValue(buffer, value.encode());
-    }    else if (value is WireStorageInfo) {
+    } else if (value is WireStorageInfo) {
       buffer.putUint8(136);
       writeValue(buffer, value.encode());
-    }    else if (value is WireDisplayInfo) {
+    } else if (value is WireDisplayInfo) {
       buffer.putUint8(137);
       writeValue(buffer, value.encode());
     } else {
@@ -557,10 +574,12 @@ class _PigeonCodec extends StandardMessageCodec {
 
 @internal
 const StandardMessageCodec pigeon_MessagesmessageCodec = _PigeonCodec();
-const String defaultInstanceName = 'PigeonDefaultClassName32uh4ui3lh445uh4h3l2l455g4y34u';
+const String defaultInstanceName =
+    'PigeonDefaultClassName32uh4ui3lh445uh4h3l2l455g4y34u';
 
 @internal
-XueHuaDeviceInfoHostApiForNativeInterop? pigeon_getInstance_XueHuaDeviceInfoHostApi({
+XueHuaDeviceInfoHostApiForNativeInterop?
+pigeon_getInstance_XueHuaDeviceInfoHostApi({
   String channelName = defaultInstanceName,
 }) {
   throw UnsupportedError(
@@ -568,11 +587,13 @@ XueHuaDeviceInfoHostApiForNativeInterop? pigeon_getInstance_XueHuaDeviceInfoHost
   );
 }
 
-
 abstract class XueHuaDeviceInfoHostApiForNativeInterop {
   /// Returns instance of XueHuaDeviceInfoHostApiForNativeInterop with specified [channelName] if one has been registered.
-  static XueHuaDeviceInfoHostApiForNativeInterop? getInstance({String channelName = defaultInstanceName}) =>
-      pigeon_native.pigeon_getInstance_XueHuaDeviceInfoHostApi(channelName: channelName);
+  static XueHuaDeviceInfoHostApiForNativeInterop? getInstance({
+    String channelName = defaultInstanceName,
+  }) => pigeon_native.pigeon_getInstance_XueHuaDeviceInfoHostApi(
+    channelName: channelName,
+  );
 
   WireDeviceInfo getDeviceInfo();
 
@@ -591,14 +612,14 @@ class XueHuaDeviceInfoHostApi {
   /// available for dependency injection. If it is left null, the default
   /// BinaryMessenger will be used which routes to the host platform.
   XueHuaDeviceInfoHostApi({
-      BinaryMessenger? binaryMessenger, 
-      String messageChannelSuffix = '', 
-      XueHuaDeviceInfoHostApiForNativeInterop? nativeInteropApi,
-  })
-      : pigeonVar_binaryMessenger = binaryMessenger,
-        pigeonVar_messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '',
-  _nativeInteropApi = nativeInteropApi;
-
+    BinaryMessenger? binaryMessenger,
+    String messageChannelSuffix = '',
+    XueHuaDeviceInfoHostApiForNativeInterop? nativeInteropApi,
+  }) : pigeonVar_binaryMessenger = binaryMessenger,
+       pigeonVar_messageChannelSuffix = messageChannelSuffix.isNotEmpty
+           ? '.$messageChannelSuffix'
+           : '',
+       _nativeInteropApi = nativeInteropApi;
 
   /// Creates an instance of [XueHuaDeviceInfoHostApi] that requests an instance of
   /// [XueHuaDeviceInfoHostApiForNativeInterop] from the host platform with a matching instance name
@@ -616,8 +637,10 @@ class XueHuaDeviceInfoHostApi {
     }
     final XueHuaDeviceInfoHostApiForNativeInterop? nativeInteropApi =
         XueHuaDeviceInfoHostApiForNativeInterop.getInstance(
-      channelName: messageChannelSuffix.isEmpty ? defaultInstanceName : messageChannelSuffix,
-    );
+          channelName: messageChannelSuffix.isEmpty
+              ? defaultInstanceName
+              : messageChannelSuffix,
+        );
     if (nativeInteropApi == null) {
       throw ArgumentError(
         'No XueHuaDeviceInfoHostApi instance with ${messageChannelSuffix.isEmpty ? 'no ' : ''}instance name ${messageChannelSuffix.isNotEmpty ? '"$messageChannelSuffix" ' : ''}found.',
@@ -641,7 +664,8 @@ class XueHuaDeviceInfoHostApi {
     if (_nativeInteropApi != null) {
       return _nativeInteropApi.getDeviceInfo();
     }
-    final pigeonVar_channelName = 'dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getDeviceInfo$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getDeviceInfo$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -650,11 +674,10 @@ class XueHuaDeviceInfoHostApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as WireDeviceInfo;
   }
 
@@ -662,7 +685,8 @@ class XueHuaDeviceInfoHostApi {
     if (_nativeInteropApi != null) {
       return _nativeInteropApi.getBatteryInfo();
     }
-    final pigeonVar_channelName = 'dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getBatteryInfo$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getBatteryInfo$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -671,11 +695,10 @@ class XueHuaDeviceInfoHostApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as WireBatteryInfo;
   }
 
@@ -683,7 +706,8 @@ class XueHuaDeviceInfoHostApi {
     if (_nativeInteropApi != null) {
       return _nativeInteropApi.getNetworkInfo();
     }
-    final pigeonVar_channelName = 'dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getNetworkInfo$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getNetworkInfo$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -692,11 +716,10 @@ class XueHuaDeviceInfoHostApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as WireNetworkInfo;
   }
 
@@ -704,7 +727,8 @@ class XueHuaDeviceInfoHostApi {
     if (_nativeInteropApi != null) {
       return _nativeInteropApi.getStorageInfo();
     }
-    final pigeonVar_channelName = 'dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getStorageInfo$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getStorageInfo$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -713,11 +737,10 @@ class XueHuaDeviceInfoHostApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as WireStorageInfo;
   }
 
@@ -725,7 +748,8 @@ class XueHuaDeviceInfoHostApi {
     if (_nativeInteropApi != null) {
       return _nativeInteropApi.getDisplayInfo();
     }
-    final pigeonVar_channelName = 'dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getDisplayInfo$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.xue_hua_device_info.XueHuaDeviceInfoHostApi.getDisplayInfo$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -734,11 +758,10 @@ class XueHuaDeviceInfoHostApi {
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
     final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
-        pigeonVar_replyList,
-        pigeonVar_channelName,
-        isNullValid: false,
-    )
-    ;
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: false,
+    );
     return pigeonVar_replyValue! as WireDisplayInfo;
   }
 }

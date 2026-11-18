@@ -6,7 +6,8 @@
 import 'dart:async';
 import 'dart:ffi';
 import 'dart:io' show Platform;
-import 'dart:typed_data' show Float32List, Float64List, Int32List, Int64List, Int8List, TypedData;
+import 'dart:typed_data'
+    show Float32List, Float64List, Int32List, Int64List, Int8List, TypedData;
 import 'dart:ui' show PlatformDispatcher;
 
 import 'package:ffi/ffi.dart';
@@ -23,7 +24,9 @@ Uint8List? _jByteArrayToDart(JByteArray? array, {bool release = false}) {
   }
   try {
     final Int8List range = array.getRange(0, array.length);
-    return Uint8List.fromList(range.buffer.asUint8List(range.offsetInBytes, range.length));
+    return Uint8List.fromList(
+      range.buffer.asUint8List(range.offsetInBytes, range.length),
+    );
   } finally {
     if (release) {
       array.release();
@@ -72,7 +75,11 @@ Float64List? _jDoubleArrayToDart(JDoubleArray? array, {bool release = false}) {
 
 JByteArray _uint8ListToJni(Uint8List value) {
   final JByteArray array = JByteArray(value.length);
-  array.setRange(0, value.length, Int8List.view(value.buffer, value.offsetInBytes, value.length));
+  array.setRange(
+    0,
+    value.length,
+    Int8List.view(value.buffer, value.offsetInBytes, value.length),
+  );
   return array;
 }
 
@@ -118,15 +125,24 @@ class _PigeonJniCodec {
   static final JClass _listClass = JList.type.jClass;
   static final JClass _mapClass = JMap.type.jClass;
 
-  static final JClass _classWireDeviceInfo = jni_bridge.WireDeviceInfo.type.jClass;
-  static final JClass _classWireBatteryInfo = jni_bridge.WireBatteryInfo.type.jClass;
-  static final JClass _classWireNetworkInfo = jni_bridge.WireNetworkInfo.type.jClass;
-  static final JClass _classWireStorageInfo = jni_bridge.WireStorageInfo.type.jClass;
-  static final JClass _classWireDisplayInfo = jni_bridge.WireDisplayInfo.type.jClass;
-  static final JClass _classWireBatteryChargingState = jni_bridge.WireBatteryChargingState.type.jClass;
-  static final JClass _classWireBatteryHealthStatus = jni_bridge.WireBatteryHealthStatus.type.jClass;
-  static final JClass _classWireNetworkConnectionType = jni_bridge.WireNetworkConnectionType.type.jClass;
-  static final JClass _classWireStorageMediumType = jni_bridge.WireStorageMediumType.type.jClass;
+  static final JClass _classWireDeviceInfo =
+      jni_bridge.WireDeviceInfo.type.jClass;
+  static final JClass _classWireBatteryInfo =
+      jni_bridge.WireBatteryInfo.type.jClass;
+  static final JClass _classWireNetworkInfo =
+      jni_bridge.WireNetworkInfo.type.jClass;
+  static final JClass _classWireStorageInfo =
+      jni_bridge.WireStorageInfo.type.jClass;
+  static final JClass _classWireDisplayInfo =
+      jni_bridge.WireDisplayInfo.type.jClass;
+  static final JClass _classWireBatteryChargingState =
+      jni_bridge.WireBatteryChargingState.type.jClass;
+  static final JClass _classWireBatteryHealthStatus =
+      jni_bridge.WireBatteryHealthStatus.type.jClass;
+  static final JClass _classWireNetworkConnectionType =
+      jni_bridge.WireNetworkConnectionType.type.jClass;
+  static final JClass _classWireStorageMediumType =
+      jni_bridge.WireStorageMediumType.type.jClass;
   static Object? readValue(JObject? value) {
     if (value == null) {
       return null;
@@ -159,7 +175,8 @@ class _PigeonJniCodec {
       }
       return res;
     } else if (value.isInstanceOf(_mapClass)) {
-      final Map<JObject?, JObject?> map = (value as JMap<JObject?, JObject?>).asDart();
+      final Map<JObject?, JObject?> map = (value as JMap<JObject?, JObject?>)
+          .asDart();
       final res = <Object?, Object?>{};
       for (final MapEntry<JObject?, JObject?> entry in map.entries) {
         final JObject? key = entry.key;
@@ -169,28 +186,44 @@ class _PigeonJniCodec {
         entryValue?.release();
       }
       return res;
-          } else if (value.isInstanceOf(_classWireDeviceInfo)) {
-      return PigeonInternalWireDeviceInfoNativeInterop.fromJni(value as jni_bridge.WireDeviceInfo);
-              } else if (value.isInstanceOf(_classWireBatteryInfo)) {
-      return PigeonInternalWireBatteryInfoNativeInterop.fromJni(value as jni_bridge.WireBatteryInfo);
-              } else if (value.isInstanceOf(_classWireNetworkInfo)) {
-      return PigeonInternalWireNetworkInfoNativeInterop.fromJni(value as jni_bridge.WireNetworkInfo);
-              } else if (value.isInstanceOf(_classWireStorageInfo)) {
-      return PigeonInternalWireStorageInfoNativeInterop.fromJni(value as jni_bridge.WireStorageInfo);
-              } else if (value.isInstanceOf(_classWireDisplayInfo)) {
-      return PigeonInternalWireDisplayInfoNativeInterop.fromJni(value as jni_bridge.WireDisplayInfo);
-        
-          } else if (value.isInstanceOf(_classWireBatteryChargingState)) {
-      return PigeonInternalWireBatteryChargingStateNativeInterop.fromJni(value as jni_bridge.WireBatteryChargingState);
-              } else if (value.isInstanceOf(_classWireBatteryHealthStatus)) {
-      return PigeonInternalWireBatteryHealthStatusNativeInterop.fromJni(value as jni_bridge.WireBatteryHealthStatus);
-              } else if (value.isInstanceOf(_classWireNetworkConnectionType)) {
-      return PigeonInternalWireNetworkConnectionTypeNativeInterop.fromJni(value as jni_bridge.WireNetworkConnectionType);
-              } else if (value.isInstanceOf(_classWireStorageMediumType)) {
-      return PigeonInternalWireStorageMediumTypeNativeInterop.fromJni(value as jni_bridge.WireStorageMediumType);
-        
+    } else if (value.isInstanceOf(_classWireDeviceInfo)) {
+      return PigeonInternalWireDeviceInfoNativeInterop.fromJni(
+        value as jni_bridge.WireDeviceInfo,
+      );
+    } else if (value.isInstanceOf(_classWireBatteryInfo)) {
+      return PigeonInternalWireBatteryInfoNativeInterop.fromJni(
+        value as jni_bridge.WireBatteryInfo,
+      );
+    } else if (value.isInstanceOf(_classWireNetworkInfo)) {
+      return PigeonInternalWireNetworkInfoNativeInterop.fromJni(
+        value as jni_bridge.WireNetworkInfo,
+      );
+    } else if (value.isInstanceOf(_classWireStorageInfo)) {
+      return PigeonInternalWireStorageInfoNativeInterop.fromJni(
+        value as jni_bridge.WireStorageInfo,
+      );
+    } else if (value.isInstanceOf(_classWireDisplayInfo)) {
+      return PigeonInternalWireDisplayInfoNativeInterop.fromJni(
+        value as jni_bridge.WireDisplayInfo,
+      );
+    } else if (value.isInstanceOf(_classWireBatteryChargingState)) {
+      return PigeonInternalWireBatteryChargingStateNativeInterop.fromJni(
+        value as jni_bridge.WireBatteryChargingState,
+      );
+    } else if (value.isInstanceOf(_classWireBatteryHealthStatus)) {
+      return PigeonInternalWireBatteryHealthStatusNativeInterop.fromJni(
+        value as jni_bridge.WireBatteryHealthStatus,
+      );
+    } else if (value.isInstanceOf(_classWireNetworkConnectionType)) {
+      return PigeonInternalWireNetworkConnectionTypeNativeInterop.fromJni(
+        value as jni_bridge.WireNetworkConnectionType,
+      );
+    } else if (value.isInstanceOf(_classWireStorageMediumType)) {
+      return PigeonInternalWireStorageMediumTypeNativeInterop.fromJni(
+        value as jni_bridge.WireStorageMediumType,
+      );
     } else {
-    throw ArgumentError.value(value);
+      throw ArgumentError.value(value);
     }
   }
 
@@ -215,52 +248,56 @@ class _PigeonJniCodec {
       return _int64ListToJni(value) as T;
     } else if (value is Float64List) {
       return _float64ListToJni(value) as T;
-    
     } else if (value is List<Object>) {
       return value.map<JObject>((e) => writeValue<JObject>(e)).toJList() as T;
     } else if (value is List) {
       return value.map<JObject?>((e) => writeValue<JObject?>(e)).toJList() as T;
-    
     } else if (value is Map<Object, Object>) {
       return value
-          .map<JObject, JObject>((k, v) =>
-              MapEntry(writeValue<JObject>(k), writeValue<JObject>(v)))
-          .toJMap() as T;
+              .map<JObject, JObject>(
+                (k, v) =>
+                    MapEntry(writeValue<JObject>(k), writeValue<JObject>(v)),
+              )
+              .toJMap()
+          as T;
     } else if (value is Map<Object, Object?>) {
       return value
-          .map<JObject, JObject?>((k, v) =>
-              MapEntry(writeValue<JObject>(k), writeValue<JObject?>(v)))
-          .toJMap() as T;
+              .map<JObject, JObject?>(
+                (k, v) =>
+                    MapEntry(writeValue<JObject>(k), writeValue<JObject?>(v)),
+              )
+              .toJMap()
+          as T;
     } else if (value is Map) {
       return value
-          .map<JObject?, JObject?>((k, v) =>
-              MapEntry(writeValue<JObject?>(k), writeValue<JObject?>(v)))
-          .toJMap() as T;
-          } else if (value is WireDeviceInfo) {
-        return value.toJni() as T;
-              } else if (value is WireBatteryInfo) {
-        return value.toJni() as T;
-              } else if (value is WireNetworkInfo) {
-        return value.toJni() as T;
-              } else if (value is WireStorageInfo) {
-        return value.toJni() as T;
-              } else if (value is WireDisplayInfo) {
-        return value.toJni() as T;
-        
-          } else if (value is WireBatteryChargingState) {
-        return value.toJni() as T;
-              } else if (value is WireBatteryHealthStatus) {
-        return value.toJni() as T;
-              } else if (value is WireNetworkConnectionType) {
-        return value.toJni() as T;
-              } else if (value is WireStorageMediumType) {
-        return value.toJni() as T;
-        
+              .map<JObject?, JObject?>(
+                (k, v) =>
+                    MapEntry(writeValue<JObject?>(k), writeValue<JObject?>(v)),
+              )
+              .toJMap()
+          as T;
+    } else if (value is WireDeviceInfo) {
+      return value.toJni() as T;
+    } else if (value is WireBatteryInfo) {
+      return value.toJni() as T;
+    } else if (value is WireNetworkInfo) {
+      return value.toJni() as T;
+    } else if (value is WireStorageInfo) {
+      return value.toJni() as T;
+    } else if (value is WireDisplayInfo) {
+      return value.toJni() as T;
+    } else if (value is WireBatteryChargingState) {
+      return value.toJni() as T;
+    } else if (value is WireBatteryHealthStatus) {
+      return value.toJni() as T;
+    } else if (value is WireNetworkConnectionType) {
+      return value.toJni() as T;
+    } else if (value is WireStorageMediumType) {
+      return value.toJni() as T;
     } else {
-    throw ArgumentError.value(value);
+      throw ArgumentError.value(value);
     }
   }
-    
 }
 
 // ignore: unused_element
@@ -268,7 +305,11 @@ class _PigeonJniBuffers {
   static JByteArray encode(Object? value) {
     final ByteData data = pigeon_MessagesmessageCodec.encodeMessage(value)!;
     final JByteArray array = JByteArray(data.lengthInBytes);
-    array.setRange(0, data.lengthInBytes, data.buffer.asInt8List(data.offsetInBytes, data.lengthInBytes));
+    array.setRange(
+      0,
+      data.lengthInBytes,
+      data.buffer.asInt8List(data.offsetInBytes, data.lengthInBytes),
+    );
     return array;
   }
 
@@ -278,10 +319,13 @@ class _PigeonJniBuffers {
 
   static Object? decode(JByteArray? array) {
     final Uint8List? bytes = _jByteArrayToDart(array, release: true);
-    return bytes == null ? null : pigeon_MessagesmessageCodec.decodeMessage(ByteData.sublistView(bytes));
+    return bytes == null
+        ? null
+        : pigeon_MessagesmessageCodec.decodeMessage(
+            ByteData.sublistView(bytes),
+          );
   }
 }
-
 
 // ignore: unused_element
 class _PigeonFfiCodec {
@@ -298,25 +342,31 @@ class _PigeonFfiCodec {
         return numValue.doubleValue;
       } else if (type == bool) {
         return numValue.boolValue;
-      }
-            else if (type == WireBatteryChargingState) {
-        return PigeonInternalWireBatteryChargingStateNativeInterop.fromNSNumber(numValue);
-      }
-      else if (type == WireBatteryHealthStatus) {
-        return PigeonInternalWireBatteryHealthStatusNativeInterop.fromNSNumber(numValue);
-      }
-      else if (type == WireNetworkConnectionType) {
-        return PigeonInternalWireNetworkConnectionTypeNativeInterop.fromNSNumber(numValue);
-      }
-      else if (type == WireStorageMediumType) {
-        return PigeonInternalWireStorageMediumTypeNativeInterop.fromNSNumber(numValue);
+      } else if (type == WireBatteryChargingState) {
+        return PigeonInternalWireBatteryChargingStateNativeInterop.fromNSNumber(
+          numValue,
+        );
+      } else if (type == WireBatteryHealthStatus) {
+        return PigeonInternalWireBatteryHealthStatusNativeInterop.fromNSNumber(
+          numValue,
+        );
+      } else if (type == WireNetworkConnectionType) {
+        return PigeonInternalWireNetworkConnectionTypeNativeInterop.fromNSNumber(
+          numValue,
+        );
+      } else if (type == WireStorageMediumType) {
+        return PigeonInternalWireStorageMediumTypeNativeInterop.fromNSNumber(
+          numValue,
+        );
       }
 
       return numValue.longValue;
     } else if (NSString.isA(value)) {
       return NSString.as(value).toDartString();
     } else if (ffi_bridge.MessagesPigeonTypedData.isA(value)) {
-      return _getValueFromPigeonTypedData(value as ffi_bridge.MessagesPigeonTypedData);
+      return _getValueFromPigeonTypedData(
+        value as ffi_bridge.MessagesPigeonTypedData,
+      );
     } else if (NSArray.isA(value)) {
       final NSArray array = NSArray.as(value);
       final List<Object?> res = <Object?>[];
@@ -330,24 +380,39 @@ class _PigeonFfiCodec {
       final Map<Object?, Object?> res = <Object?, Object?>{};
       for (int i = 0; i < keys.count; i++) {
         final ObjCObject key = keys.objectAtIndex(i);
-        res[readValue(key, type, type2)] = readValue(dict.objectForKey(key), type, type2);
+        res[readValue(key, type, type2)] = readValue(
+          dict.objectForKey(key),
+          type,
+          type2,
+        );
       }
       return res;
     } else if (ffi_bridge.MessagesNumberWrapper.isA(value)) {
-      return _convertNumberWrapperToDart(ffi_bridge.MessagesNumberWrapper.as(value));
-          } else if (ffi_bridge.WireDeviceInfoBridge.isA(value)) {
-        return PigeonInternalWireDeviceInfoNativeInterop.fromFfi(ffi_bridge.WireDeviceInfoBridge.as(value));
-              } else if (ffi_bridge.WireBatteryInfoBridge.isA(value)) {
-        return PigeonInternalWireBatteryInfoNativeInterop.fromFfi(ffi_bridge.WireBatteryInfoBridge.as(value));
-              } else if (ffi_bridge.WireNetworkInfoBridge.isA(value)) {
-        return PigeonInternalWireNetworkInfoNativeInterop.fromFfi(ffi_bridge.WireNetworkInfoBridge.as(value));
-              } else if (ffi_bridge.WireStorageInfoBridge.isA(value)) {
-        return PigeonInternalWireStorageInfoNativeInterop.fromFfi(ffi_bridge.WireStorageInfoBridge.as(value));
-              } else if (ffi_bridge.WireDisplayInfoBridge.isA(value)) {
-        return PigeonInternalWireDisplayInfoNativeInterop.fromFfi(ffi_bridge.WireDisplayInfoBridge.as(value));
-        
+      return _convertNumberWrapperToDart(
+        ffi_bridge.MessagesNumberWrapper.as(value),
+      );
+    } else if (ffi_bridge.WireDeviceInfoBridge.isA(value)) {
+      return PigeonInternalWireDeviceInfoNativeInterop.fromFfi(
+        ffi_bridge.WireDeviceInfoBridge.as(value),
+      );
+    } else if (ffi_bridge.WireBatteryInfoBridge.isA(value)) {
+      return PigeonInternalWireBatteryInfoNativeInterop.fromFfi(
+        ffi_bridge.WireBatteryInfoBridge.as(value),
+      );
+    } else if (ffi_bridge.WireNetworkInfoBridge.isA(value)) {
+      return PigeonInternalWireNetworkInfoNativeInterop.fromFfi(
+        ffi_bridge.WireNetworkInfoBridge.as(value),
+      );
+    } else if (ffi_bridge.WireStorageInfoBridge.isA(value)) {
+      return PigeonInternalWireStorageInfoNativeInterop.fromFfi(
+        ffi_bridge.WireStorageInfoBridge.as(value),
+      );
+    } else if (ffi_bridge.WireDisplayInfoBridge.isA(value)) {
+      return PigeonInternalWireDisplayInfoNativeInterop.fromFfi(
+        ffi_bridge.WireDisplayInfoBridge.as(value),
+      );
     } else {
-    throw ArgumentError.value(value);
+      throw ArgumentError.value(value);
     }
   }
 
@@ -356,61 +421,68 @@ class _PigeonFfiCodec {
     bool generic = false,
   }) {
     if (value == null) {
-      if (_isTypeOrNullableType<T>(ObjCObject) || _isTypeOrNullableType<T>(NSObject)) {
+      if (_isTypeOrNullableType<T>(ObjCObject) ||
+          _isTypeOrNullableType<T>(NSObject)) {
         return ffi_bridge.MessagesPigeonInternalNull() as T;
       }
       return null as T;
     }
     if (value is bool) {
       return (generic
-          ? _convertToFfiNumberWrapper(value)
-          : NSNumber.alloc().initWithLong(value ? 1 : 0)) as T;
+              ? _convertToFfiNumberWrapper(value)
+              : NSNumber.alloc().initWithLong(value ? 1 : 0))
+          as T;
     } else if (value is double) {
       return (generic
-          ? _convertToFfiNumberWrapper(value)
-          : NSNumber.alloc().initWithDouble(value)) as T;
+              ? _convertToFfiNumberWrapper(value)
+              : NSNumber.alloc().initWithDouble(value))
+          as T;
       // ignore: avoid_double_and_int_checks
     } else if (value is int) {
       return (generic
-          ? _convertToFfiNumberWrapper(value)
-          : NSNumber.alloc().initWithLong(value)) as T;
+              ? _convertToFfiNumberWrapper(value)
+              : NSNumber.alloc().initWithLong(value))
+          as T;
     } else if (value is Enum) {
       return (generic
-          ? _convertToFfiNumberWrapper(value)
-          : NSNumber.alloc().initWithLong(value.index)) as T;
+              ? _convertToFfiNumberWrapper(value)
+              : NSNumber.alloc().initWithLong(value.index))
+          as T;
     } else if (value is String) {
       return NSString(value) as T;
     } else if (value is TypedData) {
       return _toPigeonTypedData(value) as T;
-    
     } else if (value is List) {
       final NSMutableArray res = NSMutableArray();
       for (final Object? entry in value) {
-        res.addObject(entry == null
-            ? ffi_bridge.MessagesPigeonInternalNull()
-            : writeValue(entry, generic: true));
+        res.addObject(
+          entry == null
+              ? ffi_bridge.MessagesPigeonInternalNull()
+              : writeValue(entry, generic: true),
+        );
       }
       return res as T;
-    
     } else if (value is Map) {
       final NSMutableDictionary res = NSMutableDictionary();
       for (final MapEntry<Object?, Object?> entry in value.entries) {
-        res.setObject(writeValue(entry.value, generic: true), forKey: NSCopying.as(writeValue(entry.key, generic: true)));
+        res.setObject(
+          writeValue(entry.value, generic: true),
+          forKey: NSCopying.as(writeValue(entry.key, generic: true)),
+        );
       }
       return res as T;
-          } else if (value is WireDeviceInfo) {
-        return value.toFfi() as T;
-              } else if (value is WireBatteryInfo) {
-        return value.toFfi() as T;
-              } else if (value is WireNetworkInfo) {
-        return value.toFfi() as T;
-              } else if (value is WireStorageInfo) {
-        return value.toFfi() as T;
-              } else if (value is WireDisplayInfo) {
-        return value.toFfi() as T;
-        
+    } else if (value is WireDeviceInfo) {
+      return value.toFfi() as T;
+    } else if (value is WireBatteryInfo) {
+      return value.toFfi() as T;
+    } else if (value is WireNetworkInfo) {
+      return value.toFfi() as T;
+    } else if (value is WireStorageInfo) {
+      return value.toFfi() as T;
+    } else if (value is WireDisplayInfo) {
+      return value.toFfi() as T;
     } else {
-    throw ArgumentError.value(value);
+      throw ArgumentError.value(value);
     }
   }
 }
@@ -419,7 +491,9 @@ class _PigeonFfiCodec {
 NSData _typedDataToNSData(TypedData value) {
   final int lengthInBytes = value.lengthInBytes;
   // `malloc(0)` may return null, which `NSData` can't own.
-  final Pointer<Uint8> bytes = malloc<Uint8>(lengthInBytes == 0 ? 1 : lengthInBytes);
+  final Pointer<Uint8> bytes = malloc<Uint8>(
+    lengthInBytes == 0 ? 1 : lengthInBytes,
+  );
   bytes
       .asTypedList(lengthInBytes)
       .setAll(0, value.buffer.asUint8List(value.offsetInBytes, lengthInBytes));
@@ -444,8 +518,6 @@ ffi_bridge.MessagesPigeonTypedData _toPigeonTypedData(TypedData value) {
     type: type,
   );
 }
-
-
 
 Object? _getValueFromPigeonTypedData(ffi_bridge.MessagesPigeonTypedData value) {
   final NSData data = value.data;
@@ -483,7 +555,6 @@ Object? _getValueFromPigeonTypedData(ffi_bridge.MessagesPigeonTypedData value) {
     dataRef.release();
   }
 }
-    
 
 // ignore: unused_element
 class _PigeonFfiBuffers {
@@ -505,7 +576,9 @@ class _PigeonFfiBuffers {
 
   static NSData encode(Object? value) {
     final ByteData data = pigeon_MessagesmessageCodec.encodeMessage(value)!;
-    return _typedDataToNSData(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
+    return _typedDataToNSData(
+      data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+    );
   }
 
   static NSData? encodeOrNull(Object? value) {
@@ -514,10 +587,13 @@ class _PigeonFfiBuffers {
 
   static Object? decode(NSData? data) {
     final Uint8List? bytes = toUint8List(data);
-    return bytes == null ? null : pigeon_MessagesmessageCodec.decodeMessage(ByteData.sublistView(bytes));
+    return bytes == null
+        ? null
+        : pigeon_MessagesmessageCodec.decodeMessage(
+            ByteData.sublistView(bytes),
+          );
   }
 }
-
 
 Object? _convertNumberWrapperToDart(ffi_bridge.MessagesNumberWrapper value) {
   switch (value.type) {
@@ -528,37 +604,68 @@ Object? _convertNumberWrapperToDart(ffi_bridge.MessagesNumberWrapper value) {
     case 3:
       return value.number.boolValue;
     case 4:
-      return PigeonInternalWireBatteryChargingStateNativeInterop.fromNSNumber(value.number);
+      return PigeonInternalWireBatteryChargingStateNativeInterop.fromNSNumber(
+        value.number,
+      );
     case 5:
-      return PigeonInternalWireBatteryHealthStatusNativeInterop.fromNSNumber(value.number);
+      return PigeonInternalWireBatteryHealthStatusNativeInterop.fromNSNumber(
+        value.number,
+      );
     case 6:
-      return PigeonInternalWireNetworkConnectionTypeNativeInterop.fromNSNumber(value.number);
+      return PigeonInternalWireNetworkConnectionTypeNativeInterop.fromNSNumber(
+        value.number,
+      );
     case 7:
-      return PigeonInternalWireStorageMediumTypeNativeInterop.fromNSNumber(value.number);
+      return PigeonInternalWireStorageMediumTypeNativeInterop.fromNSNumber(
+        value.number,
+      );
     default:
       throw ArgumentError.value(value);
   }
 }
+
 ffi_bridge.MessagesNumberWrapper _convertToFfiNumberWrapper(Object value) {
   switch (value) {
     case int _:
-      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(NSNumber.alloc().initWithLong(value), type: 1);
+      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(
+        NSNumber.alloc().initWithLong(value),
+        type: 1,
+      );
     case double _:
-      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(NSNumber.alloc().initWithDouble(value), type: 2);
+      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(
+        NSNumber.alloc().initWithDouble(value),
+        type: 2,
+      );
     case bool _:
-      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(NSNumber.alloc().initWithLong(value ? 1 : 0), type: 3);
+      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(
+        NSNumber.alloc().initWithLong(value ? 1 : 0),
+        type: 3,
+      );
     case WireBatteryChargingState _:
-      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(value.toNSNumber(), type: 4);
+      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(
+        value.toNSNumber(),
+        type: 4,
+      );
     case WireBatteryHealthStatus _:
-      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(value.toNSNumber(), type: 5);
+      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(
+        value.toNSNumber(),
+        type: 5,
+      );
     case WireNetworkConnectionType _:
-      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(value.toNSNumber(), type: 6);
+      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(
+        value.toNSNumber(),
+        type: 6,
+      );
     case WireStorageMediumType _:
-      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(value.toNSNumber(), type: 7);
+      return ffi_bridge.MessagesNumberWrapper.alloc().initWithNumber(
+        value.toNSNumber(),
+        type: 7,
+      );
     default:
       throw ArgumentError.value(value);
   }
 }
+
 bool _isType<T>(Type t) => T == t;
 bool _isTypeOrNullableType<T>(Type t) => _isType<T>(t) || _isType<T?>(t);
 
@@ -610,7 +717,9 @@ void _reportFfiError(ffi_bridge.PigeonError errorOut, Object e) {
 
 PlatformException _wrapJniException(JThrowable e) {
   if (e.isA<jni_bridge.FlutterError>(jni_bridge.FlutterError.type)) {
-    final jni_bridge.FlutterError pigeonError = e.as(jni_bridge.FlutterError.type);
+    final jni_bridge.FlutterError pigeonError = e.as(
+      jni_bridge.FlutterError.type,
+    );
     return PlatformException(
       code: pigeonError.code.toDartString(),
       message: pigeonError.message?.toDartString(),
@@ -626,15 +735,18 @@ PlatformException _wrapJniException(JThrowable e) {
   );
 }
 
-
-
-extension PigeonInternalWireBatteryChargingStateNativeInterop on WireBatteryChargingState {
+extension PigeonInternalWireBatteryChargingStateNativeInterop
+    on WireBatteryChargingState {
   jni_bridge.WireBatteryChargingState toJni() {
     return jni_bridge.WireBatteryChargingState.Companion.ofRaw(index)!;
   }
 
-  static WireBatteryChargingState? fromJni(jni_bridge.WireBatteryChargingState? jniEnum) {
-    return jniEnum == null ? null : WireBatteryChargingState.values[jniEnum.raw];
+  static WireBatteryChargingState? fromJni(
+    jni_bridge.WireBatteryChargingState? jniEnum,
+  ) {
+    return jniEnum == null
+        ? null
+        : WireBatteryChargingState.values[jniEnum.raw];
   }
 
   NSNumber toNSNumber() {
@@ -642,16 +754,21 @@ extension PigeonInternalWireBatteryChargingStateNativeInterop on WireBatteryChar
   }
 
   static WireBatteryChargingState? fromNSNumber(NSNumber? ffiEnum) {
-    return ffiEnum == null ? null : WireBatteryChargingState.values[ffiEnum.intValue];
+    return ffiEnum == null
+        ? null
+        : WireBatteryChargingState.values[ffiEnum.intValue];
   }
 }
 
-extension PigeonInternalWireBatteryHealthStatusNativeInterop on WireBatteryHealthStatus {
+extension PigeonInternalWireBatteryHealthStatusNativeInterop
+    on WireBatteryHealthStatus {
   jni_bridge.WireBatteryHealthStatus toJni() {
     return jni_bridge.WireBatteryHealthStatus.Companion.ofRaw(index)!;
   }
 
-  static WireBatteryHealthStatus? fromJni(jni_bridge.WireBatteryHealthStatus? jniEnum) {
+  static WireBatteryHealthStatus? fromJni(
+    jni_bridge.WireBatteryHealthStatus? jniEnum,
+  ) {
     return jniEnum == null ? null : WireBatteryHealthStatus.values[jniEnum.raw];
   }
 
@@ -660,17 +777,24 @@ extension PigeonInternalWireBatteryHealthStatusNativeInterop on WireBatteryHealt
   }
 
   static WireBatteryHealthStatus? fromNSNumber(NSNumber? ffiEnum) {
-    return ffiEnum == null ? null : WireBatteryHealthStatus.values[ffiEnum.intValue];
+    return ffiEnum == null
+        ? null
+        : WireBatteryHealthStatus.values[ffiEnum.intValue];
   }
 }
 
-extension PigeonInternalWireNetworkConnectionTypeNativeInterop on WireNetworkConnectionType {
+extension PigeonInternalWireNetworkConnectionTypeNativeInterop
+    on WireNetworkConnectionType {
   jni_bridge.WireNetworkConnectionType toJni() {
     return jni_bridge.WireNetworkConnectionType.Companion.ofRaw(index)!;
   }
 
-  static WireNetworkConnectionType? fromJni(jni_bridge.WireNetworkConnectionType? jniEnum) {
-    return jniEnum == null ? null : WireNetworkConnectionType.values[jniEnum.raw];
+  static WireNetworkConnectionType? fromJni(
+    jni_bridge.WireNetworkConnectionType? jniEnum,
+  ) {
+    return jniEnum == null
+        ? null
+        : WireNetworkConnectionType.values[jniEnum.raw];
   }
 
   NSNumber toNSNumber() {
@@ -678,16 +802,21 @@ extension PigeonInternalWireNetworkConnectionTypeNativeInterop on WireNetworkCon
   }
 
   static WireNetworkConnectionType? fromNSNumber(NSNumber? ffiEnum) {
-    return ffiEnum == null ? null : WireNetworkConnectionType.values[ffiEnum.intValue];
+    return ffiEnum == null
+        ? null
+        : WireNetworkConnectionType.values[ffiEnum.intValue];
   }
 }
 
-extension PigeonInternalWireStorageMediumTypeNativeInterop on WireStorageMediumType {
+extension PigeonInternalWireStorageMediumTypeNativeInterop
+    on WireStorageMediumType {
   jni_bridge.WireStorageMediumType toJni() {
     return jni_bridge.WireStorageMediumType.Companion.ofRaw(index)!;
   }
 
-  static WireStorageMediumType? fromJni(jni_bridge.WireStorageMediumType? jniEnum) {
+  static WireStorageMediumType? fromJni(
+    jni_bridge.WireStorageMediumType? jniEnum,
+  ) {
     return jniEnum == null ? null : WireStorageMediumType.values[jniEnum.raw];
   }
 
@@ -696,13 +825,15 @@ extension PigeonInternalWireStorageMediumTypeNativeInterop on WireStorageMediumT
   }
 
   static WireStorageMediumType? fromNSNumber(NSNumber? ffiEnum) {
-    return ffiEnum == null ? null : WireStorageMediumType.values[ffiEnum.intValue];
+    return ffiEnum == null
+        ? null
+        : WireStorageMediumType.values[ffiEnum.intValue];
   }
 }
 
 extension PigeonInternalWireDeviceInfoNativeInterop on WireDeviceInfo {
   jni_bridge.WireDeviceInfo toJni() {
-    return jni_bridge.WireDeviceInfo (
+    return jni_bridge.WireDeviceInfo(
       _PigeonJniCodec.writeValue<JString?>(deviceId),
       _PigeonJniCodec.writeValue<JString?>(manufacturer),
       _PigeonJniCodec.writeValue<JString?>(model),
@@ -715,16 +846,24 @@ extension PigeonInternalWireDeviceInfoNativeInterop on WireDeviceInfo {
   }
 
   static WireDeviceInfo? fromJni(jni_bridge.WireDeviceInfo? jniClass) {
-    return jniClass == null ? null : WireDeviceInfo(
-      deviceId: jniClass.deviceId?.toDartString(releaseOriginal: true),
-      manufacturer: jniClass.manufacturer?.toDartString(releaseOriginal: true),
-      model: jniClass.model?.toDartString(releaseOriginal: true),
-      serial: jniClass.serial?.toDartString(releaseOriginal: true),
-      name: jniClass.name?.toDartString(releaseOriginal: true),
-      operatingSystem: jniClass.operatingSystem?.toDartString(releaseOriginal: true),
-      osVersion: jniClass.osVersion?.toDartString(releaseOriginal: true),
-      architecture: jniClass.architecture?.toDartString(releaseOriginal: true),
-    );
+    return jniClass == null
+        ? null
+        : WireDeviceInfo(
+            deviceId: jniClass.deviceId?.toDartString(releaseOriginal: true),
+            manufacturer: jniClass.manufacturer?.toDartString(
+              releaseOriginal: true,
+            ),
+            model: jniClass.model?.toDartString(releaseOriginal: true),
+            serial: jniClass.serial?.toDartString(releaseOriginal: true),
+            name: jniClass.name?.toDartString(releaseOriginal: true),
+            operatingSystem: jniClass.operatingSystem?.toDartString(
+              releaseOriginal: true,
+            ),
+            osVersion: jniClass.osVersion?.toDartString(releaseOriginal: true),
+            architecture: jniClass.architecture?.toDartString(
+              releaseOriginal: true,
+            ),
+          );
   }
 
   ffi_bridge.WireDeviceInfoBridge toFfi() {
@@ -741,22 +880,24 @@ extension PigeonInternalWireDeviceInfoNativeInterop on WireDeviceInfo {
   }
 
   static WireDeviceInfo? fromFfi(ffi_bridge.WireDeviceInfoBridge? ffiClass) {
-    return ffiClass == null ? null : WireDeviceInfo(
-      deviceId: ffiClass.deviceId?.toDartString(),
-      manufacturer: ffiClass.manufacturer?.toDartString(),
-      model: ffiClass.model?.toDartString(),
-      serial: ffiClass.serial?.toDartString(),
-      name: ffiClass.name?.toDartString(),
-      operatingSystem: ffiClass.operatingSystem?.toDartString(),
-      osVersion: ffiClass.osVersion?.toDartString(),
-      architecture: ffiClass.architecture?.toDartString(),
-    );
+    return ffiClass == null
+        ? null
+        : WireDeviceInfo(
+            deviceId: ffiClass.deviceId?.toDartString(),
+            manufacturer: ffiClass.manufacturer?.toDartString(),
+            model: ffiClass.model?.toDartString(),
+            serial: ffiClass.serial?.toDartString(),
+            name: ffiClass.name?.toDartString(),
+            operatingSystem: ffiClass.operatingSystem?.toDartString(),
+            osVersion: ffiClass.osVersion?.toDartString(),
+            architecture: ffiClass.architecture?.toDartString(),
+          );
   }
 }
 
 extension PigeonInternalWireBatteryInfoNativeInterop on WireBatteryInfo {
   jni_bridge.WireBatteryInfo toJni() {
-    return jni_bridge.WireBatteryInfo (
+    return jni_bridge.WireBatteryInfo(
       _PigeonJniCodec.writeValue<JDouble?>(level),
       _PigeonJniCodec.writeValue<JBoolean?>(isCharging),
       chargingState.toJni(),
@@ -767,42 +908,58 @@ extension PigeonInternalWireBatteryInfoNativeInterop on WireBatteryInfo {
   }
 
   static WireBatteryInfo? fromJni(jni_bridge.WireBatteryInfo? jniClass) {
-    return jniClass == null ? null : WireBatteryInfo(
-      level: jniClass.level?.toDartDouble(releaseOriginal: true),
-      isCharging: jniClass.isCharging()?.toDartBool(releaseOriginal: true),
-      chargingState: PigeonInternalWireBatteryChargingStateNativeInterop.fromJni(jniClass.chargingState)!,
-      healthStatus: PigeonInternalWireBatteryHealthStatusNativeInterop.fromJni(jniClass.healthStatus)!,
-      health: jniClass.health?.toDartString(releaseOriginal: true),
-      hasBattery: jniClass.hasBattery,
-    );
+    return jniClass == null
+        ? null
+        : WireBatteryInfo(
+            level: jniClass.level?.toDartDouble(releaseOriginal: true),
+            isCharging: jniClass.isCharging()?.toDartBool(
+              releaseOriginal: true,
+            ),
+            chargingState:
+                PigeonInternalWireBatteryChargingStateNativeInterop.fromJni(
+                  jniClass.chargingState,
+                )!,
+            healthStatus:
+                PigeonInternalWireBatteryHealthStatusNativeInterop.fromJni(
+                  jniClass.healthStatus,
+                )!,
+            health: jniClass.health?.toDartString(releaseOriginal: true),
+            hasBattery: jniClass.hasBattery,
+          );
   }
 
   ffi_bridge.WireBatteryInfoBridge toFfi() {
     return ffi_bridge.WireBatteryInfoBridge.alloc().initWithLevel(
       _PigeonFfiCodec.writeValue<NSNumber?>(level),
       isCharging: _PigeonFfiCodec.writeValue<NSNumber?>(isCharging),
-      chargingState: ffi_bridge.WireBatteryChargingState.values[chargingState.index],
-      healthStatus: ffi_bridge.WireBatteryHealthStatus.values[healthStatus.index],
+      chargingState:
+          ffi_bridge.WireBatteryChargingState.values[chargingState.index],
+      healthStatus:
+          ffi_bridge.WireBatteryHealthStatus.values[healthStatus.index],
       health: _PigeonFfiCodec.writeValue<NSString?>(health),
       hasBattery: hasBattery,
     );
   }
 
   static WireBatteryInfo? fromFfi(ffi_bridge.WireBatteryInfoBridge? ffiClass) {
-    return ffiClass == null ? null : WireBatteryInfo(
-      level: ffiClass.level?.doubleValue,
-      isCharging: ffiClass.isCharging?.boolValue,
-      chargingState: WireBatteryChargingState.values[ffiClass.chargingState.index],
-      healthStatus: WireBatteryHealthStatus.values[ffiClass.healthStatus.index],
-      health: ffiClass.health?.toDartString(),
-      hasBattery: ffiClass.hasBattery,
-    );
+    return ffiClass == null
+        ? null
+        : WireBatteryInfo(
+            level: ffiClass.level?.doubleValue,
+            isCharging: ffiClass.isCharging?.boolValue,
+            chargingState:
+                WireBatteryChargingState.values[ffiClass.chargingState.index],
+            healthStatus:
+                WireBatteryHealthStatus.values[ffiClass.healthStatus.index],
+            health: ffiClass.health?.toDartString(),
+            hasBattery: ffiClass.hasBattery,
+          );
   }
 }
 
 extension PigeonInternalWireNetworkInfoNativeInterop on WireNetworkInfo {
   jni_bridge.WireNetworkInfo toJni() {
-    return jni_bridge.WireNetworkInfo (
+    return jni_bridge.WireNetworkInfo(
       _PigeonJniCodec.writeValue<JString?>(ipAddress),
       connectionType.toJni(),
       _PigeonJniCodec.writeValue<JString>(networkType),
@@ -812,19 +969,31 @@ extension PigeonInternalWireNetworkInfoNativeInterop on WireNetworkInfo {
   }
 
   static WireNetworkInfo? fromJni(jni_bridge.WireNetworkInfo? jniClass) {
-    return jniClass == null ? null : WireNetworkInfo(
-      ipAddress: jniClass.ipAddress?.toDartString(releaseOriginal: true),
-      connectionType: PigeonInternalWireNetworkConnectionTypeNativeInterop.fromJni(jniClass.connectionType)!,
-      networkType: jniClass.networkType.toDartString(releaseOriginal: true),
-      macAddress: jniClass.macAddress?.toDartString(releaseOriginal: true),
-      interfaceName: jniClass.interfaceName?.toDartString(releaseOriginal: true),
-    );
+    return jniClass == null
+        ? null
+        : WireNetworkInfo(
+            ipAddress: jniClass.ipAddress?.toDartString(releaseOriginal: true),
+            connectionType:
+                PigeonInternalWireNetworkConnectionTypeNativeInterop.fromJni(
+                  jniClass.connectionType,
+                )!,
+            networkType: jniClass.networkType.toDartString(
+              releaseOriginal: true,
+            ),
+            macAddress: jniClass.macAddress?.toDartString(
+              releaseOriginal: true,
+            ),
+            interfaceName: jniClass.interfaceName?.toDartString(
+              releaseOriginal: true,
+            ),
+          );
   }
 
   ffi_bridge.WireNetworkInfoBridge toFfi() {
     return ffi_bridge.WireNetworkInfoBridge.alloc().initWithIpAddress(
       _PigeonFfiCodec.writeValue<NSString?>(ipAddress),
-      connectionType: ffi_bridge.WireNetworkConnectionType.values[connectionType.index],
+      connectionType:
+          ffi_bridge.WireNetworkConnectionType.values[connectionType.index],
       networkType: _PigeonFfiCodec.writeValue<NSString>(networkType),
       macAddress: _PigeonFfiCodec.writeValue<NSString?>(macAddress),
       interfaceName: _PigeonFfiCodec.writeValue<NSString?>(interfaceName),
@@ -832,19 +1001,22 @@ extension PigeonInternalWireNetworkInfoNativeInterop on WireNetworkInfo {
   }
 
   static WireNetworkInfo? fromFfi(ffi_bridge.WireNetworkInfoBridge? ffiClass) {
-    return ffiClass == null ? null : WireNetworkInfo(
-      ipAddress: ffiClass.ipAddress?.toDartString(),
-      connectionType: WireNetworkConnectionType.values[ffiClass.connectionType.index],
-      networkType: ffiClass.networkType.toDartString(),
-      macAddress: ffiClass.macAddress?.toDartString(),
-      interfaceName: ffiClass.interfaceName?.toDartString(),
-    );
+    return ffiClass == null
+        ? null
+        : WireNetworkInfo(
+            ipAddress: ffiClass.ipAddress?.toDartString(),
+            connectionType:
+                WireNetworkConnectionType.values[ffiClass.connectionType.index],
+            networkType: ffiClass.networkType.toDartString(),
+            macAddress: ffiClass.macAddress?.toDartString(),
+            interfaceName: ffiClass.interfaceName?.toDartString(),
+          );
   }
 }
 
 extension PigeonInternalWireStorageInfoNativeInterop on WireStorageInfo {
   jni_bridge.WireStorageInfo toJni() {
-    return jni_bridge.WireStorageInfo (
+    return jni_bridge.WireStorageInfo(
       totalBytes,
       freeBytes,
       mediumType.toJni(),
@@ -853,12 +1025,19 @@ extension PigeonInternalWireStorageInfoNativeInterop on WireStorageInfo {
   }
 
   static WireStorageInfo? fromJni(jni_bridge.WireStorageInfo? jniClass) {
-    return jniClass == null ? null : WireStorageInfo(
-      totalBytes: jniClass.totalBytes,
-      freeBytes: jniClass.freeBytes,
-      mediumType: PigeonInternalWireStorageMediumTypeNativeInterop.fromJni(jniClass.mediumType)!,
-      storageType: jniClass.storageType?.toDartString(releaseOriginal: true),
-    );
+    return jniClass == null
+        ? null
+        : WireStorageInfo(
+            totalBytes: jniClass.totalBytes,
+            freeBytes: jniClass.freeBytes,
+            mediumType:
+                PigeonInternalWireStorageMediumTypeNativeInterop.fromJni(
+                  jniClass.mediumType,
+                )!,
+            storageType: jniClass.storageType?.toDartString(
+              releaseOriginal: true,
+            ),
+          );
   }
 
   ffi_bridge.WireStorageInfoBridge toFfi() {
@@ -871,18 +1050,20 @@ extension PigeonInternalWireStorageInfoNativeInterop on WireStorageInfo {
   }
 
   static WireStorageInfo? fromFfi(ffi_bridge.WireStorageInfoBridge? ffiClass) {
-    return ffiClass == null ? null : WireStorageInfo(
-      totalBytes: ffiClass.totalBytes,
-      freeBytes: ffiClass.freeBytes,
-      mediumType: WireStorageMediumType.values[ffiClass.mediumType.index],
-      storageType: ffiClass.storageType?.toDartString(),
-    );
+    return ffiClass == null
+        ? null
+        : WireStorageInfo(
+            totalBytes: ffiClass.totalBytes,
+            freeBytes: ffiClass.freeBytes,
+            mediumType: WireStorageMediumType.values[ffiClass.mediumType.index],
+            storageType: ffiClass.storageType?.toDartString(),
+          );
   }
 }
 
 extension PigeonInternalWireDisplayInfoNativeInterop on WireDisplayInfo {
   jni_bridge.WireDisplayInfo toJni() {
-    return jni_bridge.WireDisplayInfo (
+    return jni_bridge.WireDisplayInfo(
       width,
       height,
       scaleFactor,
@@ -891,12 +1072,16 @@ extension PigeonInternalWireDisplayInfoNativeInterop on WireDisplayInfo {
   }
 
   static WireDisplayInfo? fromJni(jni_bridge.WireDisplayInfo? jniClass) {
-    return jniClass == null ? null : WireDisplayInfo(
-      width: jniClass.width,
-      height: jniClass.height,
-      scaleFactor: jniClass.scaleFactor,
-      refreshRate: jniClass.refreshRate?.toDartDouble(releaseOriginal: true),
-    );
+    return jniClass == null
+        ? null
+        : WireDisplayInfo(
+            width: jniClass.width,
+            height: jniClass.height,
+            scaleFactor: jniClass.scaleFactor,
+            refreshRate: jniClass.refreshRate?.toDartDouble(
+              releaseOriginal: true,
+            ),
+          );
   }
 
   ffi_bridge.WireDisplayInfoBridge toFfi() {
@@ -909,38 +1094,50 @@ extension PigeonInternalWireDisplayInfoNativeInterop on WireDisplayInfo {
   }
 
   static WireDisplayInfo? fromFfi(ffi_bridge.WireDisplayInfoBridge? ffiClass) {
-    return ffiClass == null ? null : WireDisplayInfo(
-      width: ffiClass.width,
-      height: ffiClass.height,
-      scaleFactor: ffiClass.scaleFactor,
-      refreshRate: ffiClass.refreshRate?.doubleValue,
-    );
+    return ffiClass == null
+        ? null
+        : WireDisplayInfo(
+            width: ffiClass.width,
+            height: ffiClass.height,
+            scaleFactor: ffiClass.scaleFactor,
+            refreshRate: ffiClass.refreshRate?.doubleValue,
+          );
   }
 }
 
-XueHuaDeviceInfoHostApiForNativeInterop? pigeon_getInstance_XueHuaDeviceInfoHostApi({
+XueHuaDeviceInfoHostApiForNativeInterop?
+pigeon_getInstance_XueHuaDeviceInfoHostApi({
   String channelName = defaultInstanceName,
-}) => _XueHuaDeviceInfoHostApiForNativeInterop.getInstance(channelName: channelName);
+}) => _XueHuaDeviceInfoHostApiForNativeInterop.getInstance(
+  channelName: channelName,
+);
 
-
-class _XueHuaDeviceInfoHostApiForNativeInterop implements XueHuaDeviceInfoHostApiForNativeInterop {
-  _XueHuaDeviceInfoHostApiForNativeInterop._withRegistrar({jni_bridge.XueHuaDeviceInfoHostApiRegistrar? jniApi, ffi_bridge.XueHuaDeviceInfoHostApiSetup? ffiApi}) : _jniApi = jniApi, _ffiApi = ffiApi;
+class _XueHuaDeviceInfoHostApiForNativeInterop
+    implements XueHuaDeviceInfoHostApiForNativeInterop {
+  _XueHuaDeviceInfoHostApiForNativeInterop._withRegistrar({
+    jni_bridge.XueHuaDeviceInfoHostApiRegistrar? jniApi,
+    ffi_bridge.XueHuaDeviceInfoHostApiSetup? ffiApi,
+  }) : _jniApi = jniApi,
+       _ffiApi = ffiApi;
 
   /// Returns instance of XueHuaDeviceInfoHostApiForNativeInterop with specified [channelName] if one has been registered.
   ///
   /// Returns the instance registered by this isolate's engine when it is known,
   /// and otherwise the most recent registration.
-  static XueHuaDeviceInfoHostApiForNativeInterop? getInstance({String channelName = defaultInstanceName}) {
+  static XueHuaDeviceInfoHostApiForNativeInterop? getInstance({
+    String channelName = defaultInstanceName,
+  }) {
     if (Platform.isAndroid) {
       final int? engineId = PlatformDispatcher.instance.engineId;
       final JString jName = channelName.toJString();
       final jni_bridge.XueHuaDeviceInfoHostApiRegistrar? link;
       try {
-        link = jni_bridge.XueHuaDeviceInfoHostApiRegistrar.pigeonResolveInstance(
-          engineId ?? _pigeonNoEngineKey,
-          _pigeonEngineAffinity ?? _pigeonNoEngineKey,
-          jName,
-        );
+        link =
+            jni_bridge.XueHuaDeviceInfoHostApiRegistrar.pigeonResolveInstance(
+              engineId ?? _pigeonNoEngineKey,
+              _pigeonEngineAffinity ?? _pigeonNoEngineKey,
+              jName,
+            );
       } finally {
         jName.release();
       }
@@ -948,31 +1145,43 @@ class _XueHuaDeviceInfoHostApiForNativeInterop implements XueHuaDeviceInfoHostAp
         _throwNoInstanceError(channelName);
       }
       if (link != null && _pigeonEngineAffinity == null) {
-        final int linkEngineKey = jni_bridge.XueHuaDeviceInfoHostApiRegistrar.pigeonEngineKeyOf(link);
-        if (linkEngineKey != _pigeonNoEngineKey && (engineId == null || linkEngineKey < 0)) {
+        final int linkEngineKey =
+            jni_bridge.XueHuaDeviceInfoHostApiRegistrar.pigeonEngineKeyOf(link);
+        if (linkEngineKey != _pigeonNoEngineKey &&
+            (engineId == null || linkEngineKey < 0)) {
           _pigeonEngineAffinity = linkEngineKey;
         }
       }
-      return _XueHuaDeviceInfoHostApiForNativeInterop._withRegistrar(jniApi: link);
+      return _XueHuaDeviceInfoHostApiForNativeInterop._withRegistrar(
+        jniApi: link,
+      );
     } else if (Platform.isIOS || Platform.isMacOS) {
       final int? engineId = PlatformDispatcher.instance.engineId;
-      final ffi_bridge.XueHuaDeviceInfoHostApiSetup? link = ffi_bridge.XueHuaDeviceInfoHostApiSetup.pigeonResolveInstanceWithEngineId(
-        engineId ?? _pigeonNoEngineKey,
-        affinityKey: _pigeonEngineAffinity ?? _pigeonNoEngineKey,
-        name: NSString(channelName),
-      );
+      final ffi_bridge.XueHuaDeviceInfoHostApiSetup? link =
+          ffi_bridge
+              .XueHuaDeviceInfoHostApiSetup.pigeonResolveInstanceWithEngineId(
+            engineId ?? _pigeonNoEngineKey,
+            affinityKey: _pigeonEngineAffinity ?? _pigeonNoEngineKey,
+            name: NSString(channelName),
+          );
       if (link == null) {
         _throwNoInstanceError(channelName);
       }
       if (link != null && _pigeonEngineAffinity == null) {
-        final int linkEngineKey = ffi_bridge.XueHuaDeviceInfoHostApiSetup.pigeonEngineKeyOf(link);
-        if (linkEngineKey != _pigeonNoEngineKey && (engineId == null || linkEngineKey < 0)) {
+        final int linkEngineKey =
+            ffi_bridge.XueHuaDeviceInfoHostApiSetup.pigeonEngineKeyOf(link);
+        if (linkEngineKey != _pigeonNoEngineKey &&
+            (engineId == null || linkEngineKey < 0)) {
           _pigeonEngineAffinity = linkEngineKey;
         }
       }
-      return _XueHuaDeviceInfoHostApiForNativeInterop._withRegistrar(ffiApi: link);
+      return _XueHuaDeviceInfoHostApiForNativeInterop._withRegistrar(
+        ffiApi: link,
+      );
     } else {
-      throw UnsupportedError('Native Interop is not supported on this platform. Use XueHuaDeviceInfoHostApi instead.');
+      throw UnsupportedError(
+        'Native Interop is not supported on this platform. Use XueHuaDeviceInfoHostApi instead.',
+      );
     }
   }
 
@@ -987,7 +1196,9 @@ class _XueHuaDeviceInfoHostApiForNativeInterop implements XueHuaDeviceInfoHostAp
         return _PigeonJniBuffers.decode(pigeonVar_res)! as WireDeviceInfo;
       } else if (_ffiApi != null) {
         final pigeonVar_error = ffi_bridge.PigeonError();
-        final NSData? pigeonVar_res = _ffiApi.getDeviceInfoWithWrappedError(pigeonVar_error);
+        final NSData? pigeonVar_res = _ffiApi.getDeviceInfoWithWrappedError(
+          pigeonVar_error,
+        );
         _throwIfFfiError(pigeonVar_error);
         return _PigeonFfiBuffers.decode(pigeonVar_res)! as WireDeviceInfo;
       } else {
@@ -1006,7 +1217,9 @@ class _XueHuaDeviceInfoHostApiForNativeInterop implements XueHuaDeviceInfoHostAp
         return _PigeonJniBuffers.decode(pigeonVar_res)! as WireBatteryInfo;
       } else if (_ffiApi != null) {
         final pigeonVar_error = ffi_bridge.PigeonError();
-        final NSData? pigeonVar_res = _ffiApi.getBatteryInfoWithWrappedError(pigeonVar_error);
+        final NSData? pigeonVar_res = _ffiApi.getBatteryInfoWithWrappedError(
+          pigeonVar_error,
+        );
         _throwIfFfiError(pigeonVar_error);
         return _PigeonFfiBuffers.decode(pigeonVar_res)! as WireBatteryInfo;
       } else {
@@ -1025,7 +1238,9 @@ class _XueHuaDeviceInfoHostApiForNativeInterop implements XueHuaDeviceInfoHostAp
         return _PigeonJniBuffers.decode(pigeonVar_res)! as WireNetworkInfo;
       } else if (_ffiApi != null) {
         final pigeonVar_error = ffi_bridge.PigeonError();
-        final NSData? pigeonVar_res = _ffiApi.getNetworkInfoWithWrappedError(pigeonVar_error);
+        final NSData? pigeonVar_res = _ffiApi.getNetworkInfoWithWrappedError(
+          pigeonVar_error,
+        );
         _throwIfFfiError(pigeonVar_error);
         return _PigeonFfiBuffers.decode(pigeonVar_res)! as WireNetworkInfo;
       } else {
@@ -1044,7 +1259,9 @@ class _XueHuaDeviceInfoHostApiForNativeInterop implements XueHuaDeviceInfoHostAp
         return _PigeonJniBuffers.decode(pigeonVar_res)! as WireStorageInfo;
       } else if (_ffiApi != null) {
         final pigeonVar_error = ffi_bridge.PigeonError();
-        final NSData? pigeonVar_res = _ffiApi.getStorageInfoWithWrappedError(pigeonVar_error);
+        final NSData? pigeonVar_res = _ffiApi.getStorageInfoWithWrappedError(
+          pigeonVar_error,
+        );
         _throwIfFfiError(pigeonVar_error);
         return _PigeonFfiBuffers.decode(pigeonVar_res)! as WireStorageInfo;
       } else {
@@ -1063,7 +1280,9 @@ class _XueHuaDeviceInfoHostApiForNativeInterop implements XueHuaDeviceInfoHostAp
         return _PigeonJniBuffers.decode(pigeonVar_res)! as WireDisplayInfo;
       } else if (_ffiApi != null) {
         final pigeonVar_error = ffi_bridge.PigeonError();
-        final NSData? pigeonVar_res = _ffiApi.getDisplayInfoWithWrappedError(pigeonVar_error);
+        final NSData? pigeonVar_res = _ffiApi.getDisplayInfoWithWrappedError(
+          pigeonVar_error,
+        );
         _throwIfFfiError(pigeonVar_error);
         return _PigeonFfiBuffers.decode(pigeonVar_res)! as WireDisplayInfo;
       } else {
@@ -1073,5 +1292,4 @@ class _XueHuaDeviceInfoHostApiForNativeInterop implements XueHuaDeviceInfoHostAp
       throw _wrapJniException(e);
     }
   }
-
 }
