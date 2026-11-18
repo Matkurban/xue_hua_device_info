@@ -12,10 +12,9 @@
 #include "xue_hua_device_info_plugin.h"
 
 #include "device_info_helpers.h"
+#include "messages.g.h"
 
-#include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
-#include <flutter/standard_method_codec.h>
 
 #include <memory>
 #include <string>
@@ -24,16 +23,6 @@
 namespace xue_hua_device_info {
 
 namespace {
-
-flutter::EncodableMap MakeMap(
-    std::initializer_list<std::pair<std::string, flutter::EncodableValue>>
-        entries) {
-  flutter::EncodableMap map;
-  for (const auto& entry : entries) {
-    map[flutter::EncodableValue(entry.first)] = entry.second;
-  }
-  return map;
-}
 
 std::string WideToUtf8(const std::wstring& wide) {
   if (wide.empty()) {
@@ -78,74 +67,41 @@ std::wstring ReadRegistryString(HKEY root, const wchar_t* sub_key,
   return value;
 }
 
-flutter::EncodableValue NullOrString(const std::string& value) {
-  if (value.empty()) {
-    return flutter::EncodableValue();
+std::string ResolveWindowsArchitecture() {
+  SYSTEM_INFO sys_info = {};
+  GetNativeSystemInfo(&sys_info);
+  switch (sys_info.wProcessorArchitecture) {
+    case PROCESSOR_ARCHITECTURE_AMD64:
+      return "x86_64";
+    case PROCESSOR_ARCHITECTURE_ARM64:
+      return "arm64";
+    case PROCESSOR_ARCHITECTURE_INTEL:
+      return "x86";
+    case PROCESSOR_ARCHITECTURE_ARM:
+      return "arm";
+    default:
+      return "unknown";
   }
-  return flutter::EncodableValue(value);
 }
 
-flutter::EncodableMap GetDeviceInfo() {
-  const auto manufacturer = SanitizeHardwareString(WideToUtf8(ReadRegistryString(
-      HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\BIOS",
-      L"SystemManufacturer")));
-  const auto model = SanitizeHardwareString(WideToUtf8(ReadRegistryString(
-      HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\BIOS",
-      L"SystemProductName")));
-  const auto serial = SanitizeHardwareString(WideToUtf8(ReadRegistryString(
-      HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\BIOS",
-      L"SystemSerialNumber")));
-  const auto uuid = WideToUtf8(ReadRegistryString(
-      HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Cryptography", L"MachineGuid"));
-
-  wchar_t computer_name[MAX_COMPUTERNAME_LENGTH + 1] = {};
-  DWORD name_size = MAX_COMPUTERNAME_LENGTH + 1;
-  std::string name;
-  if (GetComputerNameW(computer_name, &name_size)) {
-    name = WideToUtf8(computer_name);
+std::string ResolveWindowsOsVersion() {
+  const auto product_name = WideToUtf8(ReadRegistryString(
+      HKEY_LOCAL_MACHINE,
+      L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+      L"ProductName"));
+  const auto build_number = WideToUtf8(ReadRegistryString(
+      HKEY_LOCAL_MACHINE,
+      L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+      L"CurrentBuildNumber"));
+  if (!product_name.empty() && !build_number.empty()) {
+    return product_name + " (Build " + build_number + ")";
   }
-
-  return MakeMap({
-      {"deviceId", NullOrString(uuid)},
-      {"manufacturer", NullOrString(manufacturer)},
-      {"model", NullOrString(model)},
-      {"serial", NullOrString(serial)},
-      {"name", NullOrString(name)},
-  });
-}
-
-flutter::EncodableMap GetBatteryInfo() {
-  SYSTEM_POWER_STATUS status = {};
-  if (!GetSystemPowerStatus(&status) || status.BatteryFlag == 128) {
-    // No system battery (BatteryFlag bit 7 / 128).
-    return MakeMap({
-        {"level", flutter::EncodableValue()},
-        {"isCharging", flutter::EncodableValue()},
-        {"health", flutter::EncodableValue()},
-    });
-  }
-
-  flutter::EncodableValue level;
-  if (status.BatteryLifePercent != 255) {
-    level = flutter::EncodableValue(
-        static_cast<double>(status.BatteryLifePercent));
-  }
-  // BATTERY_FLAG_CHARGING == 8. Do not treat "on AC" alone as charging
-  // (full battery while plugged in should report false).
-  const bool is_charging = (status.BatteryFlag & 8) != 0;
-  // GetSystemPowerStatus does not expose health; leave null (documented).
-  return MakeMap({
-      {"level", level},
-      {"isCharging", flutter::EncodableValue(is_charging)},
-      {"health", flutter::EncodableValue()},
-  });
+  return !product_name.empty() ? product_name : build_number;
 }
 
 unsigned long BestIpv4InterfaceIndex() {
-  // Prefer the interface Windows would use for a typical public IPv4 dest.
   sockaddr_in dest = {};
   dest.sin_family = AF_INET;
-  // 1.1.1.1 - any public address works; we only need the interface index.
   inet_pton(AF_INET, "1.1.1.1", &dest.sin_addr);
   DWORD index = 0;
   if (GetBestInterfaceEx(reinterpret_cast<sockaddr*>(&dest), &index) ==
@@ -185,7 +141,6 @@ std::vector<NetworkCandidate> CollectNetworkCandidates() {
       candidate.mac =
           FormatMac(adapter->PhysicalAddress, adapter->PhysicalAddressLength);
     }
-    // Prefer first usable IPv4 on this adapter; fall back to any non-loopback.
     std::string fallback_ip;
     for (auto* unicast = adapter->FirstUnicastAddress; unicast != nullptr;
          unicast = unicast->Next) {
@@ -215,23 +170,6 @@ std::vector<NetworkCandidate> CollectNetworkCandidates() {
   return out;
 }
 
-flutter::EncodableMap GetNetworkInfo() {
-  const auto selection =
-      SelectNetwork(CollectNetworkCandidates(), BestIpv4InterfaceIndex());
-  if (!selection.found) {
-    return MakeMap({
-        {"ipAddress", flutter::EncodableValue()},
-        {"networkType", flutter::EncodableValue(selection.type)},
-        {"macAddress", flutter::EncodableValue()},
-    });
-  }
-  return MakeMap({
-      {"ipAddress", NullOrString(selection.ipv4)},
-      {"networkType", flutter::EncodableValue(selection.type)},
-      {"macAddress", NullOrString(selection.mac)},
-  });
-}
-
 std::wstring WindowsVolumeRoot() {
   wchar_t windows_dir[MAX_PATH] = {};
   if (GetWindowsDirectoryW(windows_dir, MAX_PATH) > 0 &&
@@ -241,7 +179,6 @@ std::wstring WindowsVolumeRoot() {
   return L"C:\\";
 }
 
-// Open \\.\X: for IOCTL_STORAGE_QUERY_PROPERTY (Raymond Chen / winioctl docs).
 std::string ResolveStorageTypeForVolume(const std::wstring& root) {
   if (root.size() < 2 || root[1] != L':') {
     return {};
@@ -268,31 +205,136 @@ std::string ResolveStorageTypeForVolume(const std::wstring& root) {
   return StorageTypeFromSeekPenalty(ok == TRUE, result.IncursSeekPenalty != 0);
 }
 
-flutter::EncodableMap GetStorageInfo() {
+}  // namespace
+
+// static
+void XueHuaDeviceInfoPlugin::RegisterWithRegistrar(
+    flutter::PluginRegistrarWindows* registrar) {
+  auto plugin = std::make_unique<XueHuaDeviceInfoPlugin>();
+  XueHuaDeviceInfoHostApi::SetUp(registrar->messenger(), plugin.get());
+  registrar->AddPlugin(std::move(plugin));
+}
+
+XueHuaDeviceInfoPlugin::XueHuaDeviceInfoPlugin() = default;
+
+XueHuaDeviceInfoPlugin::~XueHuaDeviceInfoPlugin() = default;
+
+ErrorOr<PigeonDeviceInfo> XueHuaDeviceInfoPlugin::GetDeviceInfo() {
+  const auto manufacturer = SanitizeHardwareString(WideToUtf8(ReadRegistryString(
+      HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\BIOS",
+      L"SystemManufacturer")));
+  const auto model = SanitizeHardwareString(WideToUtf8(ReadRegistryString(
+      HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\BIOS",
+      L"SystemProductName")));
+  const auto serial = SanitizeHardwareString(WideToUtf8(ReadRegistryString(
+      HKEY_LOCAL_MACHINE, L"HARDWARE\\DESCRIPTION\\System\\BIOS",
+      L"SystemSerialNumber")));
+  const auto uuid = WideToUtf8(ReadRegistryString(
+      HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Cryptography", L"MachineGuid"));
+
+  wchar_t computer_name[MAX_COMPUTERNAME_LENGTH + 1] = {};
+  DWORD name_size = MAX_COMPUTERNAME_LENGTH + 1;
+  std::string name;
+  if (GetComputerNameW(computer_name, &name_size)) {
+    name = WideToUtf8(computer_name);
+  }
+
+  const std::string os_ver = ResolveWindowsOsVersion();
+  const std::string arch = ResolveWindowsArchitecture();
+
+  PigeonDeviceInfo info;
+  if (!uuid.empty()) info.set_device_id(uuid);
+  if (!manufacturer.empty()) info.set_manufacturer(manufacturer);
+  if (!model.empty()) info.set_model(model);
+  if (!serial.empty()) info.set_serial(serial);
+  if (!name.empty()) info.set_name(name);
+  info.set_operating_system("windows");
+  if (!os_ver.empty()) info.set_os_version(os_ver);
+  if (!arch.empty()) info.set_architecture(arch);
+  return info;
+}
+
+ErrorOr<PigeonBatteryInfo> XueHuaDeviceInfoPlugin::GetBatteryInfo() {
+  SYSTEM_POWER_STATUS status = {};
+  if (!GetSystemPowerStatus(&status) || status.BatteryFlag == 128) {
+    return PigeonBatteryInfo(PigeonBatteryChargingState::kUnknown,
+                             PigeonBatteryHealthStatus::kUnknown, false);
+  }
+
+  const bool is_charging = (status.BatteryFlag & 8) != 0;
+  PigeonBatteryChargingState charging_state =
+      is_charging ? PigeonBatteryChargingState::kCharging
+                  : PigeonBatteryChargingState::kDischarging;
+  if (!is_charging && status.BatteryLifePercent == 100 &&
+      status.ACLineStatus == 1) {
+    charging_state = PigeonBatteryChargingState::kFull;
+  }
+
+  PigeonBatteryInfo info(charging_state, PigeonBatteryHealthStatus::kUnknown,
+                         true);
+  if (status.BatteryLifePercent != 255) {
+    info.set_level(static_cast<double>(status.BatteryLifePercent));
+  }
+  info.set_is_charging(is_charging);
+  return info;
+}
+
+ErrorOr<PigeonNetworkInfo> XueHuaDeviceInfoPlugin::GetNetworkInfo() {
+  const auto selection =
+      SelectNetwork(CollectNetworkCandidates(), BestIpv4InterfaceIndex());
+  if (!selection.found) {
+    const auto conn_type = selection.type == "none"
+                               ? PigeonNetworkConnectionType::kNone
+                               : PigeonNetworkConnectionType::kUnknown;
+    return PigeonNetworkInfo(conn_type, selection.type);
+  }
+
+  PigeonNetworkConnectionType conn_type = PigeonNetworkConnectionType::kUnknown;
+  if (selection.type == "wifi") {
+    conn_type = PigeonNetworkConnectionType::kWifi;
+  } else if (selection.type == "ethernet") {
+    conn_type = PigeonNetworkConnectionType::kEthernet;
+  } else if (selection.type == "cellular") {
+    conn_type = PigeonNetworkConnectionType::kCellular;
+  }
+
+  PigeonNetworkInfo info(conn_type, selection.type);
+  if (!selection.ipv4.empty()) info.set_ip_address(selection.ipv4);
+  if (!selection.mac.empty()) info.set_mac_address(selection.mac);
+  if (!selection.interface_name.empty()) {
+    info.set_interface_name(selection.interface_name);
+  }
+  return info;
+}
+
+ErrorOr<PigeonStorageInfo> XueHuaDeviceInfoPlugin::GetStorageInfo() {
   const std::wstring root = WindowsVolumeRoot();
 
   ULARGE_INTEGER free_bytes = {};
   ULARGE_INTEGER total_bytes = {};
   if (!GetDiskFreeSpaceExW(root.c_str(), &free_bytes, &total_bytes, nullptr)) {
-    return MakeMap({
-        {"totalBytes", flutter::EncodableValue(static_cast<int64_t>(0))},
-        {"freeBytes", flutter::EncodableValue(static_cast<int64_t>(0))},
-        {"storageType", flutter::EncodableValue()},
-    });
+    return PigeonStorageInfo(0, 0, PigeonStorageMediumType::kUnknown);
   }
   const std::string storage_type = ResolveStorageTypeForVolume(root);
-  return MakeMap({
-      {"totalBytes",
-       flutter::EncodableValue(static_cast<int64_t>(total_bytes.QuadPart))},
-      {"freeBytes",
-       flutter::EncodableValue(static_cast<int64_t>(free_bytes.QuadPart))},
-      {"storageType", NullOrString(storage_type)},
-  });
+  PigeonStorageMediumType medium_type = PigeonStorageMediumType::kUnknown;
+  if (storage_type == "ssd") {
+    medium_type = PigeonStorageMediumType::kSsd;
+  } else if (storage_type == "hdd") {
+    medium_type = PigeonStorageMediumType::kHdd;
+  }
+
+  PigeonStorageInfo info(static_cast<int64_t>(total_bytes.QuadPart),
+                         static_cast<int64_t>(free_bytes.QuadPart),
+                         medium_type);
+  if (!storage_type.empty()) {
+    info.set_storage_type(storage_type);
+  }
+  return info;
 }
 
-flutter::EncodableMap GetDisplayInfo() {
-  const int width = GetSystemMetrics(SM_CXSCREEN);
-  const int height = GetSystemMetrics(SM_CYSCREEN);
+ErrorOr<PigeonDisplayInfo> XueHuaDeviceInfoPlugin::GetDisplayInfo() {
+  const int64_t width = static_cast<int64_t>(GetSystemMetrics(SM_CXSCREEN));
+  const int64_t height = static_cast<int64_t>(GetSystemMetrics(SM_CYSCREEN));
   double scale = 1.0;
   HDC hdc = GetDC(nullptr);
   if (hdc != nullptr) {
@@ -301,64 +343,14 @@ flutter::EncodableMap GetDisplayInfo() {
     ReleaseDC(nullptr, hdc);
   }
 
+  PigeonDisplayInfo info(width, height, scale);
   DEVMODEW mode = {};
   mode.dmSize = sizeof(mode);
-  flutter::EncodableValue refresh;
   if (EnumDisplaySettingsW(nullptr, ENUM_CURRENT_SETTINGS, &mode) &&
       mode.dmDisplayFrequency > 1) {
-    refresh =
-        flutter::EncodableValue(static_cast<double>(mode.dmDisplayFrequency));
+    info.set_refresh_rate(static_cast<double>(mode.dmDisplayFrequency));
   }
-
-  return MakeMap({
-      {"width", flutter::EncodableValue(width)},
-      {"height", flutter::EncodableValue(height)},
-      {"scaleFactor", flutter::EncodableValue(scale)},
-      {"refreshRate", refresh},
-  });
-}
-
-}  // namespace
-
-// static
-void XueHuaDeviceInfoPlugin::RegisterWithRegistrar(
-    flutter::PluginRegistrarWindows* registrar) {
-  auto channel =
-      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
-          registrar->messenger(), "xue_hua_device_info",
-          &flutter::StandardMethodCodec::GetInstance());
-
-  auto plugin = std::make_unique<XueHuaDeviceInfoPlugin>();
-
-  channel->SetMethodCallHandler(
-      [plugin_pointer = plugin.get()](const auto& call, auto result) {
-        plugin_pointer->HandleMethodCall(call, std::move(result));
-      });
-
-  registrar->AddPlugin(std::move(plugin));
-}
-
-XueHuaDeviceInfoPlugin::XueHuaDeviceInfoPlugin() {}
-
-XueHuaDeviceInfoPlugin::~XueHuaDeviceInfoPlugin() {}
-
-void XueHuaDeviceInfoPlugin::HandleMethodCall(
-    const flutter::MethodCall<flutter::EncodableValue>& method_call,
-    std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
-  const auto& method = method_call.method_name();
-  if (method == "getDeviceInfo") {
-    result->Success(flutter::EncodableValue(GetDeviceInfo()));
-  } else if (method == "getBatteryInfo") {
-    result->Success(flutter::EncodableValue(GetBatteryInfo()));
-  } else if (method == "getNetworkInfo") {
-    result->Success(flutter::EncodableValue(GetNetworkInfo()));
-  } else if (method == "getStorageInfo") {
-    result->Success(flutter::EncodableValue(GetStorageInfo()));
-  } else if (method == "getDisplayInfo") {
-    result->Success(flutter::EncodableValue(GetDisplayInfo()));
-  } else {
-    result->NotImplemented();
-  }
+  return info;
 }
 
 }  // namespace xue_hua_device_info

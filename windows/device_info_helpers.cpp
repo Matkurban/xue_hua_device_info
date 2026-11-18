@@ -18,8 +18,7 @@ constexpr unsigned long kIfTypePropVirtual = 53;
 
 std::string ToLowerCopy(std::string value) {
   for (auto& ch : value) {
-    ch = static_cast<char>(
-        ::tolower(static_cast<unsigned char>(ch)));
+    ch = static_cast<char>(::tolower(static_cast<unsigned char>(ch)));
   }
   return value;
 }
@@ -29,7 +28,7 @@ bool DescriptionSuggestsVirtual(const std::string& description_utf8) {
   // Common Windows virtual/tunnel adapters (Hyper-V, VPN, WSL, Docker, etc.).
   static const char* kHints[] = {
       "virtual", "hyper-v", "vethernet", "vpn", "tap-", "tun", "wsl",
-      "docker", "npcap", "loopback", "teredo", "isatap", "6to4",
+      "docker",  "npcap",   "loopback",  "teredo", "isatap", "6to4",
       "bluetooth network",
   };
   for (const char* hint : kHints) {
@@ -81,7 +80,6 @@ bool IsLoopbackIpv4(const std::string& ipv4) {
 }
 
 bool IsProxyFakeIpv4(const std::string& ipv4) {
-  // 198.18.0.0/15 => first octet 198, second 18 or 19.
   if (ipv4.rfind("198.18.", 0) == 0 || ipv4.rfind("198.19.", 0) == 0) {
     return true;
   }
@@ -105,7 +103,6 @@ AdapterKindResult ClassifyAdapter(unsigned long if_type,
       if_type == kIfTypePropVirtual ||
       DescriptionSuggestsVirtual(description_utf8)) {
     result.kind = AdapterKind::kVirtual;
-    // Tunnel/VPN often still carries traffic; type stays unknown unless wifi/eth.
     result.type_string = "unknown";
     return result;
   }
@@ -179,8 +176,6 @@ NetworkSelection SelectNetwork(const std::vector<NetworkCandidate>& candidates,
       continue;
     }
     const auto kind = ClassifyAdapter(c.if_type, c.description);
-    // Lower tier wins. Physical adapters always beat virtual/tunnel even when
-    // GetBestInterfaceEx points at a VPN/proxy TUN (Clash Meta, etc.).
     const bool is_best = best_if_index != 0 && c.if_index == best_if_index;
     const bool is_physical = kind.kind == AdapterKind::kWifi ||
                              kind.kind == AdapterKind::kEthernet;
@@ -221,6 +216,7 @@ NetworkSelection SelectNetwork(const std::vector<NetworkCandidate>& candidates,
   selection.ipv4 = best.ipv4;
   selection.mac = best.mac;
   selection.type = kind.type_string;
+  selection.interface_name = best.description;
   return selection;
 }
 

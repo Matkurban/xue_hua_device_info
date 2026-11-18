@@ -1,13 +1,14 @@
 #include "include/xue_hua_device_info/xue_hua_device_info_plugin.h"
 
+#include <arpa/inet.h>
 #include <flutter_linux/flutter_linux.h>
 #include <gtk/gtk.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <netinet/in.h>
 #include <sys/statvfs.h>
 #include <sys/types.h>
-#include <ifaddrs.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <net/if.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 
 #include <cstdio>
@@ -19,6 +20,7 @@
 #include <vector>
 
 #include "device_info_helpers.h"
+#include "messages.g.h"
 
 using xue_hua_device_info::BatteryReading;
 using xue_hua_device_info::NetworkSelection;
@@ -37,13 +39,11 @@ struct _XueHuaDeviceInfoPlugin {
   GObject parent_instance;
 };
 
-G_DEFINE_TYPE(XueHuaDeviceInfoPlugin, xue_hua_device_info_plugin, g_object_get_type())
+G_DEFINE_TYPE(XueHuaDeviceInfoPlugin, xue_hua_device_info_plugin,
+              g_object_get_type())
 
-static FlValue* NullableString(const std::string& value) {
-  if (value.empty()) {
-    return fl_value_new_null();
-  }
-  return fl_value_new_string(value.c_str());
+static const gchar* NullOrCString(const std::string& value) {
+  return value.empty() ? nullptr : value.c_str();
 }
 
 static std::vector<xue_hua_device_info::NetworkCandidate> EnumerateIpv4() {
@@ -80,58 +80,110 @@ static std::string ReadWholeFile(const char* path) {
   return buffer.str();
 }
 
-static FlValue* BuildDeviceInfo() {
-  std::string uuid = ResolveDeviceId();
-  std::string manufacturer = ReadTrimmedFile("/sys/class/dmi/id/sys_vendor");
-  std::string model = ReadTrimmedFile("/sys/class/dmi/id/product_name");
-  std::string serial = ReadTrimmedFile("/sys/class/dmi/id/product_serial");
+static XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDeviceInfoResponse*
+HandleGetDeviceInfo(gpointer /*user_data*/) {
+  const std::string uuid = ResolveDeviceId();
+  const std::string manufacturer =
+      ReadTrimmedFile("/sys/class/dmi/id/sys_vendor");
+  const std::string model = ReadTrimmedFile("/sys/class/dmi/id/product_name");
+  const std::string serial =
+      ReadTrimmedFile("/sys/class/dmi/id/product_serial");
   char hostname[256] = {};
   std::string name;
   if (gethostname(hostname, sizeof(hostname)) == 0) {
-    // POSIX: truncated names may omit the NUL terminator.
     hostname[sizeof(hostname) - 1] = '\0';
     name = hostname;
   }
 
-  g_autoptr(FlValue) map = fl_value_new_map();
-  fl_value_set_string_take(map, "deviceId", NullableString(uuid));
-  fl_value_set_string_take(map, "manufacturer", NullableString(manufacturer));
-  fl_value_set_string_take(map, "model", NullableString(model));
-  fl_value_set_string_take(map, "serial", NullableString(serial));
-  fl_value_set_string_take(map, "name", NullableString(name));
-  return fl_value_ref(map);
-}
-
-static FlValue* BuildBatteryInfo() {
-  const BatteryReading battery = ReadBattery();
-  g_autoptr(FlValue) map = fl_value_new_map();
-  if (!battery.found) {
-    fl_value_set_string_take(map, "level", fl_value_new_null());
-    fl_value_set_string_take(map, "isCharging", fl_value_new_null());
-    fl_value_set_string_take(map, "health", fl_value_new_null());
-  } else {
-    fl_value_set_string_take(map, "level", fl_value_new_float(battery.level));
-    fl_value_set_string_take(map, "isCharging",
-                             fl_value_new_bool(battery.is_charging));
-    fl_value_set_string_take(map, "health", NullableString(battery.health));
+  struct utsname uts = {};
+  std::string os_version;
+  std::string arch;
+  if (uname(&uts) == 0) {
+    os_version = uts.release;
+    arch = uts.machine;
   }
-  return fl_value_ref(map);
+
+  g_autoptr(XueHuaDeviceInfoPigeonDeviceInfo) info =
+      xue_hua_device_info_pigeon_device_info_new(
+          NullOrCString(uuid), NullOrCString(manufacturer),
+          NullOrCString(model), NullOrCString(serial), NullOrCString(name),
+          "linux", NullOrCString(os_version), NullOrCString(arch));
+  return xue_hua_device_info_xue_hua_device_info_host_api_get_device_info_response_new(
+      info);
 }
 
-static FlValue* BuildNetworkInfo() {
+static XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetBatteryInfoResponse*
+HandleGetBatteryInfo(gpointer /*user_data*/) {
+  const BatteryReading battery = ReadBattery();
+  if (!battery.found) {
+    g_autoptr(XueHuaDeviceInfoPigeonBatteryInfo) info =
+        xue_hua_device_info_pigeon_battery_info_new(
+            nullptr, nullptr,
+            XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_UNKNOWN,
+            XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_UNKNOWN, nullptr,
+            FALSE);
+    return xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response_new(
+        info);
+  }
+
+  const gdouble level = battery.level;
+  const gboolean is_charging = battery.is_charging ? TRUE : FALSE;
+  const XueHuaDeviceInfoPigeonBatteryChargingState charging_state =
+      battery.is_charging
+          ? XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_CHARGING
+          : XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_CHARGING_STATE_DISCHARGING;
+
+  XueHuaDeviceInfoPigeonBatteryHealthStatus health_status =
+      XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_UNKNOWN;
+  if (battery.health == "Good") {
+    health_status = XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_GOOD;
+  } else if (battery.health == "Overheat") {
+    health_status = XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_OVERHEAT;
+  } else if (battery.health == "Dead") {
+    health_status = XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_DEAD;
+  } else if (battery.health == "Over voltage") {
+    health_status =
+        XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_OVER_VOLTAGE;
+  } else if (battery.health == "Cold") {
+    health_status = XUE_HUA_DEVICE_INFO_PIGEON_BATTERY_HEALTH_STATUS_COLD;
+  }
+
+  g_autoptr(XueHuaDeviceInfoPigeonBatteryInfo) info =
+      xue_hua_device_info_pigeon_battery_info_new(
+          &level, &is_charging, charging_state, health_status,
+          NullOrCString(battery.health), TRUE);
+  return xue_hua_device_info_xue_hua_device_info_host_api_get_battery_info_response_new(
+      info);
+}
+
+static XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetNetworkInfoResponse*
+HandleGetNetworkInfo(gpointer /*user_data*/) {
   const NetworkSelection net = SelectNetwork(
       EnumerateIpv4(),
       ParseDefaultRouteInterface(ReadWholeFile("/proc/net/route")));
-  g_autoptr(FlValue) map = fl_value_new_map();
-  fl_value_set_string_take(map, "ipAddress", NullableString(net.ipv4));
-  fl_value_set_string_take(
-      map, "networkType",
-      fl_value_new_string(net.found ? net.type.c_str() : "none"));
-  fl_value_set_string_take(map, "macAddress", NullableString(net.mac));
-  return fl_value_ref(map);
+  const std::string net_type = net.found ? net.type : "none";
+  XueHuaDeviceInfoPigeonNetworkConnectionType conn_type =
+      XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_UNKNOWN;
+  if (net_type == "none") {
+    conn_type = XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_NONE;
+  } else if (net_type == "wifi") {
+    conn_type = XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_WIFI;
+  } else if (net_type == "ethernet") {
+    conn_type = XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_ETHERNET;
+  } else if (net_type == "cellular") {
+    conn_type = XUE_HUA_DEVICE_INFO_PIGEON_NETWORK_CONNECTION_TYPE_CELLULAR;
+  }
+
+  g_autoptr(XueHuaDeviceInfoPigeonNetworkInfo) info =
+      xue_hua_device_info_pigeon_network_info_new(
+          NullOrCString(net.ipv4), conn_type, net_type.c_str(),
+          NullOrCString(net.mac), NullOrCString(net.name));
+  return xue_hua_device_info_xue_hua_device_info_host_api_get_network_info_response_new(
+      info);
 }
 
-static FlValue* BuildStorageInfo() {
+static XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetStorageInfoResponse*
+HandleGetStorageInfo(gpointer /*user_data*/) {
   struct statvfs stat = {};
   int64_t total = 0;
   int64_t free_bytes = 0;
@@ -141,14 +193,20 @@ static FlValue* BuildStorageInfo() {
     free_bytes = static_cast<int64_t>(stat.f_bavail) *
                  static_cast<int64_t>(stat.f_frsize);
   }
-  // Kernel Documentation/block/queue-sysfs.rst: queue/rotational is 0 for
-  // non-rotational (SSD) and 1 for rotational (HDD). Mapped to "ssd"/"hdd".
   const std::string storage_type = ResolveStorageType("/");
-  g_autoptr(FlValue) map = fl_value_new_map();
-  fl_value_set_string_take(map, "totalBytes", fl_value_new_int(total));
-  fl_value_set_string_take(map, "freeBytes", fl_value_new_int(free_bytes));
-  fl_value_set_string_take(map, "storageType", NullableString(storage_type));
-  return fl_value_ref(map);
+  XueHuaDeviceInfoPigeonStorageMediumType medium_type =
+      XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_UNKNOWN;
+  if (storage_type == "ssd") {
+    medium_type = XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_SSD;
+  } else if (storage_type == "hdd") {
+    medium_type = XUE_HUA_DEVICE_INFO_PIGEON_STORAGE_MEDIUM_TYPE_HDD;
+  }
+
+  g_autoptr(XueHuaDeviceInfoPigeonStorageInfo) info =
+      xue_hua_device_info_pigeon_storage_info_new(
+          total, free_bytes, medium_type, NullOrCString(storage_type));
+  return xue_hua_device_info_xue_hua_device_info_host_api_get_storage_info_response_new(
+      info);
 }
 
 static GdkMonitor* PickMonitor(GdkDisplay* display) {
@@ -162,95 +220,62 @@ static GdkMonitor* PickMonitor(GdkDisplay* display) {
   return monitor;
 }
 
-static FlValue* BuildDisplayInfo() {
-  int width = 0;
-  int height = 0;
-  double scale = 1.0;
-  double refresh = 0;
+static XueHuaDeviceInfoXueHuaDeviceInfoHostApiGetDisplayInfoResponse*
+HandleGetDisplayInfo(gpointer /*user_data*/) {
+  gint64 width = 0;
+  gint64 height = 0;
+  gdouble scale = 1.0;
+  gdouble refresh = 0.0;
 
   GdkMonitor* monitor = PickMonitor(gdk_display_get_default());
   if (monitor != nullptr) {
     GdkRectangle geometry = {};
     gdk_monitor_get_geometry(monitor, &geometry);
     const int factor = gdk_monitor_get_scale_factor(monitor);
-    scale = factor > 0 ? static_cast<double>(factor) : 1.0;
-    width = static_cast<int>(geometry.width * scale);
-    height = static_cast<int>(geometry.height * scale);
-    // GDK reports the refresh rate in millihertz (0 when unknown).
+    scale = factor > 0 ? static_cast<gdouble>(factor) : 1.0;
+    width = static_cast<gint64>(geometry.width * scale);
+    height = static_cast<gint64>(geometry.height * scale);
     const int refresh_mhz = gdk_monitor_get_refresh_rate(monitor);
     if (refresh_mhz > 0) {
       refresh = refresh_mhz / 1000.0;
     }
   }
 
-  g_autoptr(FlValue) map = fl_value_new_map();
-  fl_value_set_string_take(map, "width", fl_value_new_int(width));
-  fl_value_set_string_take(map, "height", fl_value_new_int(height));
-  fl_value_set_string_take(map, "scaleFactor", fl_value_new_float(scale));
-  if (refresh > 0) {
-    fl_value_set_string_take(map, "refreshRate", fl_value_new_float(refresh));
-  } else {
-    fl_value_set_string_take(map, "refreshRate", fl_value_new_null());
-  }
-  return fl_value_ref(map);
-}
-
-static void xue_hua_device_info_plugin_handle_method_call(
-    XueHuaDeviceInfoPlugin* /*self*/,
-    FlMethodCall* method_call) {
-  g_autoptr(FlMethodResponse) response = nullptr;
-  const gchar* method = fl_method_call_get_name(method_call);
-
-  g_autoptr(FlValue) result = nullptr;
-  if (strcmp(method, "getDeviceInfo") == 0) {
-    result = BuildDeviceInfo();
-  } else if (strcmp(method, "getBatteryInfo") == 0) {
-    result = BuildBatteryInfo();
-  } else if (strcmp(method, "getNetworkInfo") == 0) {
-    result = BuildNetworkInfo();
-  } else if (strcmp(method, "getStorageInfo") == 0) {
-    result = BuildStorageInfo();
-  } else if (strcmp(method, "getDisplayInfo") == 0) {
-    result = BuildDisplayInfo();
-  }
-
-  if (result != nullptr) {
-    response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
-  } else {
-    response = FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
-  }
-
-  fl_method_call_respond(method_call, response, nullptr);
+  const gdouble* refresh_ptr = refresh > 0.0 ? &refresh : nullptr;
+  g_autoptr(XueHuaDeviceInfoPigeonDisplayInfo) info =
+      xue_hua_device_info_pigeon_display_info_new(width, height, scale,
+                                                  refresh_ptr);
+  return xue_hua_device_info_xue_hua_device_info_host_api_get_display_info_response_new(
+      info);
 }
 
 static void xue_hua_device_info_plugin_dispose(GObject* object) {
   G_OBJECT_CLASS(xue_hua_device_info_plugin_parent_class)->dispose(object);
 }
 
-static void xue_hua_device_info_plugin_class_init(XueHuaDeviceInfoPluginClass* klass) {
+static void xue_hua_device_info_plugin_class_init(
+    XueHuaDeviceInfoPluginClass* klass) {
   G_OBJECT_CLASS(klass)->dispose = xue_hua_device_info_plugin_dispose;
 }
 
 static void xue_hua_device_info_plugin_init(XueHuaDeviceInfoPlugin* /*self*/) {}
 
-static void method_call_cb(FlMethodChannel* /*channel*/, FlMethodCall* method_call,
-                           gpointer user_data) {
-  XueHuaDeviceInfoPlugin* plugin = XUE_HUA_DEVICE_INFO_PLUGIN(user_data);
-  xue_hua_device_info_plugin_handle_method_call(plugin, method_call);
-}
-
-void xue_hua_device_info_plugin_register_with_registrar(FlPluginRegistrar* registrar) {
+void xue_hua_device_info_plugin_register_with_registrar(
+    FlPluginRegistrar* registrar) {
   XueHuaDeviceInfoPlugin* plugin = XUE_HUA_DEVICE_INFO_PLUGIN(
       g_object_new(xue_hua_device_info_plugin_get_type(), nullptr));
 
-  g_autoptr(FlStandardMethodCodec) codec = fl_standard_method_codec_new();
-  g_autoptr(FlMethodChannel) channel =
-      fl_method_channel_new(fl_plugin_registrar_get_messenger(registrar),
-                            "xue_hua_device_info",
-                            FL_METHOD_CODEC(codec));
-  fl_method_channel_set_method_call_handler(channel, method_call_cb,
-                                            g_object_ref(plugin),
-                                            g_object_unref);
+  static const XueHuaDeviceInfoXueHuaDeviceInfoHostApiVTable vtable = {
+      .get_device_info = HandleGetDeviceInfo,
+      .get_battery_info = HandleGetBatteryInfo,
+      .get_network_info = HandleGetNetworkInfo,
+      .get_storage_info = HandleGetStorageInfo,
+      .get_display_info = HandleGetDisplayInfo,
+  };
+
+  xue_hua_device_info_xue_hua_device_info_host_api_set_method_handlers(
+      fl_plugin_registrar_get_messenger(registrar), nullptr, &vtable,
+      g_object_ref(plugin), g_object_unref);
 
   g_object_unref(plugin);
 }

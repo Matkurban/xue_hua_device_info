@@ -9,44 +9,39 @@ import IOKit.ps
 import IOKit.storage
 import SystemConfiguration
 
-public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
+public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHostApi {
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(
-            name: "xue_hua_device_info",
-            binaryMessenger: registrar.messenger
-        )
         let instance = XueHuaDeviceInfoPlugin()
-        registrar.addMethodCallDelegate(instance, channel: channel)
-    }
-
-    public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        switch call.method {
-        case "getDeviceInfo":
-            result(getDeviceInfo())
-        case "getBatteryInfo":
-            result(getBatteryInfo())
-        case "getNetworkInfo":
-            result(getNetworkInfo())
-        case "getStorageInfo":
-            result(getStorageInfo())
-        case "getDisplayInfo":
-            result(getDisplayInfo())
-        default:
-            result(FlutterMethodNotImplemented)
-        }
+        XueHuaDeviceInfoHostApiSetup.setUp(
+            binaryMessenger: registrar.messenger,
+            api: instance
+        )
     }
 
     // MARK: - Device
 
-    private func getDeviceInfo() -> [String: Any?] {
+    func getDeviceInfo() throws -> PigeonDeviceInfo {
         let platform = ioPlatformExpertProperties()
-        return [
-            "deviceId": platform["IOPlatformUUID"],
-            "manufacturer": "Apple",
-            "model": platform["model"] ?? sysctlString("hw.model"),
-            "serial": platform["IOPlatformSerialNumber"],
-            "name": Host.current().localizedName,
-        ]
+        let osVer = ProcessInfo.processInfo.operatingSystemVersion
+        let osVersionString = "\(osVer.majorVersion).\(osVer.minorVersion).\(osVer.patchVersion)"
+        #if arch(arm64)
+            let arch = "arm64"
+        #elseif arch(x86_64)
+            let arch = "x86_64"
+        #else
+            let arch = "unknown"
+        #endif
+
+        return PigeonDeviceInfo(
+            deviceId: platform["IOPlatformUUID"],
+            manufacturer: "Apple",
+            model: platform["model"] ?? sysctlString("hw.model"),
+            serial: platform["IOPlatformSerialNumber"],
+            name: Host.current().localizedName,
+            operatingSystem: "macos",
+            osVersion: osVersionString,
+            architecture: arch
+        )
     }
 
     private func ioPlatformExpertProperties() -> [String: String] {
@@ -107,7 +102,7 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
     // MARK: - Battery
 
     /// Prefer an internal battery that is present (IOPSKeys.h).
-    private func getBatteryInfo() -> [String: Any?] {
+    func getBatteryInfo() throws -> PigeonBatteryInfo {
         guard let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
               let sources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() as? [CFTypeRef]
         else {
@@ -137,7 +132,6 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
         let maxCap = description[kIOPSMaxCapacityKey as String] as? Int
         let level: Double?
         if let current, let maxCap, maxCap > 0 {
-            // Apple-defined sources publish percent units (IOPSKeys.h); still normalize.
             let pct = (Double(current) / Double(maxCap)) * 100.0
             level = min(100.0, max(0.0, pct))
         } else if let current {
@@ -147,40 +141,84 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
         }
 
         let isCharging = description[kIOPSIsChargingKey as String] as? Bool
-        // kIOPSBatteryHealthKey → "Good" / "Fair" / "Poor" when published.
-        let health = description[kIOPSBatteryHealthKey as String] as? String
+        let isCharged = description[kIOPSIsChargedKey as String] as? Bool ?? false
+        let chargingState: PigeonBatteryChargingState
+        if isCharged {
+            chargingState = .full
+        } else if isCharging == true {
+            chargingState = .charging
+        } else if isCharging == false {
+            chargingState = .discharging
+        } else {
+            chargingState = .unknown
+        }
 
-        return [
-            "level": level,
-            "isCharging": isCharging,
-            "health": health,
-        ]
+        let health = description[kIOPSBatteryHealthKey as String] as? String
+        let healthStatus: PigeonBatteryHealthStatus
+        switch health?.lowercased() {
+        case "good":
+            healthStatus = .good
+        case "fair":
+            healthStatus = .fair
+        case "poor", "check battery":
+            healthStatus = .poor
+        default:
+            healthStatus = .unknown
+        }
+
+        return PigeonBatteryInfo(
+            level: level,
+            isCharging: isCharging,
+            chargingState: chargingState,
+            healthStatus: healthStatus,
+            health: health,
+            hasBattery: true
+        )
     }
 
-    private func emptyBattery() -> [String: Any?] {
-        [
-            "level": nil,
-            "isCharging": nil,
-            "health": nil,
-        ]
+    private func emptyBattery() -> PigeonBatteryInfo {
+        PigeonBatteryInfo(
+            level: nil,
+            isCharging: nil,
+            chargingState: .unknown,
+            healthStatus: .unknown,
+            health: nil,
+            hasBattery: false
+        )
     }
 
     // MARK: - Network
 
-    private func getNetworkInfo() -> [String: Any?] {
+    func getNetworkInfo() throws -> PigeonNetworkInfo {
         let iface = selectNetworkInterface()
         guard let iface else {
-            return [
-                "ipAddress": nil,
-                "networkType": "none",
-                "macAddress": nil,
-            ]
+            return PigeonNetworkInfo(
+                ipAddress: nil,
+                connectionType: .none,
+                networkType: "none",
+                macAddress: nil,
+                interfaceName: nil
+            )
         }
-        return [
-            "ipAddress": ipv4(on: iface),
-            "networkType": networkType(forBSDName: iface),
-            "macAddress": macAddress(on: iface),
-        ]
+        let netType = networkType(forBSDName: iface)
+        let connType: PigeonNetworkConnectionType
+        switch netType {
+        case "wifi":
+            connType = .wifi
+        case "ethernet":
+            connType = .ethernet
+        case "cellular":
+            connType = .cellular
+        default:
+            connType = .unknown
+        }
+        return PigeonNetworkInfo(
+            ipAddress: ipv4(on: iface),
+            connectionType: connType,
+            networkType: netType,
+            macAddress: macAddress(on: iface),
+            interfaceName: iface
+        )
     }
 
     /// Pick one BSD interface: prefer SCDynamicStore PrimaryInterface when it has a
@@ -230,7 +268,6 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
 
     private func isVirtualInterface(_ name: String) -> Bool {
         let prefixes = ["lo", "utun", "ipsec", "ppp", "awdl", "llw", "bridge", "vmenet", "ap", "anpi", "gif", "stf", "tun", "tap", "vmnet"]
-        // Exact loopback; prefix match for virtual families. Do not treat "en*" as virtual.
         if name == "lo0" || name == "lo" { return true }
         for p in prefixes where p != "lo" {
             if name.hasPrefix(p) { return true }
@@ -240,8 +277,7 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
 
     private func isUnusableIPv4(_ ip: String) -> Bool {
         if ip.hasPrefix("127.") { return true }
-        if ip.hasPrefix("169.254.") { return true } // RFC 3927 link-local
-        // Clash Meta / similar fake-IP pool: 198.18.0.0/15
+        if ip.hasPrefix("169.254.") { return true }
         let parts = ip.split(separator: ".").compactMap { Int($0) }
         if parts.count == 4, parts[0] == 198, (parts[1] == 18 || parts[1] == 19) {
             return true
@@ -402,23 +438,34 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
 
     // MARK: - Storage
 
-    private func getStorageInfo() -> [String: Any?] {
+    func getStorageInfo() throws -> PigeonStorageInfo {
         let url = URL(fileURLWithPath: "/")
         let values = try? url.resourceValues(forKeys: [
             .volumeTotalCapacityKey,
             .volumeAvailableCapacityForImportantUsageKey,
             .volumeAvailableCapacityKey,
         ])
-        let total = values?.volumeTotalCapacity ?? 0
-        let free = Int(
+        let total = Int64(values?.volumeTotalCapacity ?? 0)
+        let free = Int64(
             values?.volumeAvailableCapacityForImportantUsage
                 ?? Int64(values?.volumeAvailableCapacity ?? 0)
         )
-        return [
-            "totalBytes": total,
-            "freeBytes": free,
-            "storageType": detectStorageType(),
-        ]
+        let detectedType = detectStorageType()
+        let medium: PigeonStorageMediumType
+        switch detectedType {
+        case "ssd":
+            medium = .ssd
+        case "hdd":
+            medium = .hdd
+        default:
+            medium = .unknown
+        }
+        return PigeonStorageInfo(
+            totalBytes: total,
+            freeBytes: free,
+            mediumType: medium,
+            storageType: detectedType
+        )
     }
 
     /// IOKit Device Characteristics `Medium Type` via DiskArbitration → IOMedia
@@ -456,20 +503,18 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
 
     // MARK: - Display
 
-    private func getDisplayInfo() -> [String: Any?] {
+    func getDisplayInfo() throws -> PigeonDisplayInfo {
         let displayId = CGMainDisplayID()
         let mode = CGDisplayCopyDisplayMode(displayId)
 
-        // Prefer CGDisplayMode pixel dimensions (physical Retina pixels).
-        // CGDisplayPixelsWide/High can report the point size on HiDPI.
-        let width: Int
-        let height: Int
+        let width: Int64
+        let height: Int64
         if let mode, mode.pixelWidth > 0, mode.pixelHeight > 0 {
-            width = Int(mode.pixelWidth)
-            height = Int(mode.pixelHeight)
+            width = Int64(mode.pixelWidth)
+            height = Int64(mode.pixelHeight)
         } else {
-            width = CGDisplayPixelsWide(displayId)
-            height = CGDisplayPixelsHigh(displayId)
+            width = Int64(CGDisplayPixelsWide(displayId))
+            height = Int64(CGDisplayPixelsHigh(displayId))
         }
 
         var refresh: Double? = nil
@@ -479,7 +524,6 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
                 refresh = rate
             }
         }
-        // Built-in panels sometimes report 0 from CG; NSScreen.maximumFramesPerSecond is reliable (macOS 12+).
         if refresh == nil {
             if #available(macOS 12.0, *), let screen = NSScreen.main {
                 let fps = screen.maximumFramesPerSecond
@@ -495,11 +539,11 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
         } else {
             scale = 1.0
         }
-        return [
-            "width": width,
-            "height": height,
-            "scaleFactor": scale,
-            "refreshRate": refresh,
-        ]
+        return PigeonDisplayInfo(
+            width: width,
+            height: height,
+            scaleFactor: scale,
+            refreshRate: refresh
+        )
     }
 }

@@ -54,6 +54,7 @@ struct NetworkSelection {
   std::string ipv4;
   std::string mac;
   std::string type;  // "wifi" | "ethernet" | "unknown" | "none"
+  std::string interface_name;
 };
 
 // Pick ONE up, non-loopback adapter with a usable IPv4. Preference:

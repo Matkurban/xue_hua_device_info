@@ -3,19 +3,26 @@ import Flutter
 import Network
 import UIKit
 
-public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
+public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin, XueHuaDeviceInfoHostApi {
     private let pathMonitor = NWPathMonitor()
     private let monitorQueue = DispatchQueue(label: "xue_hua_device_info.network")
     private var currentPath: NWPath?
 
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(
-            name: "xue_hua_device_info",
-            binaryMessenger: registrar.messenger()
-        )
         let instance = XueHuaDeviceInfoPlugin()
         instance.startNetworkMonitor()
-        registrar.addMethodCallDelegate(instance, channel: channel)
+        registrar.publish(instance)
+        XueHuaDeviceInfoHostApiSetup.setUp(
+            binaryMessenger: registrar.messenger(),
+            api: instance
+        )
+    }
+
+    public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
+        XueHuaDeviceInfoHostApiSetup.setUp(
+            binaryMessenger: registrar.messenger(),
+            api: nil
+        )
     }
 
     deinit {
@@ -29,24 +36,7 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
         pathMonitor.start(queue: monitorQueue)
     }
 
-    public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        switch call.method {
-        case "getDeviceInfo":
-            result(getDeviceInfo())
-        case "getBatteryInfo":
-            result(getBatteryInfo())
-        case "getNetworkInfo":
-            result(getNetworkInfo())
-        case "getStorageInfo":
-            result(getStorageInfo())
-        case "getDisplayInfo":
-            result(getDisplayInfo())
-        default:
-            result(FlutterMethodNotImplemented)
-        }
-    }
-
-    private func getDeviceInfo() -> [String: Any?] {
+    func getDeviceInfo() throws -> PigeonDeviceInfo {
         let device = UIDevice.current
         var systemInfo = utsname()
         uname(&systemInfo)
@@ -55,16 +45,27 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
             guard let value = element.value as? Int8, value != 0 else { return }
             result.append(Character(UnicodeScalar(UInt8(bitPattern: value))))
         }
-        return [
-            "deviceId": device.identifierForVendor?.uuidString,
-            "manufacturer": "Apple",
-            "model": machine.isEmpty ? device.model : machine,
-            "serial": nil,
-            "name": device.name,
-        ]
+        #if arch(arm64)
+            let arch = "arm64"
+        #elseif arch(x86_64)
+            let arch = "x86_64"
+        #else
+            let arch = "unknown"
+        #endif
+
+        return PigeonDeviceInfo(
+            deviceId: device.identifierForVendor?.uuidString,
+            manufacturer: "Apple",
+            model: machine.isEmpty ? device.model : machine,
+            serial: nil,
+            name: device.name,
+            operatingSystem: "ios",
+            osVersion: device.systemVersion,
+            architecture: arch
+        )
     }
 
-    private func getBatteryInfo() -> [String: Any?] {
+    func getBatteryInfo() throws -> PigeonBatteryInfo {
         let device = UIDevice.current
         device.isBatteryMonitoringEnabled = true
         defer { device.isBatteryMonitoringEnabled = false }
@@ -72,54 +73,76 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
         let level = device.batteryLevel
         let levelPercent: Double? = level < 0 ? nil : Double(level) * 100.0
         let isCharging: Bool?
+        let chargingState: PigeonBatteryChargingState
         switch device.batteryState {
-        case .charging, .full:
+        case .charging:
             isCharging = true
+            chargingState = .charging
+        case .full:
+            isCharging = true
+            chargingState = .full
         case .unplugged:
             isCharging = false
-        default:
+            chargingState = .discharging
+        case .unknown:
             isCharging = nil
+            chargingState = .unknown
+        @unknown default:
+            isCharging = nil
+            chargingState = .unknown
         }
         // UIDevice has no public battery-health API.
-        return [
-            "level": levelPercent,
-            "isCharging": isCharging,
-            "health": nil,
-        ]
+        return PigeonBatteryInfo(
+            level: levelPercent,
+            isCharging: isCharging,
+            chargingState: chargingState,
+            healthStatus: .unknown,
+            health: nil,
+            hasBattery: levelPercent != nil || isCharging != nil
+        )
     }
 
-    private func getNetworkInfo() -> [String: Any?] {
+    func getNetworkInfo() throws -> PigeonNetworkInfo {
         let path = currentPath ?? pathMonitor.currentPath
+        let connectionType: PigeonNetworkConnectionType
         let networkType: String
         if path.status != .satisfied {
+            connectionType = .none
             networkType = "none"
         } else if path.usesInterfaceType(.wifi) {
+            connectionType = .wifi
             networkType = "wifi"
         } else if path.usesInterfaceType(.wiredEthernet) {
+            connectionType = .ethernet
             networkType = "ethernet"
         } else if path.usesInterfaceType(.cellular) {
+            connectionType = .cellular
             networkType = "cellular"
         } else {
+            connectionType = .unknown
             networkType = "unknown"
         }
-        return [
-            "ipAddress": localIPv4(preferCellular: networkType == "cellular"),
-            "networkType": networkType,
-            "macAddress": nil,
-        ]
+        let resolved = localIPv4(preferCellular: networkType == "cellular")
+        return PigeonNetworkInfo(
+            ipAddress: resolved?.ip,
+            connectionType: connectionType,
+            networkType: networkType,
+            macAddress: nil,
+            interfaceName: resolved?.interfaceName
+        )
     }
 
     /// Prefer en0 (Wi-Fi); for cellular prefer pdp_ip*. Skip loopback, RFC 3927
     /// link-local (169.254/16), and Clash-style fake-IP (198.18.0.0/15).
-    private func localIPv4(preferCellular: Bool) -> String? {
+    private func localIPv4(preferCellular: Bool) -> (ip: String, interfaceName: String)? {
         var ifaddr: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&ifaddr) == 0, let first = ifaddr else { return nil }
         defer { freeifaddrs(ifaddr) }
 
-        var bestEn0: String?
-        var bestEn: String?
-        var bestCellular: String?
-        var bestOther: String?
+        var bestEn0: (String, String)?
+        var bestEn: (String, String)?
+        var bestCellular: (String, String)?
+        var bestOther: (String, String)?
 
         var ptr: UnsafeMutablePointer<ifaddrs>? = first
         while let current = ptr {
@@ -146,13 +169,13 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
             guard !isUnusableIPv4(candidate) else { continue }
 
             if name == "en0" {
-                bestEn0 = candidate
+                bestEn0 = (candidate, name)
             } else if name.hasPrefix("en") {
-                if bestEn == nil { bestEn = candidate }
+                if bestEn == nil { bestEn = (candidate, name) }
             } else if name.hasPrefix("pdp_ip") {
-                if bestCellular == nil { bestCellular = candidate }
+                if bestCellular == nil { bestCellular = (candidate, name) }
             } else if bestOther == nil {
-                bestOther = candidate
+                bestOther = (candidate, name)
             }
         }
 
@@ -172,30 +195,31 @@ public class XueHuaDeviceInfoPlugin: NSObject, FlutterPlugin {
         return false
     }
 
-    private func getStorageInfo() -> [String: Any?] {
+    func getStorageInfo() throws -> PigeonStorageInfo {
         let url = URL(fileURLWithPath: NSHomeDirectory())
         let values = try? url.resourceValues(forKeys: [
             .volumeTotalCapacityKey,
             .volumeAvailableCapacityForImportantUsageKey,
         ])
-        let total = values?.volumeTotalCapacity ?? 0
-        let free = Int(values?.volumeAvailableCapacityForImportantUsage ?? 0)
-        return [
-            "totalBytes": total,
-            "freeBytes": free,
-            "storageType": "internal",
-        ]
+        let total = Int64(values?.volumeTotalCapacity ?? 0)
+        let free = Int64(values?.volumeAvailableCapacityForImportantUsage ?? 0)
+        return PigeonStorageInfo(
+            totalBytes: total,
+            freeBytes: free,
+            mediumType: .internalStorage,
+            storageType: "internal"
+        )
     }
 
-    private func getDisplayInfo() -> [String: Any?] {
+    func getDisplayInfo() throws -> PigeonDisplayInfo {
         let screen = UIScreen.main
         let bounds = screen.bounds
         let scale = screen.scale
-        return [
-            "width": Int(bounds.width * scale),
-            "height": Int(bounds.height * scale),
-            "scaleFactor": Double(scale),
-            "refreshRate": Double(screen.maximumFramesPerSecond),
-        ]
+        return PigeonDisplayInfo(
+            width: Int64(bounds.width * scale),
+            height: Int64(bounds.height * scale),
+            scaleFactor: Double(scale),
+            refreshRate: Double(screen.maximumFramesPerSecond)
+        )
     }
 }

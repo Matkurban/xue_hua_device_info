@@ -14,7 +14,6 @@ internal object DeviceInfoHelpers {
      */
     fun mapBatteryHealth(healthCode: Int): String =
         when (healthCode) {
-            // BatteryManager.BATTERY_HEALTH_* constants (keep numeric to stay Context-free).
             2 -> "good" // BATTERY_HEALTH_GOOD
             3 -> "overheat" // BATTERY_HEALTH_OVERHEAT
             4 -> "dead" // BATTERY_HEALTH_DEAD
@@ -22,6 +21,28 @@ internal object DeviceInfoHelpers {
             6 -> "unspecified_failure" // BATTERY_HEALTH_UNSPECIFIED_FAILURE
             7 -> "cold" // BATTERY_HEALTH_COLD
             else -> "unknown" // includes BATTERY_HEALTH_UNKNOWN (1) and missing (-1)
+        }
+
+    /** Maps [android.os.BatteryManager] EXTRA_HEALTH codes to [PigeonBatteryHealthStatus]. */
+    fun mapBatteryHealthStatus(healthCode: Int): PigeonBatteryHealthStatus =
+        when (healthCode) {
+            2 -> PigeonBatteryHealthStatus.GOOD
+            3 -> PigeonBatteryHealthStatus.OVERHEAT
+            4 -> PigeonBatteryHealthStatus.DEAD
+            5 -> PigeonBatteryHealthStatus.OVER_VOLTAGE
+            6 -> PigeonBatteryHealthStatus.UNSPECIFIED_FAILURE
+            7 -> PigeonBatteryHealthStatus.COLD
+            else -> PigeonBatteryHealthStatus.UNKNOWN
+        }
+
+    /** Maps [android.os.BatteryManager] EXTRA_STATUS codes to [PigeonBatteryChargingState]. */
+    fun mapChargingState(statusCode: Int): PigeonBatteryChargingState =
+        when (statusCode) {
+            2 -> PigeonBatteryChargingState.CHARGING // BATTERY_STATUS_CHARGING
+            3 -> PigeonBatteryChargingState.DISCHARGING // BATTERY_STATUS_DISCHARGING
+            4 -> PigeonBatteryChargingState.NOT_CHARGING // BATTERY_STATUS_NOT_CHARGING
+            5 -> PigeonBatteryChargingState.FULL // BATTERY_STATUS_FULL
+            else -> PigeonBatteryChargingState.UNKNOWN
         }
 
     /**

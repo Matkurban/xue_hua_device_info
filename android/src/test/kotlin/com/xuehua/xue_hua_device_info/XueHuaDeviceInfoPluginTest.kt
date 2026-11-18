@@ -1,14 +1,11 @@
 package com.xuehua.xue_hua_device_info
 
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
 import java.net.InetAddress
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import org.mockito.Mockito
 
 internal class XueHuaDeviceInfoPluginTest {
     @Test
@@ -36,6 +33,19 @@ internal class XueHuaDeviceInfoPluginTest {
         assertEquals("unknown", DeviceInfoHelpers.mapBatteryHealth(1))
         assertEquals("unknown", DeviceInfoHelpers.mapBatteryHealth(-1))
         assertEquals("unknown", DeviceInfoHelpers.mapBatteryHealth(99))
+    }
+
+    @Test
+    fun mapBatteryHealthStatus_and_mapChargingState() {
+        assertEquals(PigeonBatteryHealthStatus.GOOD, DeviceInfoHelpers.mapBatteryHealthStatus(2))
+        assertEquals(PigeonBatteryHealthStatus.OVERHEAT, DeviceInfoHelpers.mapBatteryHealthStatus(3))
+        assertEquals(PigeonBatteryHealthStatus.UNKNOWN, DeviceInfoHelpers.mapBatteryHealthStatus(-1))
+
+        assertEquals(PigeonBatteryChargingState.CHARGING, DeviceInfoHelpers.mapChargingState(2))
+        assertEquals(PigeonBatteryChargingState.DISCHARGING, DeviceInfoHelpers.mapChargingState(3))
+        assertEquals(PigeonBatteryChargingState.NOT_CHARGING, DeviceInfoHelpers.mapChargingState(4))
+        assertEquals(PigeonBatteryChargingState.FULL, DeviceInfoHelpers.mapChargingState(5))
+        assertEquals(PigeonBatteryChargingState.UNKNOWN, DeviceInfoHelpers.mapChargingState(-1))
     }
 
     @Test
@@ -76,15 +86,18 @@ internal class XueHuaDeviceInfoPluginTest {
     }
 
     @Test
-    fun onMethodCall_unknownMethod_callsNotImplemented() {
-        val plugin = XueHuaDeviceInfoPlugin()
-        val call = MethodCall("unknown", null)
-        val mockResult: MethodChannel.Result = Mockito.mock(MethodChannel.Result::class.java)
-        try {
-            plugin.onMethodCall(call, mockResult)
-            Mockito.verify(mockResult).notImplemented()
-        } catch (_: UninitializedPropertyAccessException) {
-            // Engine not attached - acceptable for this smoke path.
-        }
+    fun pigeonDataClasses_roundTripToList() {
+        val device =
+            PigeonDeviceInfo(
+                deviceId = "id-1",
+                manufacturer = "Google",
+                model = "Pixel",
+                serial = null,
+                name = "Pixel 9",
+                operatingSystem = "android",
+                osVersion = "16",
+                architecture = "arm64-v8a",
+            )
+        assertEquals(device, PigeonDeviceInfo.fromList(device.toList()))
     }
 }

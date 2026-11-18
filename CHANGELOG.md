@@ -1,5 +1,16 @@
 # Change log
 
+## 2.1.0
+
+- **Core Architecture (Pigeon Migration):** Replaced `plugin_platform_interface` (`XueHuaDeviceInfoPlatform`) and handwritten `MethodChannel` (`MethodChannelXueHuaDeviceInfo`) with strongly-typed **Pigeon (`^30.0.4`)** `@HostApi` code generation (`pigeons/messages.dart`, `lib/src/messages.g.dart`) across Android (`Messages.g.kt`), iOS (`Messages.g.swift`), macOS (`Messages.g.swift`), Windows (`messages.g.h` / `messages.g.cpp`), and Linux (`messages.g.h` / `messages.g.cc`).
+  **核心架构升级（Pigeon 迁移）：** 移除 `plugin_platform_interface` 与手写 `MethodChannel` 实现，全面迁移至最新版 **Pigeon (`^30.0.4`)** 强类型 `@HostApi` 跨平台代码生成，覆盖 Android、iOS、macOS、Windows 与 Linux 五端。
+- **Redesigned Modular Domain Models:** Split the monolithic `lib/src/models.dart` into dedicated model files under `lib/src/models/` (`device_enums.dart`, `device_info.dart`, `battery_info.dart`, `network_info.dart`, `storage_info.dart`, `display_info.dart`) with strongly-typed enums (`BatteryChargingState`, `BatteryHealthStatus`, `NetworkConnectionType`, `StorageMediumType`), extended fields (`operatingSystem`, `osVersion`, `architecture`, `hasBattery`, `interfaceName`, `usedBytes`), computed properties (`displayTitle`, `hasSerial`, `levelRatio`, `formattedLevel`, `isConnected`, `isWireless`, `usageRatio`, `usedPercentage`, `totalGigabytes`, `freeGigabytes`, `usedGigabytes`, `logicalWidth`, `logicalHeight`, `aspectRatio`, `physicalResolution`, `logicalResolution`, `isHighRefreshRate`), and `copyWith` support.
+  **数据模型全面重设计：** 将原有的单文件模型拆分为 `lib/src/models/` 下按职责独立的模型与枚举文件，新增强类型枚举（`BatteryChargingState`、`BatteryHealthStatus`、`NetworkConnectionType`、`StorageMediumType`）、扩展字段（`operatingSystem`、`osVersion`、`architecture`、`hasBattery`、`interfaceName`、`usedBytes`）、丰富的计算属性以及 `copyWith` 方法。
+- **Example App (`signals_flutter` Fine-Grained State):** Refactored the example app (`example/lib/main.dart`, `example/lib/state/device_info_signals.dart`, `example/lib/widgets/device_section_card.dart`) to use `signals_flutter` (`Signal`, `SignalBuilder`, `SignalStatefulWidget`, `computed`, `batch`) with zero `setState`. All 5 subsystems (Device Identity, Battery Status, Network Connection, Storage Capacity, Display Metrics) are fetched independently and displayed under separate titled cards showing every model property.
+  **示例应用重构（`signals_flutter` 精细化状态管理）：** 示例应用全面采用 `signals_flutter` 管理各模块状态，完全移除 `setState`；5 大硬件信息模块按独立标题卡片分开展示全部字段，支持各模块独立异步获取与局部刷新，不再使用一次性打包耦合渲染。
+- **Native Verification:** Verified Windows and Linux C++/GObject implementations with `clang++ -Wall -Wextra -Werror` (zero warnings, zero errors), and bumped minimum SDK constraints to Dart `^3.13.0` and Flutter `>=3.47.0`.
+  **原生编译验证：** 使用 `clang++ -Wall -Wextra -Werror` 完成 Windows 与 Linux C++/GObject 代码零警告、零错误编译验证，并将环境要求升级至 Dart `^3.13.0`、Flutter `>=3.47.0`。
+
 ## 2.0.11
 
 - Example: add `test_driver/integration_test.dart` for `flutter drive`; set example `version` so iOS CFBundleShortVersionString/CFBundleVersion are present (clears Xcode version warnings).
@@ -23,7 +34,6 @@
 - macOS: prefer present `InternalBattery` power source; normalize level with `Max Capacity`; surface `kIOPSBatteryHealthKey` (`Good`/`Fair`/`Poor`) when published.
 - iOS: skip link-local and fake-IP addresses when picking IPv4; prefer `en0` for Wi-Fi and `pdp_ip*` when `NWPathMonitor` reports cellular.
 - Docs: macOS/iOS network, storage, display, and battery notes; platform-behavior skill reference.
-
 
 ## 2.0.8
 

@@ -18,6 +18,8 @@ set(PLUGIN_NAME "xue_hua_device_info_plugin")
 
 # Any new source files that you add to the plugin should be added here.
 list(APPEND PLUGIN_SOURCES
+  "messages.g.cpp"
+  "messages.g.h"
   "xue_hua_device_info_plugin.cpp"
   "xue_hua_device_info_plugin.h"
   "device_info_helpers.cpp"
@@ -45,8 +47,6 @@ set_target_properties(${PLUGIN_NAME} PROPERTIES
 target_compile_definitions(${PLUGIN_NAME} PRIVATE
   FLUTTER_PLUGIN_IMPL
   WIN32_LEAN_AND_MEAN)
-# Match Linux: surface unused params / suspicious code without turning /WX on
-# for consumers (apply_standard_settings may already set /W4).
 target_compile_options(${PLUGIN_NAME} PRIVATE /W4 /utf-8)
 
 # Source include directories and library dependencies. Add any plugin-specific
@@ -65,30 +65,20 @@ set(xue_hua_device_info_bundled_libraries
 )
 
 # === Tests ===
-# These unit tests can be run from a terminal after building the example, or
-# from Visual Studio after opening the generated solution file.
-
-# Only enable test builds when building the example (which sets this variable)
-# so that plugin clients aren't building the tests.
 if (${include_${PROJECT_NAME}_tests})
 set(TEST_RUNNER "${PROJECT_NAME}_test")
 enable_testing()
 
-# Add the Google Test dependency.
 include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/v1.18.0.zip
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
-# Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-# Disable install commands for gtest so it doesn't end up in the bundle.
 set(INSTALL_GTEST OFF CACHE BOOL "Disable installation of googletest" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# The plugin's C API is not very useful for unit testing, so build the sources
-# directly into the test binary rather than using the DLL.
 add_executable(${TEST_RUNNER}
   test/xue_hua_device_info_plugin_test.cpp
   test/device_info_helpers_test.cpp
@@ -101,13 +91,11 @@ target_include_directories(${TEST_RUNNER} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(${TEST_RUNNER} PRIVATE flutter_wrapper_plugin)
 target_link_libraries(${TEST_RUNNER} PRIVATE iphlpapi ws2_32)
 target_link_libraries(${TEST_RUNNER} PRIVATE gtest_main gmock)
-# flutter_wrapper_plugin has link dependencies on the Flutter DLL.
 add_custom_command(TARGET ${TEST_RUNNER} POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
   "${FLUTTER_LIBRARY}" $<TARGET_FILE_DIR:${TEST_RUNNER}>
 )
 
-# Enable automatic test discovery.
 include(GoogleTest)
 gtest_discover_tests(${TEST_RUNNER})
 endif()

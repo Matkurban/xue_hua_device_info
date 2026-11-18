@@ -13,6 +13,8 @@ set(PLUGIN_NAME "xue_hua_device_info_plugin")
 
 # Any new source files that you add to the plugin should be added here.
 list(APPEND PLUGIN_SOURCES
+  "messages.g.cc"
+  "messages.g.h"
   "xue_hua_device_info_plugin.cc"
   "device_info_helpers.cc"
 )
@@ -44,18 +46,12 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE flutter)
 target_link_libraries(${PLUGIN_NAME} PRIVATE PkgConfig::GTK)
 
 # List of absolute paths to libraries that should be bundled with the plugin.
-# This list could contain prebuilt libraries, or libraries created by an
-# external build triggered from this build file.
 set(xue_hua_device_info_bundled_libraries
   ""
   PARENT_SCOPE
 )
 
 # === Tests ===
-# These unit tests can be run from a terminal after building the example.
-
-# Only enable test builds when building the example (which sets this variable)
-# so that plugin clients aren't building the tests.
 if (${include_${PROJECT_NAME}_tests})
 if(${CMAKE_VERSION} VERSION_LESS "3.13.0")
 message("Unit tests require CMake 3.13.0 or later")
@@ -63,22 +59,17 @@ else()
 set(TEST_RUNNER "${PROJECT_NAME}_test")
 enable_testing()
 
-# Add the Google Test dependency.
 include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/v1.18.0.zip
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
-# Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-# Disable install commands for gtest so it doesn't end up in the bundle.
 set(INSTALL_GTEST OFF CACHE BOOL "Disable installation of googletest" FORCE)
 
 FetchContent_MakeAvailable(googletest)
 
-# The plugin's exported API is not very useful for unit testing, so build the
-# sources directly into the test binary rather than using the shared library.
 add_executable(${TEST_RUNNER}
   test/xue_hua_device_info_plugin_test.cc
   test/device_info_helpers_test.cc
@@ -91,7 +82,6 @@ target_link_libraries(${TEST_RUNNER} PRIVATE flutter)
 target_link_libraries(${TEST_RUNNER} PRIVATE PkgConfig::GTK)
 target_link_libraries(${TEST_RUNNER} PRIVATE gtest_main gmock)
 
-# Enable automatic test discovery.
 include(GoogleTest)
 gtest_discover_tests(${TEST_RUNNER})
 

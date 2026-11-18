@@ -4,22 +4,22 @@
 
 Flutter plugin for device information: identity, battery, network, storage, and display.
 
-Built with **MethodChannel** native implementations (Kotlin / Swift / C++). Web is not supported.
+Built with **Pigeon (`^30.0.4`)** strongly-typed native host APIs across Kotlin, Swift, C++, and GObject. Web is not supported.
 
 ---
 
 ## Supported Platforms
 
-| Platform | Support | Notes                  |
-| -------- | ------- | ---------------------- |
-| Android  | Yes     | Kotlin + MethodChannel |
-| iOS      | Yes     | Swift + SPM/CocoaPods  |
-| macOS    | Yes     | Swift + SPM/CocoaPods  |
-| Windows  | Yes     | C++ + MethodChannel    |
-| Linux    | Yes     | C++ + MethodChannel    |
-| Web      | No      | Not supported          |
+| Platform | Support | Implementation                        |
+| -------- | ------- | ------------------------------------- |
+| Android  | Yes     | Kotlin + Pigeon HostApi               |
+| iOS      | Yes     | Swift + Pigeon HostApi (SPM/CocoaPods)|
+| macOS    | Yes     | Swift + Pigeon HostApi (SPM/CocoaPods)|
+| Windows  | Yes     | C++ + Pigeon HostApi                  |
+| Linux    | Yes     | C++/GObject + Pigeon HostApi          |
+| Web      | No      | Not supported                         |
 
-**Requirements:** Dart `^3.12.0`, Flutter `>=3.44.0`
+**Requirements:** Dart `^3.13.0`, Flutter `>=3.47.0`
 
 ---
 
@@ -27,26 +27,12 @@ Built with **MethodChannel** native implementations (Kotlin / Swift / C++). Web 
 
 ```yaml
 dependencies:
-  xue_hua_device_info: ^2.0.9
+  xue_hua_device_info: ^2.1.0
 ```
 
 ---
 
-## Package skills
-
-This package ships an AI agent skill that documents every public class and method.
-
-After adding the dependency, install it in your app project:
-
-```bash
-dart run skills@ get
-```
-
-That copies `xue_hua_device_info-usage` into your agent skills directory (for example `.agents/skills/`). The skill covers `XueHuaDeviceInfo` usage, model fields, `PlatformException` handling, and per-platform nullability.
-
----
-
-## Quick Start
+## Quick Start (Independent Subsystem Queries)
 
 ```dart
 import 'package:flutter/widgets.dart';
@@ -55,120 +41,91 @@ import 'package:xue_hua_device_info/xue_hua_device_info.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Each subsystem can be queried independently on demand:
   final device = await XueHuaDeviceInfo.getDeviceInfo();
   final battery = await XueHuaDeviceInfo.getBatteryInfo();
   final network = await XueHuaDeviceInfo.getNetworkInfo();
   final storage = await XueHuaDeviceInfo.getStorageInfo();
   final display = await XueHuaDeviceInfo.getDisplayInfo();
 
-  print(device.model);
-  print(battery.level);
-  print(network.ipAddress);
-  print(storage.freeBytes);
-  print('${display.width}x${display.height}');
+  debugPrint('${device.displayTitle} (${device.operatingSystem} ${device.architecture})');
+  debugPrint('Battery: ${battery.formattedLevel}, state=${battery.chargingState.code}');
+  debugPrint('Network: ${network.connectionType.code} (${network.ipAddress}) on ${network.interfaceName}');
+  debugPrint('Storage: ${storage.usedGigabytes.toStringAsFixed(1)} / ${storage.totalGigabytes.toStringAsFixed(1)} GiB (${storage.mediumType.code})');
+  debugPrint('Display: ${display.physicalResolution} (${display.logicalResolution} @ ${display.scaleFactor}x)');
 }
 ```
 
-No `initialize()` call is required.
-
 ---
 
-## API
+## Redesigned Domain Models
 
-| Method             | Returns       |
-| ------------------ | ------------- |
-| `getDeviceInfo()`  | `DeviceInfo`  |
-| `getBatteryInfo()` | `BatteryInfo` |
-| `getNetworkInfo()` | `NetworkInfo` |
-| `getStorageInfo()` | `StorageInfo` |
-| `getDisplayInfo()` | `DisplayInfo` |
+### `DeviceInfo` (`lib/src/models/device_info.dart`)
 
-### DeviceInfo
+| Property          | Type      | Description                                                                 |
+| ----------------- | --------- | --------------------------------------------------------------------------- |
+| `deviceId`        | `String?` | Android ID / IDFV / IOPlatformUUID / MachineGuid / DMI UUID or machine-id   |
+| `manufacturer`    | `String?` | Hardware manufacturer                                                       |
+| `model`           | `String?` | Hardware model / machine identifier                                         |
+| `serial`          | `String?` | Hardware serial on desktop when readable; `null` on Android/iOS             |
+| `name`            | `String?` | Host or user-visible device name                                            |
+| `operatingSystem` | `String?` | `android`, `ios`, `macos`, `windows`, or `linux`                            |
+| `osVersion`       | `String?` | Operating system release / build string                                     |
+| `architecture`    | `String?` | CPU architecture (`arm64`, `x86_64`, etc.)                                  |
+| `displayTitle`    | `String`  | Computed human-readable label combining `manufacturer` and `model`          |
+| `hasSerial`       | `bool`    | Computed flag indicating whether `serial` is non-empty                      |
 
-| Field          | Type      | Notes                                                                                                                                                                                                                   |
-| -------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `deviceId`     | `String?` | Android ID / IDFV / machine UUID                                                                                                                                                                                        |
-| `manufacturer` | `String?` |                                                                                                                                                                                                                         |
-| `model`        | `String?` |                                                                                                                                                                                                                         |
-| `serial`       | `String?` | Desktop when available; **always null on iOS/Android** (no public hardware serial on iOS)                                                                                                                               |
-| `name`         | `String?` | Device or host name. On **iOS 16+**, without the `com.apple.developer.device-information.user-assigned-device-name` entitlement this is typically a generic label (e.g. `"iPhone"`), not the user-assigned device name. |
+### `BatteryInfo` (`lib/src/models/battery_info.dart`)
 
-### BatteryInfo
+| Property         | Type                   | Description                                                      |
+| ---------------- | ---------------------- | ---------------------------------------------------------------- |
+| `level`          | `double?`              | Charge percentage (`0.0`–`100.0`), or `null`                     |
+| `levelRatio`     | `double?`              | Normalized charge ratio (`0.0`–`1.0`), or `null`                 |
+| `formattedLevel` | `String`               | Formatted string (e.g. `"85.0%"` or `"N/A"`)                     |
+| `isCharging`     | `bool?`                | Whether charging or full on external power                       |
+| `chargingState`  | `BatteryChargingState` | `charging`, `discharging`, `full`, `notCharging`, `unknown`      |
+| `healthStatus`   | `BatteryHealthStatus`  | `good`, `fair`, `poor`, `overheat`, `dead`, `overVoltage`, `cold`, `unknown` |
+| `health`         | `String?`              | Raw platform health string when available                        |
+| `hasBattery`     | `bool`                 | Whether a system battery is present                              |
 
-| Field        | Type              |
-| ------------ | ----------------- |
-| `level`      | `double?` (0–100) |
-| `isCharging` | `bool?`           |
-| `health`     | `String?`         |
+### `NetworkInfo` (`lib/src/models/network_info.dart`)
 
-### NetworkInfo
+| Property         | Type                    | Description                                                      |
+| ---------------- | ----------------------- | ---------------------------------------------------------------- |
+| `ipAddress`      | `String?`               | Active IPv4 address (skips loopback, link-local, and fake-IP)    |
+| `connectionType` | `NetworkConnectionType` | `wifi`, `ethernet`, `cellular`, `vpn`, `loopback`, `none`, `unknown` |
+| `networkType`    | `String`                | Canonical transport string (`wifi`, `ethernet`, `cellular`, `none`, `unknown`) |
+| `macAddress`     | `String?`               | Hardware MAC address on desktop; `null` on mobile                |
+| `interfaceName`  | `String?`               | Selected interface/adapter name (`en0`, `wlan0`, `eth0`, etc.)   |
+| `isConnected`    | `bool`                  | Computed connectivity status                                     |
+| `isWireless`     | `bool`                  | Computed wireless transport flag (`wifi` or `cellular`)          |
 
-| Field         | Type      | Notes                                                 |
-| ------------- | --------- | ----------------------------------------------------- |
-| `ipAddress`   | `String?` |                                                       |
-| `networkType` | `String?` | `wifi` / `ethernet` / `cellular` / `none` / `unknown` |
-| `macAddress`  | `String?` | Desktop when available; `null` on mobile              |
+### `StorageInfo` (`lib/src/models/storage_info.dart`)
 
-### StorageInfo
+| Property         | Type                | Description                                                      |
+| ---------------- | ------------------- | ---------------------------------------------------------------- |
+| `totalBytes`     | `int`               | Total capacity in bytes                                          |
+| `freeBytes`      | `int`               | Available capacity in bytes                                      |
+| `usedBytes`      | `int`               | Computed used bytes (`totalBytes - freeBytes`)                   |
+| `usageRatio`     | `double`            | Computed used ratio (`0.0`–`1.0`)                                |
+| `usedPercentage` | `double`            | Computed used percentage (`0.0`–`100.0`)                         |
+| `totalGigabytes` | `double`            | Total capacity in GiB                                            |
+| `freeGigabytes`  | `double`            | Available capacity in GiB                                        |
+| `usedGigabytes`  | `double`            | Used capacity in GiB                                             |
+| `mediumType`     | `StorageMediumType` | `ssd`, `hdd`, `internal`, `nvme`, `virtual`, `unknown`           |
+| `storageType`    | `String?`           | `internal` on mobile; `ssd` / `hdd` on desktop when detected     |
 
-| Field         | Type      |
-| ------------- | --------- |
-| `totalBytes`  | `int`     |
-| `freeBytes`   | `int`     |
-| `storageType` | `String?` | Android/iOS: `internal`. Linux/Windows/macOS: `ssd`/`hdd` when known |
+### `DisplayInfo` (`lib/src/models/display_info.dart`)
 
-### DisplayInfo
-
-| Field         | Type      |
-| ------------- | --------- |
-| `width`       | `int`     |
-| `height`      | `int`     |
-| `scaleFactor` | `double`  |
-| `refreshRate` | `double?` |
-
-### Linux notes
-
-- **`deviceId`**: DMI `product_uuid` when readable, otherwise `/etc/machine-id`, then `/var/lib/dbus/machine-id`. `product_uuid` is usually root-only (`0400`), so an **unprivileged process typically gets the machine-id while a root process gets the DMI UUID** — the id can differ by privilege level. Placeholder values (all-zero/all-F UUIDs, `uninitialized`) are skipped. Treat it as stable per (machine, privilege), not as a hardware-bound identifier; per machine-id(5) the machine-id is confidential, so hash it with an app-specific key if you transmit it. `serial` is likewise root-only and `null` otherwise.
-- **Battery**: scans `/sys/class/power_supply/*` for `type=Battery` (peripheral batteries with `scope=Device` are skipped). `health` comes from the kernel `health` file when present (e.g. `Good`), otherwise `null`. Desktops without a battery return `null` fields.
-- **Network**: one interface is chosen (up, non-loopback, has IPv4; the default-route interface from `/proc/net/route` is preferred, physical interfaces are preferred over docker/veth/bridge/tun) and `ipAddress`, `macAddress` and `networkType` all come from that same interface. Wi-Fi is detected via `/sys/class/net/<if>/wireless`.
-- **Display**: uses GDK only (primary monitor, scale factor, refresh rate); no external tools such as `xrandr` are required or spawned. Without a display (headless) `width`/`height` are `0`.
-- Build requires the GTK 3 development package (as for any Flutter Linux app).
-
-
-### macOS notes
-
-- **Network**: one interface is chosen (`SCDynamicStore` `State:/Network/Global/IPv4` → `PrimaryInterface` when it has a usable IPv4; otherwise the best physical `en*`/`eth*`). `ipAddress`, `macAddress` and `networkType` all come from that interface. Link-local (`169.254/16`) and Clash-style fake-IP (`198.18.0.0/15`) addresses are skipped. Type uses `SCNetworkInterfaceGetInterfaceType` (`IEEE80211` → `wifi`, `Ethernet` → `ethernet`).
-- **Storage**: `storageType` is `ssd` or `hdd` from IOKit Device Characteristics `Medium Type` on the root volume's IOMedia (via DiskArbitration), else `null`.
-- **Display**: physical pixels from `CGDisplayMode.pixelWidth/Height` (Retina-correct). Refresh rate from the display mode, or `NSScreen.maximumFramesPerSecond` when the mode reports 0.
-- **Battery**: prefers a present `InternalBattery` source. `health` is `kIOPSBatteryHealthKey` (`Good`/`Fair`/`Poor`) when Apple publishes it; many Macs omit the key → `null`.
-
-
-### Android notes
-
-- **Network**: IPv4 comes from `ConnectivityManager.getLinkProperties(activeNetwork)` (prefer site-local); falls back to a filtered `NetworkInterface` scan. Link-local (`169.254/16`) and Clash-style fake-IP (`198.18.0.0/15`) are skipped. `networkType` uses active `NetworkCapabilities` transports. `macAddress` is always `null` (Android privacy).
-- **Display**: physical pixels and refresh from `Display.getMode()` (`physicalWidth` / `physicalHeight` / `refreshRate`); `scaleFactor` is `DisplayMetrics.density`.
-- **Storage**: `storageType` is always `"internal"` (no public rotational/SSD API on phones).
-- **Device**: `deviceId` is `Settings.Secure.ANDROID_ID`; `serial` is always `null`.
-
-
----
-
-## Architecture
-
-```
-Dart XueHuaDeviceInfo
-  → Platform Interface
-    → MethodChannel ("xue_hua_device_info")
-      → Android Kotlin / iOS Swift / macOS Swift / Windows C++ / Linux C++
-```
-
-iOS and macOS ship both **Swift Package Manager** and **CocoaPods** manifests per Flutter 3.44 plugin guidance.
-
----
-
-## Breaking changes (2.0.0)
-
-- Removed Rust / flutter_rust_bridge / Cargokit.
-- Redesigned models and field names (`deviceId`, `name`, `totalBytes`, …).
-- Removed `initialize()`.
-- iOS no longer fabricates a Keychain UUID as `serial`.
+| Property             | Type      | Description                                                  |
+| -------------------- | --------- | ------------------------------------------------------------ |
+| `width`              | `int`     | Physical width in pixels                                     |
+| `height`             | `int`     | Physical height in pixels                                    |
+| `scaleFactor`        | `double`  | Logical-to-physical scale factor                             |
+| `refreshRate`        | `double?` | Refresh rate in Hz when available                            |
+| `logicalWidth`       | `double`  | Computed logical width in points                             |
+| `logicalHeight`      | `double`  | Computed logical height in points                            |
+| `aspectRatio`        | `double`  | Computed width-to-height ratio                               |
+| `physicalResolution` | `String`  | Formatted physical resolution (`"${width}x$height"`)         |
+| `logicalResolution`  | `String`  | Formatted logical resolution                                 |
+| `isHighRefreshRate`  | `bool`    | Whether `refreshRate > 60.5` Hz                              |
